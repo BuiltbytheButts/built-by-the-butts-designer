@@ -58,8 +58,8 @@
             <option value="checker">Alternate 0° / 90°</option>
           </select>
         </label>
-        <label>Tip cut inward <span id="cutDepthLabel">0.180 in</span>
-          <input id="cutDepth" type="range" min="0" max="38" value="12" />
+        <label>Edge rip inset <span id="edgeInsetLabel">0.500 in</span>
+          <input id="edgeInset" type="range" min="0.125" max="0.750" step="0.0625" value="0.500" />
         </label>
         <label>Module spacing <span id="spacingLabel">0.000 in</span>
           <input id="spacing" type="range" min="0" max="30" value="0" />
@@ -76,7 +76,7 @@
 
       <section>
         <h2>Machining</h2>
-        <label>Tip fill wood
+        <label>Added edge wood
           <select id="tipWood"></select>
         </label>
         <label class="check-row"><input id="showLines" type="checkbox" checked /> Show glue lines</label>
@@ -124,7 +124,7 @@
           </div>
           <div id="timelineShopNotes" class="timeline-shop-notes"></div>
         </div>
-        <p class="note">The timeline is a geometric planning aid. Verify your actual fence position, blade height, kerf, grain orientation, and safe workholding before making a cut.</p>
+        <p class="note">The timeline models the revised process: shape the long blank to 45°, rip off and save both laminated edges, then glue on continuous walnut faces. Verify fence position, blade angle, kerf, grain orientation, and safe workholding before cutting.</p>
       </section>
 
       <div class="bottom-grid">

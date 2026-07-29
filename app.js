@@ -15,8 +15,8 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '1.1.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
-  layout: 'grid', orientation: '0', cutDepth: 12, spacing: 0,
+  version: '1.2.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
+  layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
   tipWood: 'walnut', showLines: true, showFrame: true,
   strips: structuredClone(DEFAULT_STRIPS)
 };
@@ -25,7 +25,7 @@ let future = [];
 let isRestoring = false;
 
 const $ = id => document.getElementById(id);
-const controls = ['boardLength','boardWidth','columns','rows','layout','orientation','cutDepth','spacing','tipWood','showLines','showFrame'];
+const controls = ['boardLength','boardWidth','columns','rows','layout','orientation','edgeInset','spacing','tipWood','showLines','showFrame'];
 
 function svgEl(name, attrs = {}) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -110,7 +110,8 @@ function drawModule(svg, cx, cy, size, angle, prefix) {
     g.append(svgEl('polygon',{points:pts(polygon),fill:`url(#${prefix}-${strip.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':state.showLines?'.55':'0'}));
     x = nx;
   });
-  const inward = h * state.cutDepth/100;
+  const insetRatio = Math.max(0.04, Math.min(0.46, Number(state.edgeInset || 0.5) / total));
+  const inward = h * insetRatio;
   const base = Math.min(h*.48, inward + size*.075);
   const fill = `url(#${prefix}-${state.tipWood})`;
   g.append(svgEl('polygon',{points:pts([[0,-h],[base,-h+inward],[-base,-h+inward]]),fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'}));
@@ -155,7 +156,7 @@ function renderMetrics() {
   $('moduleWidthMetric').textContent = `${totalWidth().toFixed(3)} in`;
   $('moduleCountMetric').textContent = String(Number(state.columns)*rows);
   $('boardSizeMetric').textContent = `${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`;
-  $('cutDepthLabel').textContent = `${(totalWidth()*state.cutDepth/100).toFixed(3)} in`;
+  $('edgeInsetLabel').textContent = `${Number(state.edgeInset || 0.5).toFixed(3)} in`;
   $('spacingLabel').textContent = `${(state.spacing/100).toFixed(3)} in`;
 }
 function render() { renderBoard(); renderModule(); renderSchedule(); renderMetrics(); updateUndoRedo(); }
@@ -166,14 +167,14 @@ function syncControls() {
 }
 function pullControl(id) {
   const el=$(id); let v = el.type==='checkbox' ? el.checked : el.value;
-  if (['boardLength','boardWidth','columns','rows','cutDepth','spacing'].includes(id)) v=Number(v);
+  if (['boardLength','boardWidth','columns','rows','edgeInset','spacing'].includes(id)) v=Number(v);
   state[id]=v; render(); commit();
 }
 
 controls.forEach(id => $(id).addEventListener('change',()=>pullControl(id)));
-$('cutDepth').addEventListener('input',()=>{ state.cutDepth=Number($('cutDepth').value); render(); });
+$('edgeInset').addEventListener('input',()=>{ state.edgeInset=Number($('edgeInset').value); render(); });
 $('spacing').addEventListener('input',()=>{ state.spacing=Number($('spacing').value); render(); });
-$('cutDepth').addEventListener('change',commit); $('spacing').addEventListener('change',commit);
+$('edgeInset').addEventListener('change',commit); $('spacing').addEventListener('change',commit);
 $('resetStripsBtn').addEventListener('click',()=>{ state.strips=structuredClone(DEFAULT_STRIPS); buildStripEditor(); render(); commit(); toast('Strip schedule reset'); });
 $('undoBtn').addEventListener('click',()=>{ if(history.length<=1)return; future.push(history.pop()); restore(history.at(-1)); updateUndoRedo(); });
 $('redoBtn').addEventListener('click',()=>{ if(!future.length)return; const next=future.pop(); history.push(next); restore(next); updateUndoRedo(); });
@@ -198,51 +199,55 @@ $('exportSvgBtn').addEventListener('click',()=>{
 
 const saved=localStorage.getItem('bbtb-designer-autosave');
 if(saved) { try { state=JSON.parse(saved); } catch {} }
+if (!Number.isFinite(Number(state.edgeInset))) state.edgeInset = 0.500;
+delete state.cutDepth;
+state.version = '1.2.0';
 syncControls(); buildStripEditor(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------
+// ---------- Step-by-step machining timeline ----------
 const TIMELINE_STEPS = [
   {
-    title: 'Laminated blank',
-    short: 'Glue the full-length strip stack',
-    description: 'Start with one straight, full-length laminated blank using the current strip schedule.',
-    notes: '<strong>Shop check:</strong> Joint the mating faces, keep the strip stack square, and flatten the blank before the angled operations.'
+    title: 'Square laminated blank',
+    short: 'Glue and square the full-length strip stack',
+    description: 'Start with one straight, full-length square blank using the current strip schedule.',
+    notes: '<strong>Shop check:</strong> Joint the mating faces, keep the stack square, and flatten the blank before shaping the outside faces.'
   },
   {
-    title: 'Reference the glue lines',
-    short: 'Identify both maple/walnut references',
-    description: 'Use the two maple-to-walnut glue lines as the reference points for the inward 45° cuts.',
-    notes: '<strong>Current references:</strong> The simulator highlights the two glue lines bordering the center strip. These should be confirmed against the actual blank.'
+    title: 'Cut the blank to 45°',
+    short: 'Form the long diamond-shaped blank',
+    description: 'Cut the outside faces at 45° so the full-length square glue-up becomes a consistent diamond-shaped core.',
+    notes: '<strong>Setup:</strong> Use safe workholding and make matching cuts so the original glue-up remains centered and symmetrical.'
   },
   {
-    title: 'First 45° cut',
-    short: 'Cut inward from the first reference',
-    description: 'Make the first angled cut so the cut moves inward and does not place cherry or maple outside the walnut tip.',
-    notes: '<strong>Current design intent:</strong> Walnut remains the outside tip material. The highlighted waste area is removed from one end of the long blank.'
+    title: 'Mark the edge rips',
+    short: 'Measure inward from both walnut tips',
+    description: 'Measure the selected edge-rip inset inward from each tip where the center walnut reaches the outside edge.',
+    notes: '<strong>Current inset:</strong> The dimension follows the Edge rip inset control. The default is 0.500 in from each outside tip.'
   },
   {
-    title: 'Glue the first fill',
-    short: 'Install one continuous tip-fill strip',
-    description: 'Glue the selected tip-fill wood into the first full-length angled cut, then flatten the repair.',
-    notes: '<strong>Tip-fill wood:</strong> The selected species is applied continuously along the long blank before modules are crosscut.'
+    title: 'Rip off both edges',
+    short: 'Remove and save the two outside sections',
+    description: 'Rip both marked edges from the long diamond blank, leaving a smaller center core with two parallel 45° glue faces.',
+    notes: '<strong>Save the offcuts:</strong> These continuous laminated strips can be reused in coasters, accent boards, handles, or future pattern experiments.'
   },
   {
-    title: 'Second 45° cut',
-    short: 'Mirror the operation at the other tip',
-    description: 'Make the matching inward cut from the opposite maple/walnut reference line.',
-    notes: '<strong>Alignment:</strong> Match the second operation to the first so the finished module remains balanced around the center strip.'
+    title: 'Mill the walnut additions',
+    short: 'Prepare two continuous 45° walnut pieces',
+    description: 'Mill two full-length walnut pieces with mating 45° faces sized to rebuild the removed edges.',
+    notes: '<strong>Continuous construction:</strong> Prepare the walnut additions as long strips, not individual module pieces.'
   },
   {
-    title: 'Glue the second fill',
-    short: 'Complete both outside walnut tips',
-    description: 'Glue and flatten the second continuous fill. The long blank now contains the complete tip geometry.',
-    notes: '<strong>Before crosscutting:</strong> Confirm both fills are fully seated, cured, and flattened with no material extending beyond the intended outside tips.'
+    title: 'Glue on the walnut edges',
+    short: 'Attach, cure, and flatten both additions',
+    description: 'Glue one walnut piece to each prepared face. After curing, flatten and true the reconstructed long blank.',
+    notes: '<strong>Pattern result:</strong> The new walnut becomes the outside material while the original laminated glue-up reads as an inner square or diamond.'
   },
   {
     title: 'Crosscut the modules',
     short: 'Slice, rotate, and assemble the end grain',
-    description: 'Crosscut the completed long blank into repeated modules, rotate them to end grain, and arrange the board pattern.',
-    notes: '<strong>Final planning:</strong> Add blade kerf and flattening allowance when calculating the crosscut thickness and total blank length.'
+    description: 'Crosscut the completed long blank into repeated sections, rotate them to end grain, and arrange the board pattern.',
+    notes: '<strong>Final planning:</strong> Include blade kerf, flattening allowance, and the desired finished board thickness when calculating blank length and slice width.'
   }
 ];
 
@@ -263,54 +268,103 @@ function timelinePatterns(svg) {
   svg.append(defs);
 }
 
-function drawBlank(svg, opts={}) {
-  const x=150, y=145, w=800, h=210;
+function labelSvg(svg,text,x,y,opts={}) {
+  const t=svgEl('text',{x,y,fill:opts.fill||'#5a4635','font-size':opts.size||16,'font-weight':opts.weight||700,'text-anchor':opts.anchor||'start'});
+  t.textContent=text; svg.append(t); return t;
+}
+
+function stripBands(totalHeight, topY) {
   const total=totalWidth() || 1;
-  let cy=y;
-  const boundaries=[];
-  state.strips.forEach((strip,i)=>{
-    const sh=h*Number(strip.width)/total;
-    svg.append(svgEl('rect',{x,y:cy,width:w,height:sh,fill:`url(#timeline-${strip.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':'1'}));
-    cy+=sh;
-    if(i < state.strips.length-1) boundaries.push(cy);
+  let cursor=topY;
+  return state.strips.map(strip=>{
+    const height=totalHeight*Number(strip.width)/total;
+    const band={...strip,y:cursor,h:height}; cursor+=height; return band;
   });
-  svg.append(svgEl('rect',{x,y,width:w,height:h,fill:'none',stroke:'#241710','stroke-width':'3',rx:'2'}));
+}
 
-  // The two boundaries bordering the center strip are the intended references.
-  const centerIndex=Math.floor(state.strips.length/2);
-  const topRef=boundaries[Math.max(0,centerIndex-1)] ?? y+h*.42;
-  const bottomRef=boundaries[Math.min(boundaries.length-1,centerIndex)] ?? y+h*.58;
+function drawSquareBlank(svg) {
+  const x=150,y=140,w=800,h=220;
+  for(const band of stripBands(h,y)) svg.append(svgEl('rect',{x,y:band.y,width:w,height:band.h,fill:`url(#timeline-${band.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':'1'}));
+  svg.append(svgEl('rect',{x,y,width:w,height:h,fill:'none',stroke:'#241710','stroke-width':'3'}));
+  labelSvg(svg,'Full-length square laminated blank',550,405,{anchor:'middle',size:18});
+}
 
-  if(opts.references){
-    [topRef,bottomRef].forEach((ry,idx)=>{
-      svg.append(svgEl('line',{x1:x-28,y1:ry,x2:x+w+28,y2:ry,stroke:'#f4d03f','stroke-width':'5','stroke-dasharray':'12 7'}));
-      const label=svgEl('text',{x:x+w+38,y:ry+5,fill:'#5a4635','font-size':'17','font-weight':'700'});
-      label.textContent=`Reference ${idx+1}`; svg.append(label);
-    });
+function diamondGeometry() {
+  const cx=550, cy=250, halfW=400, halfH=150;
+  return {cx,cy,halfW,halfH,left:cx-halfW,right:cx+halfW,top:cy-halfH,bottom:cy+halfH};
+}
+
+function drawDiamondCore(svg, options={}) {
+  const g=diamondGeometry();
+  const total=totalWidth()||1;
+  const clipId=`diamond-clip-${timelineStep}`;
+  const defs=svg.querySelector('defs');
+  const clip=svgEl('clipPath',{id:clipId});
+  clip.append(svgEl('polygon',{points:pts([[g.left,g.cy],[g.cx,g.top],[g.right,g.cy],[g.cx,g.bottom]])}));
+  defs.append(clip);
+
+  const group=svgEl('g',{'clip-path':`url(#${clipId})`});
+  let y=g.top;
+  for(const strip of state.strips){
+    const sh=(g.bottom-g.top)*Number(strip.width)/total;
+    group.append(svgEl('rect',{x:g.left,y,width:g.right-g.left,height:sh,fill:`url(#timeline-${strip.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':'1'}));
+    y+=sh;
   }
+  svg.append(group);
+  svg.append(svgEl('polygon',{points:pts([[g.left,g.cy],[g.cx,g.top],[g.right,g.cy],[g.cx,g.bottom]]),fill:'none',stroke:'#241710','stroke-width':'3'}));
 
-  const depth=Math.max(35, Math.min(125, h*state.cutDepth/38));
-  const fill=`url(#timeline-${state.tipWood})`;
-  const leftCut=[[x,topRef],[x+depth,bottomRef],[x,bottomRef]];
-  const rightCut=[[x+w, bottomRef],[x+w-depth,topRef],[x+w,topRef]];
+  const inset=Math.max(35,Math.min(150,(Number(state.edgeInset||.5)/(total||1))*300));
+  const leftCutX=g.left+inset;
+  const rightCutX=g.right-inset;
+  const yOffset=g.halfH*(inset/g.halfW);
+  const leftTop=g.cy-yOffset,leftBottom=g.cy+yOffset,rightTop=leftTop,rightBottom=leftBottom;
 
-  if(opts.firstCut || opts.firstFill || opts.secondCut || opts.secondFill){
-    svg.append(svgEl('line',{x1:x,y1:topRef,x2:x+depth,y2:bottomRef,stroke:'#c0392b','stroke-width':'5','stroke-dasharray':opts.firstFill?'0':'12 7'}));
-    if(opts.firstFill) svg.append(svgEl('polygon',{points:pts(leftCut),fill,stroke:'#241710','stroke-width':'2'}));
-    else {
-      svg.append(svgEl('polygon',{points:pts(leftCut),fill:'#fff','fill-opacity':'.72',stroke:'#c0392b','stroke-width':'2'}));
-      const waste=svgEl('text',{x:x+18,y:(topRef+bottomRef)/2+5,fill:'#9b2d20','font-size':'15','font-weight':'700'}); waste.textContent='WASTE'; svg.append(waste);
+  if(options.marks || options.cut || options.filled){
+    for(const [x,top,bottom] of [[leftCutX,leftTop,leftBottom],[rightCutX,rightTop,rightBottom]]){
+      svg.append(svgEl('line',{x1:x,y1:top,x2:x,y2:bottom,stroke:'#c0392b','stroke-width':'5','stroke-dasharray':options.cut||options.filled?'0':'12 7'}));
     }
+    svg.append(svgEl('line',{x1:g.left,y1:g.bottom+38,x2:leftCutX,y2:g.bottom+38,stroke:'#6f3f24','stroke-width':'3','marker-start':'url(#timeline-arrow)','marker-end':'url(#timeline-arrow)'}));
+    labelSvg(svg,`${Number(state.edgeInset||.5).toFixed(3)} in`,(g.left+leftCutX)/2,g.bottom+66,{anchor:'middle',size:15});
   }
-  if(opts.secondCut || opts.secondFill){
-    svg.append(svgEl('line',{x1:x+w,y1:bottomRef,x2:x+w-depth,y2:topRef,stroke:'#c0392b','stroke-width':'5','stroke-dasharray':opts.secondFill?'0':'12 7'}));
-    if(opts.secondFill) svg.append(svgEl('polygon',{points:pts(rightCut),fill,stroke:'#241710','stroke-width':'2'}));
-    else {
-      svg.append(svgEl('polygon',{points:pts(rightCut),fill:'#fff','fill-opacity':'.72',stroke:'#c0392b','stroke-width':'2'}));
-      const waste=svgEl('text',{x:x+w-82,y:(topRef+bottomRef)/2+5,fill:'#9b2d20','font-size':'15','font-weight':'700'}); waste.textContent='WASTE'; svg.append(waste);
-    }
+
+  if(options.cut){
+    const leftOff=[[g.left,g.cy],[g.cx,g.top],[leftCutX,leftTop],[leftCutX,leftBottom],[g.cx,g.bottom]];
+    const rightOff=[[g.right,g.cy],[g.cx,g.top],[rightCutX,rightTop],[rightCutX,rightBottom],[g.cx,g.bottom]];
+    svg.append(svgEl('polygon',{points:pts(leftOff),fill:'#fff','fill-opacity':'.75',stroke:'#c0392b','stroke-width':'2'}));
+    svg.append(svgEl('polygon',{points:pts(rightOff),fill:'#fff','fill-opacity':'.75',stroke:'#c0392b','stroke-width':'2'}));
+    labelSvg(svg,'SAVE OFFCUT',245,250,{anchor:'middle',fill:'#9b2d20',size:15});
+    labelSvg(svg,'SAVE OFFCUT',855,250,{anchor:'middle',fill:'#9b2d20',size:15});
   }
-  return {x,y,w,h,topRef,bottomRef,depth};
+
+  if(options.separated){
+    // overlay a clean reduced core and show reusable offcuts below
+    svg.append(svgEl('rect',{x:0,y:0,width:1100,height:500,fill:'#f8f4ee'}));
+    const corePts=[[leftCutX,leftTop],[g.cx,g.top],[rightCutX,rightTop],[rightCutX,rightBottom],[g.cx,g.bottom],[leftCutX,leftBottom]];
+    const coreClip=svgEl('clipPath',{id:`core-clip-${timelineStep}`}); coreClip.append(svgEl('polygon',{points:pts(corePts)})); defs.append(coreClip);
+    const coreGroup=svgEl('g',{'clip-path':`url(#core-clip-${timelineStep})`});
+    y=g.top;
+    for(const strip of state.strips){ const sh=(g.bottom-g.top)*Number(strip.width)/total; coreGroup.append(svgEl('rect',{x:g.left,y,width:g.right-g.left,height:sh,fill:`url(#timeline-${strip.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':'1'})); y+=sh; }
+    svg.append(coreGroup); svg.append(svgEl('polygon',{points:pts(corePts),fill:'none',stroke:'#241710','stroke-width':'3'}));
+    svg.append(svgEl('polygon',{points:pts([[115,350],[230,307],[260,319],[145,362]]),fill:'url(#timeline-cherry)',stroke:'#241710','stroke-width':'2'}));
+    svg.append(svgEl('polygon',{points:pts([[985,350],[870,307],[840,319],[955,362]]),fill:'url(#timeline-cherry)',stroke:'#241710','stroke-width':'2'}));
+    labelSvg(svg,'Reusable laminated offcuts',550,440,{anchor:'middle',size:18});
+  }
+
+  if(options.walnutPieces){
+    const fill=`url(#timeline-${state.tipWood})`;
+    svg.append(svgEl('polygon',{points:pts([[90,250],[leftCutX-28,leftTop-10],[leftCutX-28,leftBottom+10]]),fill,stroke:'#241710','stroke-width':'2'}));
+    svg.append(svgEl('polygon',{points:pts([[1010,250],[rightCutX+28,rightTop-10],[rightCutX+28,rightBottom+10]]),fill,stroke:'#241710','stroke-width':'2'}));
+    svg.append(svgEl('path',{d:`M285 250 L${leftCutX-8} 250`,stroke:'#6f3f24','stroke-width':'4','marker-end':'url(#timeline-arrow)'}));
+    svg.append(svgEl('path',{d:`M815 250 L${rightCutX+8} 250`,stroke:'#6f3f24','stroke-width':'4','marker-end':'url(#timeline-arrow)'}));
+    labelSvg(svg,`${WOODS[state.tipWood].name} additions`,550,445,{anchor:'middle',size:18});
+  }
+
+  if(options.filled){
+    const fill=`url(#timeline-${state.tipWood})`;
+    svg.append(svgEl('polygon',{points:pts([[g.left,g.cy],[leftCutX,leftTop],[leftCutX,leftBottom]]),fill,stroke:'#241710','stroke-width':'2'}));
+    svg.append(svgEl('polygon',{points:pts([[g.right,g.cy],[rightCutX,rightTop],[rightCutX,rightBottom]]),fill,stroke:'#241710','stroke-width':'2'}));
+  }
+  return {g,leftCutX,rightCutX,leftTop,leftBottom,rightTop,rightBottom};
 }
 
 function drawTimelineModule(svg,cx,cy,size) {
@@ -318,35 +372,33 @@ function drawTimelineModule(svg,cx,cy,size) {
   const g=svgEl('g',{transform:`translate(${cx} ${cy}) rotate(45)`});
   let x=-h;
   state.strips.forEach(strip=>{
-    const sw=size*Number(strip.width)/total, nx=x+sw;
+    const sw=size*Number(strip.width)/total;
     g.append(svgEl('rect',{x,y:-h,width:sw,height:size,fill:`url(#timeline-${strip.wood})`,stroke:'#241710','stroke-width':'1'}));
-    x=nx;
+    x+=sw;
   });
-  const inward=Math.max(18,h*state.cutDepth/100);
-  const base=Math.min(h*.52,inward+size*.08), fill=`url(#timeline-${state.tipWood})`;
-  g.append(svgEl('polygon',{points:pts([[0,-h],[base,-h+inward],[-base,-h+inward]]),fill,stroke:'#241710','stroke-width':'2'}));
-  g.append(svgEl('polygon',{points:pts([[0,h],[-base,h-inward],[base,h-inward]]),fill,stroke:'#241710','stroke-width':'2'}));
+  const insetRatio=Math.max(.05,Math.min(.42,Number(state.edgeInset||.5)/total));
+  const d=h*insetRatio, fill=`url(#timeline-${state.tipWood})`;
+  g.append(svgEl('polygon',{points:pts([[0,-h],[d,-h+d],[-d,-h+d]]),fill,stroke:'#241710','stroke-width':'2'}));
+  g.append(svgEl('polygon',{points:pts([[0,h],[-d,h-d],[d,h-d]]),fill,stroke:'#241710','stroke-width':'2'}));
   g.append(svgEl('rect',{x:-h,y:-h,width:size,height:size,fill:'none',stroke:'#241710','stroke-width':'3'}));
   svg.append(g);
 }
 
 function renderTimeline() {
-  const svg=$('timelineSvg');
-  if(!svg) return;
+  const svg=$('timelineSvg'); if(!svg) return;
   svg.innerHTML=''; timelinePatterns(svg);
   svg.append(svgEl('rect',{x:0,y:0,width:1100,height:500,fill:'#f8f4ee'}));
-
-  if(timelineStep===0) drawBlank(svg);
-  if(timelineStep===1) drawBlank(svg,{references:true});
-  if(timelineStep===2) drawBlank(svg,{references:true,firstCut:true});
-  if(timelineStep===3) drawBlank(svg,{references:true,firstFill:true});
-  if(timelineStep===4) drawBlank(svg,{references:true,firstFill:true,secondCut:true});
-  if(timelineStep===5) drawBlank(svg,{references:true,firstFill:true,secondFill:true});
+  if(timelineStep===0) drawSquareBlank(svg);
+  if(timelineStep===1) { drawDiamondCore(svg); labelSvg(svg,'Matching 45° outside faces',550,445,{anchor:'middle',size:18}); }
+  if(timelineStep===2) drawDiamondCore(svg,{marks:true});
+  if(timelineStep===3) drawDiamondCore(svg,{separated:true});
+  if(timelineStep===4) drawDiamondCore(svg,{separated:true,walnutPieces:true});
+  if(timelineStep===5) drawDiamondCore(svg,{filled:true});
   if(timelineStep===6) {
-    drawBlank(svg,{firstFill:true,secondFill:true});
-    for(let i=0;i<5;i++) svg.append(svgEl('line',{x1:315+i*105,y1:135,x2:315+i*105,y2:365,stroke:'#6f3f24','stroke-width':'3','stroke-dasharray':'10 7'}));
-    svg.append(svgEl('path',{d:'M550 390 L550 430',stroke:'#6f3f24','stroke-width':'4','marker-end':'url(#timeline-arrow)'}));
-    drawTimelineModule(svg,550,465,105);
+    drawDiamondCore(svg,{filled:true});
+    for(let i=0;i<5;i++) svg.append(svgEl('line',{x1:330+i*110,y1:100,x2:330+i*110,y2:400,stroke:'#6f3f24','stroke-width':'3','stroke-dasharray':'10 7'}));
+    svg.append(svgEl('path',{d:'M550 405 L550 435',stroke:'#6f3f24','stroke-width':'4','marker-end':'url(#timeline-arrow)'}));
+    drawTimelineModule(svg,550,470,82);
   }
 
   const step=TIMELINE_STEPS[timelineStep];
@@ -363,28 +415,20 @@ function renderTimeline() {
 }
 
 function buildTimelineButtons() {
-  const holder=$('timelineSteps');
-  if(!holder) return;
+  const holder=$('timelineSteps'); if(!holder) return;
   holder.innerHTML='';
   TIMELINE_STEPS.forEach((step,i)=>{
-    const b=document.createElement('button');
-    b.type='button'; b.className='timeline-step';
+    const b=document.createElement('button'); b.type='button'; b.className='timeline-step';
     b.innerHTML=`<span>Step ${i+1}</span><strong>${step.title}</strong>`;
     b.addEventListener('click',()=>{ stopTimeline(); timelineStep=i; renderTimeline(); });
     holder.append(b);
   });
 }
-function stopTimeline(){
-  if(timelineTimer){ clearInterval(timelineTimer); timelineTimer=null; }
-  if($('playTimelineBtn')) $('playTimelineBtn').textContent='Play';
-}
+function stopTimeline(){ if(timelineTimer){ clearInterval(timelineTimer); timelineTimer=null; } if($('playTimelineBtn')) $('playTimelineBtn').textContent='Play'; }
 function playTimeline(){
   if(timelineTimer){ stopTimeline(); return; }
   $('playTimelineBtn').textContent='Pause';
-  timelineTimer=setInterval(()=>{
-    if(timelineStep>=TIMELINE_STEPS.length-1){ stopTimeline(); return; }
-    timelineStep++; renderTimeline();
-  },1500);
+  timelineTimer=setInterval(()=>{ if(timelineStep>=TIMELINE_STEPS.length-1){ stopTimeline(); return; } timelineStep++; renderTimeline(); },1500);
 }
 
 buildTimelineButtons();
@@ -393,6 +437,5 @@ $('nextStepBtn').addEventListener('click',()=>{ stopTimeline(); timelineStep=Mat
 $('playTimelineBtn').addEventListener('click',playTimeline);
 renderTimeline();
 
-// Keep the machining illustration synchronized with design changes.
 const originalRender = render;
 render = function(){ originalRender(); renderTimeline(); };
