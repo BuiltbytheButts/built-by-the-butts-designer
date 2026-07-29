@@ -96,6 +96,37 @@
         <svg id="boardSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" aria-label="End-grain cutting board preview"></svg>
       </div>
 
+
+      <section class="panel machining-timeline-panel">
+        <div class="timeline-heading">
+          <div>
+            <p class="eyebrow dark">Machining Simulator</p>
+            <h2>Step-by-Step Machining Timeline</h2>
+            <p id="timelineDescription" class="timeline-description"></p>
+          </div>
+          <div class="timeline-nav">
+            <button id="previousStepBtn" class="secondary" type="button">Previous</button>
+            <button id="playTimelineBtn" class="primary" type="button">Play</button>
+            <button id="nextStepBtn" class="secondary" type="button">Next</button>
+          </div>
+        </div>
+
+        <div id="timelineSteps" class="timeline-steps" aria-label="Machining steps"></div>
+
+        <div class="timeline-stage">
+          <svg id="timelineSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 500" aria-label="Machining step illustration"></svg>
+        </div>
+
+        <div class="timeline-footer">
+          <div>
+            <span class="timeline-kicker">Current step</span>
+            <strong id="timelineStepTitle">Step 1</strong>
+          </div>
+          <div id="timelineShopNotes" class="timeline-shop-notes"></div>
+        </div>
+        <p class="note">The timeline is a geometric planning aid. Verify your actual fence position, blade height, kerf, grain orientation, and safe workholding before making a cut.</p>
+      </section>
+
       <div class="bottom-grid">
         <section class="panel">
           <h2>Single Module</h2>

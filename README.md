@@ -28,3 +28,8 @@ Your site should then be available at:
 ## Important shop note
 
 This app is a visual design and planning aid. Confirm blade angle, kerf, glue-line references, stock dimensions, and safe machine setup before making cuts.
+
+
+## Version 1.1
+
+Adds an interactive seven-stage machining timeline: laminated blank, glue-line references, first 45-degree cut and fill, second cut and fill, and final crosscut/module preview.

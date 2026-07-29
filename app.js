@@ -15,7 +15,7 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '1.0.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
+  version: '1.1.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
   layout: 'grid', orientation: '0', cutDepth: 12, spacing: 0,
   tipWood: 'walnut', showLines: true, showFrame: true,
   strips: structuredClone(DEFAULT_STRIPS)
@@ -199,3 +199,200 @@ $('exportSvgBtn').addEventListener('click',()=>{
 const saved=localStorage.getItem('bbtb-designer-autosave');
 if(saved) { try { state=JSON.parse(saved); } catch {} }
 syncControls(); buildStripEditor(); render(); history=[snapshot()]; updateUndoRedo();
+
+// ---------- Step-by-step machining timeline ----------
+const TIMELINE_STEPS = [
+  {
+    title: 'Laminated blank',
+    short: 'Glue the full-length strip stack',
+    description: 'Start with one straight, full-length laminated blank using the current strip schedule.',
+    notes: '<strong>Shop check:</strong> Joint the mating faces, keep the strip stack square, and flatten the blank before the angled operations.'
+  },
+  {
+    title: 'Reference the glue lines',
+    short: 'Identify both maple/walnut references',
+    description: 'Use the two maple-to-walnut glue lines as the reference points for the inward 45° cuts.',
+    notes: '<strong>Current references:</strong> The simulator highlights the two glue lines bordering the center strip. These should be confirmed against the actual blank.'
+  },
+  {
+    title: 'First 45° cut',
+    short: 'Cut inward from the first reference',
+    description: 'Make the first angled cut so the cut moves inward and does not place cherry or maple outside the walnut tip.',
+    notes: '<strong>Current design intent:</strong> Walnut remains the outside tip material. The highlighted waste area is removed from one end of the long blank.'
+  },
+  {
+    title: 'Glue the first fill',
+    short: 'Install one continuous tip-fill strip',
+    description: 'Glue the selected tip-fill wood into the first full-length angled cut, then flatten the repair.',
+    notes: '<strong>Tip-fill wood:</strong> The selected species is applied continuously along the long blank before modules are crosscut.'
+  },
+  {
+    title: 'Second 45° cut',
+    short: 'Mirror the operation at the other tip',
+    description: 'Make the matching inward cut from the opposite maple/walnut reference line.',
+    notes: '<strong>Alignment:</strong> Match the second operation to the first so the finished module remains balanced around the center strip.'
+  },
+  {
+    title: 'Glue the second fill',
+    short: 'Complete both outside walnut tips',
+    description: 'Glue and flatten the second continuous fill. The long blank now contains the complete tip geometry.',
+    notes: '<strong>Before crosscutting:</strong> Confirm both fills are fully seated, cured, and flattened with no material extending beyond the intended outside tips.'
+  },
+  {
+    title: 'Crosscut the modules',
+    short: 'Slice, rotate, and assemble the end grain',
+    description: 'Crosscut the completed long blank into repeated modules, rotate them to end grain, and arrange the board pattern.',
+    notes: '<strong>Final planning:</strong> Add blade kerf and flattening allowance when calculating the crosscut thickness and total blank length.'
+  }
+];
+
+let timelineStep = 0;
+let timelineTimer = null;
+
+function timelinePatterns(svg) {
+  const defs = svgEl('defs');
+  for (const [key, wood] of Object.entries(WOODS)) {
+    const pattern = svgEl('pattern', { id:`timeline-${key}`, width:42, height:42, patternUnits:'userSpaceOnUse' });
+    pattern.append(svgEl('rect', { width:42, height:42, fill:wood.color }));
+    pattern.append(svgEl('path', { d:'M-8 11 C5 1 16 20 30 9 S45 7 51 16 M-7 31 C7 20 18 40 32 28 S45 26 52 35', fill:'none', stroke:'#fff', 'stroke-opacity':'.12', 'stroke-width':'1.2' }));
+    defs.append(pattern);
+  }
+  const arrow = svgEl('marker', { id:'timeline-arrow', markerWidth:10, markerHeight:10, refX:8, refY:3, orient:'auto', markerUnits:'strokeWidth' });
+  arrow.append(svgEl('path', { d:'M0,0 L0,6 L9,3 z', fill:'#6f3f24' }));
+  defs.append(arrow);
+  svg.append(defs);
+}
+
+function drawBlank(svg, opts={}) {
+  const x=150, y=145, w=800, h=210;
+  const total=totalWidth() || 1;
+  let cy=y;
+  const boundaries=[];
+  state.strips.forEach((strip,i)=>{
+    const sh=h*Number(strip.width)/total;
+    svg.append(svgEl('rect',{x,y:cy,width:w,height:sh,fill:`url(#timeline-${strip.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':'1'}));
+    cy+=sh;
+    if(i < state.strips.length-1) boundaries.push(cy);
+  });
+  svg.append(svgEl('rect',{x,y,width:w,height:h,fill:'none',stroke:'#241710','stroke-width':'3',rx:'2'}));
+
+  // The two boundaries bordering the center strip are the intended references.
+  const centerIndex=Math.floor(state.strips.length/2);
+  const topRef=boundaries[Math.max(0,centerIndex-1)] ?? y+h*.42;
+  const bottomRef=boundaries[Math.min(boundaries.length-1,centerIndex)] ?? y+h*.58;
+
+  if(opts.references){
+    [topRef,bottomRef].forEach((ry,idx)=>{
+      svg.append(svgEl('line',{x1:x-28,y1:ry,x2:x+w+28,y2:ry,stroke:'#f4d03f','stroke-width':'5','stroke-dasharray':'12 7'}));
+      const label=svgEl('text',{x:x+w+38,y:ry+5,fill:'#5a4635','font-size':'17','font-weight':'700'});
+      label.textContent=`Reference ${idx+1}`; svg.append(label);
+    });
+  }
+
+  const depth=Math.max(35, Math.min(125, h*state.cutDepth/38));
+  const fill=`url(#timeline-${state.tipWood})`;
+  const leftCut=[[x,topRef],[x+depth,bottomRef],[x,bottomRef]];
+  const rightCut=[[x+w, bottomRef],[x+w-depth,topRef],[x+w,topRef]];
+
+  if(opts.firstCut || opts.firstFill || opts.secondCut || opts.secondFill){
+    svg.append(svgEl('line',{x1:x,y1:topRef,x2:x+depth,y2:bottomRef,stroke:'#c0392b','stroke-width':'5','stroke-dasharray':opts.firstFill?'0':'12 7'}));
+    if(opts.firstFill) svg.append(svgEl('polygon',{points:pts(leftCut),fill,stroke:'#241710','stroke-width':'2'}));
+    else {
+      svg.append(svgEl('polygon',{points:pts(leftCut),fill:'#fff','fill-opacity':'.72',stroke:'#c0392b','stroke-width':'2'}));
+      const waste=svgEl('text',{x:x+18,y:(topRef+bottomRef)/2+5,fill:'#9b2d20','font-size':'15','font-weight':'700'}); waste.textContent='WASTE'; svg.append(waste);
+    }
+  }
+  if(opts.secondCut || opts.secondFill){
+    svg.append(svgEl('line',{x1:x+w,y1:bottomRef,x2:x+w-depth,y2:topRef,stroke:'#c0392b','stroke-width':'5','stroke-dasharray':opts.secondFill?'0':'12 7'}));
+    if(opts.secondFill) svg.append(svgEl('polygon',{points:pts(rightCut),fill,stroke:'#241710','stroke-width':'2'}));
+    else {
+      svg.append(svgEl('polygon',{points:pts(rightCut),fill:'#fff','fill-opacity':'.72',stroke:'#c0392b','stroke-width':'2'}));
+      const waste=svgEl('text',{x:x+w-82,y:(topRef+bottomRef)/2+5,fill:'#9b2d20','font-size':'15','font-weight':'700'}); waste.textContent='WASTE'; svg.append(waste);
+    }
+  }
+  return {x,y,w,h,topRef,bottomRef,depth};
+}
+
+function drawTimelineModule(svg,cx,cy,size) {
+  const total=totalWidth() || 1, h=size/2;
+  const g=svgEl('g',{transform:`translate(${cx} ${cy}) rotate(45)`});
+  let x=-h;
+  state.strips.forEach(strip=>{
+    const sw=size*Number(strip.width)/total, nx=x+sw;
+    g.append(svgEl('rect',{x,y:-h,width:sw,height:size,fill:`url(#timeline-${strip.wood})`,stroke:'#241710','stroke-width':'1'}));
+    x=nx;
+  });
+  const inward=Math.max(18,h*state.cutDepth/100);
+  const base=Math.min(h*.52,inward+size*.08), fill=`url(#timeline-${state.tipWood})`;
+  g.append(svgEl('polygon',{points:pts([[0,-h],[base,-h+inward],[-base,-h+inward]]),fill,stroke:'#241710','stroke-width':'2'}));
+  g.append(svgEl('polygon',{points:pts([[0,h],[-base,h-inward],[base,h-inward]]),fill,stroke:'#241710','stroke-width':'2'}));
+  g.append(svgEl('rect',{x:-h,y:-h,width:size,height:size,fill:'none',stroke:'#241710','stroke-width':'3'}));
+  svg.append(g);
+}
+
+function renderTimeline() {
+  const svg=$('timelineSvg');
+  if(!svg) return;
+  svg.innerHTML=''; timelinePatterns(svg);
+  svg.append(svgEl('rect',{x:0,y:0,width:1100,height:500,fill:'#f8f4ee'}));
+
+  if(timelineStep===0) drawBlank(svg);
+  if(timelineStep===1) drawBlank(svg,{references:true});
+  if(timelineStep===2) drawBlank(svg,{references:true,firstCut:true});
+  if(timelineStep===3) drawBlank(svg,{references:true,firstFill:true});
+  if(timelineStep===4) drawBlank(svg,{references:true,firstFill:true,secondCut:true});
+  if(timelineStep===5) drawBlank(svg,{references:true,firstFill:true,secondFill:true});
+  if(timelineStep===6) {
+    drawBlank(svg,{firstFill:true,secondFill:true});
+    for(let i=0;i<5;i++) svg.append(svgEl('line',{x1:315+i*105,y1:135,x2:315+i*105,y2:365,stroke:'#6f3f24','stroke-width':'3','stroke-dasharray':'10 7'}));
+    svg.append(svgEl('path',{d:'M550 390 L550 430',stroke:'#6f3f24','stroke-width':'4','marker-end':'url(#timeline-arrow)'}));
+    drawTimelineModule(svg,550,465,105);
+  }
+
+  const step=TIMELINE_STEPS[timelineStep];
+  $('timelineDescription').textContent=step.description;
+  $('timelineStepTitle').textContent=`Step ${timelineStep+1}: ${step.title}`;
+  $('timelineShopNotes').innerHTML=step.notes;
+  $('previousStepBtn').disabled=timelineStep===0;
+  $('nextStepBtn').disabled=timelineStep===TIMELINE_STEPS.length-1;
+  document.querySelectorAll('.timeline-step').forEach((button,i)=>{
+    button.classList.toggle('active',i===timelineStep);
+    button.classList.toggle('complete',i<timelineStep);
+    button.setAttribute('aria-current',i===timelineStep?'step':'false');
+  });
+}
+
+function buildTimelineButtons() {
+  const holder=$('timelineSteps');
+  if(!holder) return;
+  holder.innerHTML='';
+  TIMELINE_STEPS.forEach((step,i)=>{
+    const b=document.createElement('button');
+    b.type='button'; b.className='timeline-step';
+    b.innerHTML=`<span>Step ${i+1}</span><strong>${step.title}</strong>`;
+    b.addEventListener('click',()=>{ stopTimeline(); timelineStep=i; renderTimeline(); });
+    holder.append(b);
+  });
+}
+function stopTimeline(){
+  if(timelineTimer){ clearInterval(timelineTimer); timelineTimer=null; }
+  if($('playTimelineBtn')) $('playTimelineBtn').textContent='Play';
+}
+function playTimeline(){
+  if(timelineTimer){ stopTimeline(); return; }
+  $('playTimelineBtn').textContent='Pause';
+  timelineTimer=setInterval(()=>{
+    if(timelineStep>=TIMELINE_STEPS.length-1){ stopTimeline(); return; }
+    timelineStep++; renderTimeline();
+  },1500);
+}
+
+buildTimelineButtons();
+$('previousStepBtn').addEventListener('click',()=>{ stopTimeline(); timelineStep=Math.max(0,timelineStep-1); renderTimeline(); });
+$('nextStepBtn').addEventListener('click',()=>{ stopTimeline(); timelineStep=Math.min(TIMELINE_STEPS.length-1,timelineStep+1); renderTimeline(); });
+$('playTimelineBtn').addEventListener('click',playTimeline);
+renderTimeline();
+
+// Keep the machining illustration synchronized with design changes.
+const originalRender = render;
+render = function(){ originalRender(); renderTimeline(); };
