@@ -7,15 +7,15 @@ const WOODS = {
 };
 
 const DEFAULT_STRIPS = [
-  { width: 0.500, wood: 'cherry' },
-  { width: 0.125, wood: 'maple' },
-  { width: 0.250, wood: 'walnut' },
-  { width: 0.125, wood: 'maple' },
-  { width: 0.500, wood: 'cherry' }
+  { width: 0.500, wood: 'cherry', enabled: true },
+  { width: 0.125, wood: 'maple', enabled: true },
+  { width: 0.250, wood: 'walnut', enabled: true },
+  { width: 0.125, wood: 'maple', enabled: true },
+  { width: 0.500, wood: 'cherry', enabled: true }
 ];
 
 let state = {
-  version: '1.3.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
+  version: '1.4.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
   layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
   tipWood: 'walnut', showLines: true, showFrame: true, walnutPrice: 28, insetGoal: 'balanced', targetCenterPercent: 35,
   strips: structuredClone(DEFAULT_STRIPS)
@@ -33,7 +33,8 @@ function svgEl(name, attrs = {}) {
   return el;
 }
 function pts(a) { return a.map(([x,y]) => `${x},${y}`).join(' '); }
-function totalWidth() { return state.strips.reduce((s,x) => s + Number(x.width || 0), 0); }
+function activeStrips() { return state.strips.filter(x => x.enabled !== false); }
+function totalWidth() { return activeStrips().reduce((s,x) => s + Number(x.width || 0), 0); }
 function snapshot() { return JSON.stringify(state); }
 function commit() {
   if (isRestoring) return;
@@ -68,22 +69,51 @@ function woodOptions(selected) {
 function buildStripEditor() {
   const holder = $('stripEditor'); holder.innerHTML = '';
   state.strips.forEach((strip, i) => {
-    const row = document.createElement('div'); row.className = 'strip-row';
+    if (strip.enabled === undefined) strip.enabled = true;
+    const row = document.createElement('div');
+    row.className = 'strip-row' + (strip.enabled ? '' : ' disabled');
     row.innerHTML = `
       <span class="swatch" style="background:${WOODS[strip.wood].color}"></span>
+      <label class="strip-enable" title="Include Strip ${i+1}"><input data-enabled="${i}" type="checkbox" ${strip.enabled ? 'checked' : ''} aria-label="Use strip ${i+1}"></label>
       <label>Strip ${i+1}<input data-width="${i}" type="number" min="0.0625" max="3" step="0.0625" value="${Number(strip.width).toFixed(4)}"></label>
       <label>Wood<select data-wood="${i}">${woodOptions(strip.wood)}</select></label>`;
     holder.appendChild(row);
   });
-  holder.querySelectorAll('[data-width]').forEach(el => el.addEventListener('change', e => {
-    const i = Number(e.target.dataset.width); const v = Number(e.target.value);
-    if (v > 0) state.strips[i].width = v;
+  holder.querySelectorAll('[data-enabled]').forEach(el => el.addEventListener('change', e => {
+    state.strips[Number(e.target.dataset.enabled)].enabled = e.target.checked;
+    if (!activeStrips().length) state.strips[Number(e.target.dataset.enabled)].enabled = true;
     buildStripEditor(); render(); commit();
   }));
+  holder.querySelectorAll('[data-width]').forEach(el => el.addEventListener('input', e => {
+    const i = Number(e.target.dataset.width); const v = Number(e.target.value);
+    if (v > 0) state.strips[i].width = v;
+    render();
+  }));
+  holder.querySelectorAll('[data-width]').forEach(el => el.addEventListener('change', () => { buildStripEditor(); render(); commit(); }));
   holder.querySelectorAll('[data-wood]').forEach(el => el.addEventListener('change', e => {
     state.strips[Number(e.target.dataset.wood)].wood = e.target.value;
     buildStripEditor(); render(); commit();
   }));
+}
+
+function addStripPairs(pairCount) {
+  for (let n = 0; n < pairCount; n++) {
+    const centerIndex = Math.floor(state.strips.length / 2);
+    const left = { width: 0.125, wood: n % 2 ? 'cherry' : 'maple', enabled: true };
+    const right = { ...left };
+    state.strips.splice(centerIndex, 0, left);
+    state.strips.splice(centerIndex + 2, 0, right);
+  }
+  buildStripEditor(); render(); commit();
+  toast(`${pairCount * 2} strips added`);
+}
+
+function removeStripPair() {
+  if (state.strips.length <= 3) { toast('Keep at least 3 strips'); return; }
+  const centerIndex = Math.floor(state.strips.length / 2);
+  state.strips.splice(centerIndex - 1, 1);
+  state.strips.splice(centerIndex, 1);
+  buildStripEditor(); render(); commit(); toast('2 strips removed');
 }
 
 function addPatterns(svg, prefix) {
@@ -103,7 +133,7 @@ function drawModule(svg, cx, cy, size, angle, prefix) {
   const h = size/2;
   const g = svgEl('g',{transform:`translate(${cx} ${cy}) rotate(${angle})`});
   let x = -h;
-  state.strips.forEach(strip => {
+  activeStrips().forEach(strip => {
     const w = size * strip.width / total;
     const nx = x + w;
     const polygon = [[x,-h+Math.abs(x)],[nx,-h+Math.abs(nx)],[nx,h-Math.abs(nx)],[x,h-Math.abs(x)]];
@@ -144,7 +174,7 @@ function renderBoard() {
 function renderModule() { const svg=$('moduleSvg'); svg.innerHTML=''; addPatterns(svg,'module'); drawModule(svg,160,160,245,0,'module'); }
 function renderSchedule() {
   const h=$('schedule'); h.innerHTML='';
-  state.strips.forEach((s,i)=>{
+  activeStrips().forEach((s,i)=>{
     const row=document.createElement('div'); row.className='schedule-row';
     row.innerHTML=`<div class="schedule-left"><span class="swatch" style="width:24px;height:24px;background:${WOODS[s.wood].color}"></span><div><strong>Strip ${i+1}</strong><br><small>${WOODS[s.wood].name}</small></div></div><span class="badge">${Number(s.width).toFixed(3)} in</span>`;
     h.append(row);
@@ -159,7 +189,7 @@ function renderMetrics() {
   $('edgeInsetLabel').textContent = `${Number(state.edgeInset || 0.5).toFixed(3)} in`;
   $('spacingLabel').textContent = `${(state.spacing/100).toFixed(3)} in`;
 }
-function render() { renderBoard(); renderModule(); renderSchedule(); renderMetrics(); updateUndoRedo(); }
+function render() { renderBoard(); renderModule(); renderSchedule(); renderMetrics(); renderEngineering(); updateUndoRedo(); }
 
 function syncControls() {
   controls.forEach(id => { const el=$(id); if (el.type==='checkbox') el.checked=Boolean(state[id]); else el.value=state[id]; });
@@ -172,10 +202,15 @@ function pullControl(id) {
 }
 
 controls.forEach(id => $(id).addEventListener('change',()=>pullControl(id)));
+['walnutPrice','targetCenterPercent'].forEach(id => $(id).addEventListener('input',()=>pullControl(id)));
+$('insetGoal').addEventListener('input',()=>pullControl('insetGoal'));
 $('edgeInset').addEventListener('input',()=>{ state.edgeInset=Number($('edgeInset').value); render(); });
 $('spacing').addEventListener('input',()=>{ state.spacing=Number($('spacing').value); render(); });
 $('edgeInset').addEventListener('change',commit); $('spacing').addEventListener('change',commit);
 $('resetStripsBtn').addEventListener('click',()=>{ state.strips=structuredClone(DEFAULT_STRIPS); buildStripEditor(); render(); commit(); toast('Strip schedule reset'); });
+$('add2StripsBtn').addEventListener('click',()=>addStripPairs(1));
+$('add4StripsBtn').addEventListener('click',()=>addStripPairs(2));
+$('remove2StripsBtn').addEventListener('click',removeStripPair);
 $('undoBtn').addEventListener('click',()=>{ if(history.length<=1)return; future.push(history.pop()); restore(history.at(-1)); updateUndoRedo(); });
 $('redoBtn').addEventListener('click',()=>{ if(!future.length)return; const next=future.pop(); history.push(next); restore(next); updateUndoRedo(); });
 
@@ -206,7 +241,7 @@ function engineeringForInset(inset) {
   // Two 45-degree triangular additions: total cross-sectional area ~= inset².
   const addedBoardFeet = (i * i * Number(state.boardLength || 0)) / 144;
   const addedCost = addedBoardFeet * Number(state.walnutPrice || 0);
-  const originalWalnut = state.strips.filter(s=>s.wood==='walnut').reduce((sum,s)=>sum+Number(s.width||0),0) / total;
+  const originalWalnut = activeStrips().filter(s=>s.wood==='walnut').reduce((sum,s)=>sum+Number(s.width||0),0) / total;
   const addedFaceShare = Math.min(.95, 2*i/total);
   const walnutShare = Math.min(1, originalWalnut*(1-addedFaceShare) + addedFaceShare) * 100;
   return { inset:i, centerRemaining, centerPercent, addedBoardFeet, addedCost, offcutBoardFeet:addedBoardFeet, walnutShare };
@@ -230,7 +265,7 @@ function miniModuleSvg(inset) {
   const total=totalWidth()||1, size=108, h=size/2;
   let x=-h;
   let shapes='';
-  state.strips.forEach(strip=>{
+  activeStrips().forEach(strip=>{
     const w=size*Number(strip.width)/total, nx=x+w;
     const polygon=[[x,-h+Math.abs(x)],[nx,-h+Math.abs(nx)],[nx,h-Math.abs(nx)],[x,h-Math.abs(x)]].map(p=>p.join(',')).join(' ');
     shapes += `<polygon points="${polygon}" fill="${WOODS[strip.wood].color}" stroke="#241710" stroke-width=".5"/>`;
@@ -249,9 +284,8 @@ function renderDesignExplorer() {
   holder.innerHTML='';
   values.forEach(inset=>{
     const e=engineeringForInset(inset);
-    const b=document.createElement('button'); b.type='button'; b.className='explorer-card'+(Math.abs(state.edgeInset-inset)<.001?' active':'');
+    const b=document.createElement('button'); b.type='button'; b.dataset.inset=String(inset); b.className='explorer-card'+(Math.abs(state.edgeInset-inset)<.001?' active':'');
     b.innerHTML=`${miniModuleSvg(inset)}<strong>${inset.toFixed(3)} in</strong><small>${e.centerPercent.toFixed(0)}% center · $${e.addedCost.toFixed(2)}</small>`;
-    b.addEventListener('click',()=>{ state.edgeInset=inset; $('edgeInset').value=inset; render(); commit(); toast(`Inset changed to ${inset.toFixed(3)} in`); });
     holder.append(b);
   });
   $('explorerRangeSummary').textContent=`$${engineeringForInset(.125).addedCost.toFixed(2)}–$${engineeringForInset(.750).addedCost.toFixed(2)} added walnut`;
@@ -277,9 +311,13 @@ function renderEngineering() {
 $('applyRecommendedInsetBtn').addEventListener('click',()=>{
   state.edgeInset=recommendedInset(); $('edgeInset').value=state.edgeInset; render(); commit(); toast('Recommended inset applied');
 });
-document.querySelectorAll('[data-inset]').forEach(b=>b.addEventListener('click',()=>{
-  state.edgeInset=Number(b.dataset.inset); $('edgeInset').value=state.edgeInset; render(); commit();
-}));
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-inset]');
+  if (!b) return;
+  state.edgeInset = Number(b.dataset.inset);
+  $('edgeInset').value = state.edgeInset;
+  render(); commit(); toast(`Inset changed to ${state.edgeInset.toFixed(3)} in`);
+});
 
 const saved=localStorage.getItem('bbtb-designer-autosave');
 if(saved) { try { state=JSON.parse(saved); } catch {} }
@@ -288,7 +326,8 @@ delete state.cutDepth;
 if (!Number.isFinite(Number(state.walnutPrice))) state.walnutPrice = 28;
 if (!state.insetGoal) state.insetGoal = 'balanced';
 if (!Number.isFinite(Number(state.targetCenterPercent))) state.targetCenterPercent = 35;
-state.version = '1.3.0';
+state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false}));
+state.version = '1.4.0';
 syncControls(); buildStripEditor(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------
@@ -392,7 +431,7 @@ function drawDiamondCore(svg, options={}) {
 
   const group=svgEl('g',{'clip-path':`url(#${clipId})`});
   let y=g.top;
-  for(const strip of state.strips){
+  for(const strip of activeStrips()){
     const sh=(g.bottom-g.top)*Number(strip.width)/total;
     group.append(svgEl('rect',{x:g.left,y,width:g.right-g.left,height:sh,fill:`url(#timeline-${strip.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':'1'}));
     y+=sh;
@@ -430,7 +469,7 @@ function drawDiamondCore(svg, options={}) {
     const coreClip=svgEl('clipPath',{id:`core-clip-${timelineStep}`}); coreClip.append(svgEl('polygon',{points:pts(corePts)})); defs.append(coreClip);
     const coreGroup=svgEl('g',{'clip-path':`url(#core-clip-${timelineStep})`});
     y=g.top;
-    for(const strip of state.strips){ const sh=(g.bottom-g.top)*Number(strip.width)/total; coreGroup.append(svgEl('rect',{x:g.left,y,width:g.right-g.left,height:sh,fill:`url(#timeline-${strip.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':'1'})); y+=sh; }
+    for(const strip of activeStrips()){ const sh=(g.bottom-g.top)*Number(strip.width)/total; coreGroup.append(svgEl('rect',{x:g.left,y,width:g.right-g.left,height:sh,fill:`url(#timeline-${strip.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':'1'})); y+=sh; }
     svg.append(coreGroup); svg.append(svgEl('polygon',{points:pts(corePts),fill:'none',stroke:'#241710','stroke-width':'3'}));
     svg.append(svgEl('polygon',{points:pts([[115,350],[230,307],[260,319],[145,362]]),fill:'url(#timeline-cherry)',stroke:'#241710','stroke-width':'2'}));
     svg.append(svgEl('polygon',{points:pts([[985,350],[870,307],[840,319],[955,362]]),fill:'url(#timeline-cherry)',stroke:'#241710','stroke-width':'2'}));
@@ -458,7 +497,7 @@ function drawTimelineModule(svg,cx,cy,size) {
   const total=totalWidth() || 1, h=size/2;
   const g=svgEl('g',{transform:`translate(${cx} ${cy}) rotate(45)`});
   let x=-h;
-  state.strips.forEach(strip=>{
+  activeStrips().forEach(strip=>{
     const sw=size*Number(strip.width)/total;
     g.append(svgEl('rect',{x,y:-h,width:sw,height:size,fill:`url(#timeline-${strip.wood})`,stroke:'#241710','stroke-width':'1'}));
     x+=sw;
@@ -525,6 +564,6 @@ $('playTimelineBtn').addEventListener('click',playTimeline);
 renderTimeline();
 
 const originalRender = render;
-render = function(){ originalRender(); renderTimeline(); renderEngineering(); };
+render = function(){ originalRender(); renderTimeline(); };
 
 renderEngineering();

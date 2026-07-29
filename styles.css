@@ -113,3 +113,14 @@ input[type="range"] { width: 100%; }
 .explorer-card small { color:var(--muted); margin-top:.15rem; }
 @media (max-width:1000px){ .engineering-metrics{grid-template-columns:repeat(2,1fr)} .design-explorer{grid-template-columns:repeat(3,minmax(140px,1fr))} }
 @media (max-width:650px){ .engineering-heading{flex-direction:column}.recommended-inset-card{width:100%}.engineering-grid{grid-template-columns:1fr}.engineering-metrics{grid-template-columns:1fr 1fr}.design-explorer{grid-template-columns:repeat(2,minmax(130px,1fr))} }
+
+/* v1.4 strip schedule controls */
+.sidebar-help{margin:-.25rem 0 .65rem;color:var(--muted);font-size:.82rem;line-height:1.35}
+.strip-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-bottom:.7rem}
+button.small{padding:.48rem .35rem;font-size:.78rem}
+.strip-row{grid-template-columns:28px 28px 82px 1fr!important}
+.strip-enable{display:flex!important;align-items:center;justify-content:center;margin:0!important}
+.strip-enable input{width:18px;height:18px;margin:0}
+.strip-row.disabled{opacity:.48}
+.strip-row.disabled input[type="number"],.strip-row.disabled select{pointer-events:none}
+@media(max-width:520px){.strip-actions{grid-template-columns:1fr}.strip-row{grid-template-columns:26px 26px 74px 1fr!important}}
