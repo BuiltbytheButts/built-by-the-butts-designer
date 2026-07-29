@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.5.2");
+console.info("Built By The Butts End Grain Designer Pro v2.5.3");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -442,7 +442,7 @@ if (!Number.isFinite(Number(state.wastePercent))) state.wastePercent = 20;
 delete state.insetGoal;
 delete state.targetCenterPercent;
 state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false}));
-state.version = '2.5.2';
+state.version = '2.5.3';
 syncControls(); buildStripEditor(); buildWoodPriceEditor(); refreshSavedScheduleSelect(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------
