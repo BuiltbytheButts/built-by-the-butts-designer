@@ -15,9 +15,9 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '1.2.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
+  version: '1.3.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
   layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
-  tipWood: 'walnut', showLines: true, showFrame: true,
+  tipWood: 'walnut', showLines: true, showFrame: true, walnutPrice: 28, insetGoal: 'balanced', targetCenterPercent: 35,
   strips: structuredClone(DEFAULT_STRIPS)
 };
 let history = [];
@@ -25,7 +25,7 @@ let future = [];
 let isRestoring = false;
 
 const $ = id => document.getElementById(id);
-const controls = ['boardLength','boardWidth','columns','rows','layout','orientation','edgeInset','spacing','tipWood','showLines','showFrame'];
+const controls = ['boardLength','boardWidth','columns','rows','layout','orientation','edgeInset','spacing','tipWood','showLines','showFrame','walnutPrice','insetGoal','targetCenterPercent'];
 
 function svgEl(name, attrs = {}) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -167,7 +167,7 @@ function syncControls() {
 }
 function pullControl(id) {
   const el=$(id); let v = el.type==='checkbox' ? el.checked : el.value;
-  if (['boardLength','boardWidth','columns','rows','edgeInset','spacing'].includes(id)) v=Number(v);
+  if (['boardLength','boardWidth','columns','rows','edgeInset','spacing','walnutPrice','targetCenterPercent'].includes(id)) v=Number(v);
   state[id]=v; render(); commit();
 }
 
@@ -197,11 +197,98 @@ $('exportSvgBtn').addEventListener('click',()=>{
   download('built-by-the-butts-board.svg','image/svg+xml;charset=utf-8',source); toast('SVG exported');
 });
 
+
+function engineeringForInset(inset) {
+  const total = totalWidth() || 1;
+  const i = Math.max(0, Math.min(total/2 - 0.001, Number(inset)));
+  const centerRemaining = Math.max(0, total - 2*i);
+  const centerPercent = centerRemaining / total * 100;
+  // Two 45-degree triangular additions: total cross-sectional area ~= inset².
+  const addedBoardFeet = (i * i * Number(state.boardLength || 0)) / 144;
+  const addedCost = addedBoardFeet * Number(state.walnutPrice || 0);
+  const originalWalnut = state.strips.filter(s=>s.wood==='walnut').reduce((sum,s)=>sum+Number(s.width||0),0) / total;
+  const addedFaceShare = Math.min(.95, 2*i/total);
+  const walnutShare = Math.min(1, originalWalnut*(1-addedFaceShare) + addedFaceShare) * 100;
+  return { inset:i, centerRemaining, centerPercent, addedBoardFeet, addedCost, offcutBoardFeet:addedBoardFeet, walnutShare };
+}
+
+function snapInset(value) {
+  const min=.125,max=.750,step=.0625;
+  return Math.max(min,Math.min(max,Math.round((value-min)/step)*step+min));
+}
+
+function recommendedInset() {
+  const total=totalWidth()||1;
+  if(state.insetGoal==='economy') return .125;
+  if(state.insetGoal==='bold') return .750;
+  if(state.insetGoal==='target') return snapInset((total*(1-Number(state.targetCenterPercent||35)/100))/2);
+  // Balanced: preserve roughly one-third center diamond while limiting added walnut.
+  return snapInset(total/3);
+}
+
+function miniModuleSvg(inset) {
+  const total=totalWidth()||1, size=108, h=size/2;
+  let x=-h;
+  let shapes='';
+  state.strips.forEach(strip=>{
+    const w=size*Number(strip.width)/total, nx=x+w;
+    const polygon=[[x,-h+Math.abs(x)],[nx,-h+Math.abs(nx)],[nx,h-Math.abs(nx)],[x,h-Math.abs(x)]].map(p=>p.join(',')).join(' ');
+    shapes += `<polygon points="${polygon}" fill="${WOODS[strip.wood].color}" stroke="#241710" stroke-width=".5"/>`;
+    x=nx;
+  });
+  const d=h*Math.max(.04,Math.min(.46,inset/total));
+  const base=Math.min(h*.48,d+size*.075), fill=WOODS[state.tipWood].color;
+  shapes += `<polygon points="0,${-h} ${base},${-h+d} ${-base},${-h+d}" fill="${fill}" stroke="#241710" stroke-width=".8"/>`;
+  shapes += `<polygon points="0,${h} ${-base},${h-d} ${base},${h-d}" fill="${fill}" stroke="#241710" stroke-width=".8"/>`;
+  return `<svg viewBox="-60 -60 120 120" aria-hidden="true"><g>${shapes}<polygon points="0,${-h} ${h},0 0,${h} ${-h},0" fill="none" stroke="#241710" stroke-width="1.2"/></g></svg>`;
+}
+
+function renderDesignExplorer() {
+  const holder=$('designExplorer'); if(!holder) return;
+  const values=[.125,.250,.375,.500,.625,.750];
+  holder.innerHTML='';
+  values.forEach(inset=>{
+    const e=engineeringForInset(inset);
+    const b=document.createElement('button'); b.type='button'; b.className='explorer-card'+(Math.abs(state.edgeInset-inset)<.001?' active':'');
+    b.innerHTML=`${miniModuleSvg(inset)}<strong>${inset.toFixed(3)} in</strong><small>${e.centerPercent.toFixed(0)}% center · $${e.addedCost.toFixed(2)}</small>`;
+    b.addEventListener('click',()=>{ state.edgeInset=inset; $('edgeInset').value=inset; render(); commit(); toast(`Inset changed to ${inset.toFixed(3)} in`); });
+    holder.append(b);
+  });
+  $('explorerRangeSummary').textContent=`$${engineeringForInset(.125).addedCost.toFixed(2)}–$${engineeringForInset(.750).addedCost.toFixed(2)} added walnut`;
+}
+
+function renderEngineering() {
+  if(!$('centerDiamondMetric')) return;
+  const e=engineeringForInset(state.edgeInset);
+  const rec=recommendedInset();
+  $('centerDiamondMetric').textContent=`${e.centerPercent.toFixed(1)}%`;
+  $('centerDiamondDimension').textContent=`${e.centerRemaining.toFixed(3)} in remaining`;
+  $('addedWalnutMetric').textContent=`${e.addedBoardFeet.toFixed(3)} bd ft`;
+  $('addedWalnutCostMetric').textContent=`$${e.addedCost.toFixed(2)} estimated`;
+  $('offcutMetric').textContent=`${e.offcutBoardFeet.toFixed(3)} bd ft`;
+  $('walnutShareMetric').textContent=`${e.walnutShare.toFixed(1)}%`;
+  $('recommendedInsetMetric').textContent=`${rec.toFixed(3)} in`;
+  $('targetCenterLabel').textContent=`${Number(state.targetCenterPercent).toFixed(0)}%`;
+  $('targetCenterWrap').style.display=state.insetGoal==='target'?'grid':'none';
+  document.querySelectorAll('[data-inset]').forEach(b=>b.classList.toggle('active',Math.abs(Number(b.dataset.inset)-state.edgeInset)<.001));
+  renderDesignExplorer();
+}
+
+$('applyRecommendedInsetBtn').addEventListener('click',()=>{
+  state.edgeInset=recommendedInset(); $('edgeInset').value=state.edgeInset; render(); commit(); toast('Recommended inset applied');
+});
+document.querySelectorAll('[data-inset]').forEach(b=>b.addEventListener('click',()=>{
+  state.edgeInset=Number(b.dataset.inset); $('edgeInset').value=state.edgeInset; render(); commit();
+}));
+
 const saved=localStorage.getItem('bbtb-designer-autosave');
 if(saved) { try { state=JSON.parse(saved); } catch {} }
 if (!Number.isFinite(Number(state.edgeInset))) state.edgeInset = 0.500;
 delete state.cutDepth;
-state.version = '1.2.0';
+if (!Number.isFinite(Number(state.walnutPrice))) state.walnutPrice = 28;
+if (!state.insetGoal) state.insetGoal = 'balanced';
+if (!Number.isFinite(Number(state.targetCenterPercent))) state.targetCenterPercent = 35;
+state.version = '1.3.0';
 syncControls(); buildStripEditor(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------
@@ -438,4 +525,6 @@ $('playTimelineBtn').addEventListener('click',playTimeline);
 renderTimeline();
 
 const originalRender = render;
-render = function(){ originalRender(); renderTimeline(); };
+render = function(){ originalRender(); renderTimeline(); renderEngineering(); };
+
+renderEngineering();

@@ -61,6 +61,14 @@
         <label>Edge rip inset <span id="edgeInsetLabel">0.500 in</span>
           <input id="edgeInset" type="range" min="0.125" max="0.750" step="0.0625" value="0.500" />
         </label>
+        <div class="inset-quick-values" aria-label="Edge rip inset presets">
+          <button type="button" data-inset="0.125">⅛″</button>
+          <button type="button" data-inset="0.250">¼″</button>
+          <button type="button" data-inset="0.375">⅜″</button>
+          <button type="button" data-inset="0.500">½″</button>
+          <button type="button" data-inset="0.625">⅝″</button>
+          <button type="button" data-inset="0.750">¾″</button>
+        </div>
         <label>Module spacing <span id="spacingLabel">0.000 in</span>
           <input id="spacing" type="range" min="0" max="30" value="0" />
         </label>
@@ -96,6 +104,53 @@
         <svg id="boardSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" aria-label="End-grain cutting board preview"></svg>
       </div>
 
+      <section class="panel engineering-panel">
+        <div class="engineering-heading">
+          <div>
+            <p class="eyebrow dark">Geometry + Cost</p>
+            <h2>Edge Rip Engineering</h2>
+            <p class="timeline-description">See how the inset changes the center diamond, added walnut, reusable offcuts, and estimated material cost.</p>
+          </div>
+          <div class="recommended-inset-card">
+            <span>Recommended inset</span>
+            <strong id="recommendedInsetMetric">0.500 in</strong>
+            <button id="applyRecommendedInsetBtn" class="primary" type="button">Apply</button>
+          </div>
+        </div>
+
+        <div class="engineering-grid">
+          <div class="engineering-controls">
+            <label>Walnut price ($/board foot)
+              <input id="walnutPrice" type="number" min="0" max="100" step="0.50" value="28.00" />
+            </label>
+            <label>Goal for correct inset
+              <select id="insetGoal">
+                <option value="balanced">Balanced look and cost</option>
+                <option value="bold">Bold walnut frame</option>
+                <option value="economy">Lowest added walnut cost</option>
+                <option value="target">Target center diamond percentage</option>
+              </select>
+            </label>
+            <label id="targetCenterWrap">Target center diamond <span id="targetCenterLabel">35%</span>
+              <input id="targetCenterPercent" type="range" min="15" max="75" step="1" value="35" />
+            </label>
+          </div>
+
+          <div class="engineering-metrics">
+            <article><span>Center diamond</span><strong id="centerDiamondMetric">33.3%</strong><small id="centerDiamondDimension">0.500 in remaining</small></article>
+            <article><span>Added walnut</span><strong id="addedWalnutMetric">0.035 bd ft</strong><small id="addedWalnutCostMetric">$0.98 estimated</small></article>
+            <article><span>Reusable offcuts</span><strong id="offcutMetric">0.035 bd ft</strong><small>saved for other projects</small></article>
+            <article><span>Walnut share</span><strong id="walnutShareMetric">33.3%</strong><small>of module face, estimated</small></article>
+          </div>
+        </div>
+
+        <div class="design-explorer-heading">
+          <div><h3>Design Explorer</h3><p>Click a variation to load it into the main designer.</p></div>
+          <span id="explorerRangeSummary" class="badge"></span>
+        </div>
+        <div id="designExplorer" class="design-explorer"></div>
+        <p class="note">Cost values are planning estimates based on triangular replacement stock and the current blank length. Actual lumber use will be higher after milling, kerf, defects, and flattening allowance.</p>
+      </section>
 
       <section class="panel machining-timeline-panel">
         <div class="timeline-heading">

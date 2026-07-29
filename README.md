@@ -1,48 +1,23 @@
-# Built By The Butts End Grain Designer Pro
+# Built By The Butts End Grain Designer Pro v1.3
 
-A browser-based end-grain cutting-board pattern designer built around continuous strip construction.
+A standalone browser app for designing continuous-strip end-grain cutting boards.
 
-## Current features
+## Version 1.3 additions
 
-- Editable board dimensions
-- Five wood species
-- Editable strip widths
-- 45-degree tip-fill visualization
-- Multiple repeated-module layouts
-- Undo and redo
-- Automatic local browser save
-- Save/open project files as JSON
-- Export the board preview as SVG
-- Responsive layout for desktop and tablet
+- Edge Rip Engineering panel
+- Live center-diamond percentage and remaining dimension
+- Estimated added-walnut board feet and cost
+- Reusable offcut estimate
+- Estimated walnut share of the module face
+- Design Explorer comparing six inset presets from 1/8 inch through 3/4 inch
+- Correct-inset recommendation modes: balanced, bold, economy, and target center percentage
+- One-click apply for the recommended inset
+- Editable walnut price per board foot
 
-## Publish with GitHub Pages
+## Upload to GitHub Pages
 
-Upload `index.html`, `styles.css`, and `app.js` to the root of this repository.
+Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of your GitHub repository, replacing the previous files. Commit the changes. GitHub Pages should rebuild automatically.
 
-Then open the repository's **Settings**, choose **Pages**, set the source to **Deploy from a branch**, choose `main` and `/root`, and save.
+## Cost estimate note
 
-Your site should then be available at:
-
-`https://builtbythebutts.github.io/built-by-the-butts-designer/`
-
-## Important shop note
-
-This app is a visual design and planning aid. Confirm blade angle, kerf, glue-line references, stock dimensions, and safe machine setup before making cuts.
-
-
-## Version 1.1
-
-Adds an interactive seven-stage machining timeline: laminated blank, glue-line references, first 45-degree cut and fill, second cut and fill, and final crosscut/module preview.
-
-
-## Version 1.2 machining update
-
-The machining timeline now follows the revised production method:
-
-1. Glue and square the long laminated blank.
-2. Cut the outside faces to 45 degrees to form a long diamond blank.
-3. Mark the edge-rip inset, defaulting to 0.500 inch.
-4. Rip off both walnut-containing edge sections and save the reusable offcuts.
-5. Mill two continuous walnut additions with matching 45-degree faces.
-6. Glue, cure, flatten, and true the reconstructed blank.
-7. Crosscut and rotate the repeated end-grain modules.
+The incremental walnut estimate models two 45-degree triangular replacement pieces across the current blank length. Actual lumber consumption will be higher after kerf, milling allowance, defects, and flattening.
