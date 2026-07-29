@@ -1,4 +1,4 @@
-# Built By The Butts End Grain Designer Pro v2.5.4
+# Built By The Butts End Grain Designer Pro v2.5.5
 
 This release restores the compact original strip editor layout, removes drag-and-drop, keeps individual strip on/off controls, and ensures the full wood-species selector remains visible in the sidebar. Cache-busting version tags are included so GitHub Pages loads the new CSS and JavaScript immediately.
 
@@ -65,3 +65,12 @@ Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the 
 - Corrected the starting strip schedule to display six strips.
 - Split the former center strip into two matching half-width strips, preserving the same pattern, total width, species usage, and cost.
 - Automatically migrates older five-strip autosaves to the six-strip layout.
+
+
+## v2.5.5 — Linked sizing
+
+- Added **Board dimensions determine grid** mode. Length and width remain editable while rows and columns are calculated.
+- Added **Rows and columns determine board dimensions** mode. Grid counts remain editable while finished length and width are calculated.
+- Added a final-trim allowance per edge.
+- Board size, visible module count, board feet, species usage, waste, and total material cost now update from the selected sizing mode.
+- Module width, orientation, spacing, layout, and strip-schedule changes automatically flow through the sizing calculation.

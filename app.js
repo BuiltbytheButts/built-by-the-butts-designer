@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.5.4");
+console.info("Built By The Butts End Grain Designer Pro v2.5.5");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -17,7 +17,7 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '2.1.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
+  version: '2.5.5', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
   tipWood: 'walnut', showLines: true, showFrame: true,
   finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
@@ -29,7 +29,7 @@ let future = [];
 let isRestoring = false;
 
 const $ = id => document.getElementById(id);
-const controls = ['boardLength','boardWidth','columns','rows','layout','orientation','edgeInset','spacing','tipWood','showLines','showFrame','finishedThickness','planingAllowance','wastePercent'];
+const controls = ['sizingMode','boardLength','boardWidth','columns','rows','trimAllowance','layout','orientation','edgeInset','spacing','tipWood','showLines','showFrame','finishedThickness','planingAllowance','wastePercent'];
 
 function svgEl(name, attrs = {}) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -40,6 +40,65 @@ function pts(a) { return a.map(([x,y]) => `${x},${y}`).join(' '); }
 function activeStrips() { return state.strips.filter(x => x.enabled !== false); }
 function totalWidth() { return activeStrips().reduce((s,x) => s + Number(x.width || 0), 0); }
 function roughThickness() { return Math.max(0, Number(state.finishedThickness || 0)) + 2 * Math.max(0, Number(state.planingAllowance || 0)); }
+function roundDimension(value) { return Math.round(Math.max(0, value) * 1000) / 1000; }
+function moduleSizingGeometry() {
+  const module = Math.max(0.0625, totalWidth());
+  const gap = Math.max(0, Number(state.spacing || 0)) / 100;
+  const pitch = module / Math.SQRT2 + gap;
+  const turnedSquare = state.orientation === '45' || state.orientation === 'alternate';
+  const footprint = turnedSquare ? module / Math.SQRT2 : module;
+  return { module, gap, pitch, footprint };
+}
+function gridFinishedDimensions(columns = state.columns, rows = state.rows) {
+  const g = moduleSizingGeometry();
+  const cols = Math.max(1, Math.round(Number(columns) || 1));
+  const actualRows = state.layout === 'single' ? 1 : Math.max(1, Math.round(Number(rows) || 1));
+  const stagger = state.layout === 'stagger' && actualRows > 1 ? g.pitch / 2 : 0;
+  const trim = Math.max(0, Number(state.trimAllowance || 0));
+  const assembledLength = g.footprint + (cols - 1) * g.pitch + stagger;
+  const assembledWidth = g.footprint + (actualRows - 1) * g.pitch;
+  return {
+    length: Math.max(0.125, assembledLength - 2 * trim),
+    width: Math.max(0.125, assembledWidth - 2 * trim),
+    assembledLength,
+    assembledWidth,
+    rows: actualRows
+  };
+}
+function countForFinishedDimension(dimension, footprint, pitch, trim, extra = 0) {
+  const assembledTarget = Math.max(0, Number(dimension || 0)) + 2 * trim - extra;
+  if (assembledTarget <= footprint) return 1;
+  return Math.max(1, Math.floor((assembledTarget - footprint + 1e-9) / pitch) + 1);
+}
+function applySizingRules() {
+  if (!['dimensions','grid'].includes(state.sizingMode)) state.sizingMode = 'dimensions';
+  state.trimAllowance = Math.max(0, Math.min(0.250, Number(state.trimAllowance || 0)));
+  const g = moduleSizingGeometry();
+  const trim = state.trimAllowance;
+  if (state.sizingMode === 'grid') {
+    state.columns = Math.max(1, Math.round(Number(state.columns) || 1));
+    state.rows = state.layout === 'single' ? 1 : Math.max(1, Math.round(Number(state.rows) || 1));
+    const dims = gridFinishedDimensions();
+    state.boardLength = roundDimension(dims.length);
+    state.boardWidth = roundDimension(dims.width);
+  } else {
+    state.boardLength = Math.max(0.125, Number(state.boardLength) || 0.125);
+    state.boardWidth = Math.max(0.125, Number(state.boardWidth) || 0.125);
+    state.rows = state.layout === 'single' ? 1 : countForFinishedDimension(state.boardWidth, g.footprint, g.pitch, trim);
+    const stagger = state.layout === 'stagger' && state.rows > 1 ? g.pitch / 2 : 0;
+    state.columns = countForFinishedDimension(state.boardLength, g.footprint, g.pitch, trim, stagger);
+  }
+  const lengthInput = $('boardLength'), widthInput = $('boardWidth');
+  const columnsInput = $('columns'), rowsInput = $('rows');
+  if (lengthInput) { lengthInput.readOnly = state.sizingMode === 'grid'; lengthInput.classList.toggle('calculated-input', state.sizingMode === 'grid'); lengthInput.value = state.boardLength; }
+  if (widthInput) { widthInput.readOnly = state.sizingMode === 'grid'; widthInput.classList.toggle('calculated-input', state.sizingMode === 'grid'); widthInput.value = state.boardWidth; }
+  if (columnsInput) { columnsInput.readOnly = state.sizingMode === 'dimensions'; columnsInput.classList.toggle('calculated-input', state.sizingMode === 'dimensions'); columnsInput.value = state.columns; }
+  if (rowsInput) { rowsInput.readOnly = state.sizingMode === 'dimensions' || state.layout === 'single'; rowsInput.classList.toggle('calculated-input', state.sizingMode === 'dimensions' || state.layout === 'single'); rowsInput.value = state.rows; }
+  const help = $('sizingHelp');
+  if (help) help.textContent = state.sizingMode === 'grid'
+    ? 'Rows and columns are editable. Finished length, width, lumber use, and cost are recalculated automatically.'
+    : 'Board dimensions are editable. Rows and columns are calculated from the current module geometry.';
+}
 function snapshot() { return JSON.stringify(state); }
 function commit() {
   if (isRestoring) return;
@@ -280,7 +339,7 @@ function renderMetrics() {
   $('edgeInsetLabel').textContent = `${Number(state.edgeInset ?? 0.5).toFixed(3)} in`;
   $('spacingLabel').textContent = `${(state.spacing/100).toFixed(3)} in`;
 }
-function render() { renderBoard(); renderModule(); renderSchedule(); renderMetrics(); renderEngineering(); updateUndoRedo(); }
+function render() { applySizingRules(); renderBoard(); renderModule(); renderSchedule(); renderMetrics(); renderEngineering(); updateUndoRedo(); }
 
 function syncControls() {
   controls.forEach(id => { const el=$(id); if (el.type==='checkbox') el.checked=Boolean(state[id]); else el.value=state[id]; });
@@ -288,7 +347,7 @@ function syncControls() {
 }
 function pullControl(id) {
   const el=$(id); let v = el.type==='checkbox' ? el.checked : el.value;
-  if (['boardLength','boardWidth','columns','rows','edgeInset','spacing','finishedThickness','planingAllowance','wastePercent'].includes(id)) v=Number(v);
+  if (['boardLength','boardWidth','columns','rows','trimAllowance','edgeInset','spacing','finishedThickness','planingAllowance','wastePercent'].includes(id)) v=Number(v);
   state[id]=v; render(); commit();
 }
 
@@ -440,6 +499,9 @@ if (!Number.isFinite(Number(state.finishedThickness))) state.finishedThickness =
 if (!Number.isFinite(Number(state.planingAllowance))) state.planingAllowance = 0.125;
 state.planingAllowance = Math.max(0.125, Math.min(0.250, Number(state.planingAllowance)));
 if (!Number.isFinite(Number(state.wastePercent))) state.wastePercent = 20;
+if (!['dimensions','grid'].includes(state.sizingMode)) state.sizingMode = 'dimensions';
+if (!Number.isFinite(Number(state.trimAllowance))) state.trimAllowance = 0.0625;
+state.trimAllowance = Math.max(0, Math.min(0.250, Number(state.trimAllowance)));
 delete state.insetGoal;
 delete state.targetCenterPercent;
 state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false}));
@@ -455,7 +517,7 @@ if (state.strips.length === 5) {
     {...centerStrip, width: halfWidth}
   );
 }
-state.version = '2.5.4';
+state.version = '2.5.5';
 syncControls(); buildStripEditor(); buildWoodPriceEditor(); refreshSavedScheduleSelect(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------

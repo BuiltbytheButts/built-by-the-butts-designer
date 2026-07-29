@@ -201,3 +201,13 @@ button.small{padding:.48rem .35rem;font-size:.78rem}
 .calculated-field span { font-size: .82rem; color: #765f4e; }
 .calculated-field strong { font-size: 1.05rem; }
 .calculated-field small { color: #7c6a5b; line-height: 1.25; }
+
+
+/* v2.5.5 linked board/grid sizing */
+.calculated-input {
+  background:#eee8df !important;
+  color:#66584d !important;
+  cursor:not-allowed;
+  font-weight:700;
+}
+.sizing-help { margin-top:.15rem; }

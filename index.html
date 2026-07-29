@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Built By The Butts End Grain Designer Pro" />
   <title>Built By The Butts End Grain Designer Pro</title>
-  <link rel="stylesheet" href="styles.css?v=2.5.4" />
+  <link rel="stylesheet" href="styles.css?v=2.5.5" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>End Grain Designer Pro <span class="version-badge">v2.5.4</span></h1>
+      <h1>End Grain Designer Pro <span class="version-badge">v2.5.5</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -26,12 +26,18 @@
     <aside class="panel controls-panel">
       <section>
         <h2>Board Setup</h2>
+        <label>Sizing mode
+          <select id="sizingMode">
+            <option value="dimensions">Board dimensions determine grid</option>
+            <option value="grid">Rows and columns determine board dimensions</option>
+          </select>
+        </label>
         <div class="two-col">
           <label>Length (in)
-            <input id="boardLength" type="number" min="4" max="60" step="0.125" value="20" />
+            <input id="boardLength" type="number" min="1" max="60" step="0.125" value="20" />
           </label>
           <label>Width (in)
-            <input id="boardWidth" type="number" min="4" max="36" step="0.125" value="12.75" />
+            <input id="boardWidth" type="number" min="1" max="36" step="0.125" value="12.75" />
           </label>
         </div>
         <div class="two-col">
@@ -45,12 +51,16 @@
         <p class="strip-help thickness-help">Rough slice thickness equals the finished thickness plus the planing allowance on both faces.</p>
         <div class="two-col">
           <label>Columns
-            <input id="columns" type="number" min="1" max="20" step="1" value="8" />
+            <input id="columns" type="number" min="1" max="40" step="1" value="8" />
           </label>
           <label>Rows
-            <input id="rows" type="number" min="1" max="16" step="1" value="5" />
+            <input id="rows" type="number" min="1" max="30" step="1" value="5" />
           </label>
         </div>
+        <label>Final trim per edge (in)
+          <input id="trimAllowance" type="number" min="0" max="0.250" step="0.03125" value="0.0625" />
+        </label>
+        <p id="sizingHelp" class="strip-help sizing-help">Board dimensions are editable. Rows and columns are calculated from the current module geometry.</p>
         <label>Pattern
           <select id="layout">
             <option value="grid">Straight grid</option>
@@ -223,6 +233,6 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=2.5.4"></script>
+  <script src="app.js?v=2.5.5"></script>
 </body>
 </html>
