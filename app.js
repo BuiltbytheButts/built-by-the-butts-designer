@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.5.3");
+console.info("Built By The Butts End Grain Designer Pro v2.5.4");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -10,7 +10,8 @@ const WOODS = {
 const DEFAULT_STRIPS = [
   { width: 0.500, wood: 'cherry', enabled: true },
   { width: 0.125, wood: 'maple', enabled: true },
-  { width: 0.250, wood: 'walnut', enabled: true },
+  { width: 0.125, wood: 'walnut', enabled: true },
+  { width: 0.125, wood: 'walnut', enabled: true },
   { width: 0.125, wood: 'maple', enabled: true },
   { width: 0.500, wood: 'cherry', enabled: true }
 ];
@@ -442,7 +443,19 @@ if (!Number.isFinite(Number(state.wastePercent))) state.wastePercent = 20;
 delete state.insetGoal;
 delete state.targetCenterPercent;
 state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false}));
-state.version = '2.5.3';
+// v2.5.4 migration: older saves started with five strips. Split the center
+// strip into two equal, matching strips so six rows appear without changing
+// the pattern, total glue-up width, wood volume, or material cost.
+if (state.strips.length === 5) {
+  const centerIndex = 2;
+  const centerStrip = state.strips[centerIndex];
+  const halfWidth = Number(centerStrip.width || 0) / 2;
+  state.strips.splice(centerIndex, 1,
+    {...centerStrip, width: halfWidth},
+    {...centerStrip, width: halfWidth}
+  );
+}
+state.version = '2.5.4';
 syncControls(); buildStripEditor(); buildWoodPriceEditor(); refreshSavedScheduleSelect(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------

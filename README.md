@@ -1,4 +1,4 @@
-# Built By The Butts End Grain Designer Pro v2.5.3
+# Built By The Butts End Grain Designer Pro v2.5.4
 
 This release restores the compact original strip editor layout, removes drag-and-drop, keeps individual strip on/off controls, and ensures the full wood-species selector remains visible in the sidebar. Cache-busting version tags are included so GitHub Pages loads the new CSS and JavaScript immediately.
 
@@ -58,3 +58,10 @@ Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the 
 - Expanded the Edge Rip Inset range through 1.000 in.
 - Added quick-select buttons for 7/8 in and 1 in edge strips.
 - Preview, engineering, and cost calculations update automatically for both new sizes.
+
+
+## Version 2.5.4
+
+- Corrected the starting strip schedule to display six strips.
+- Split the former center strip into two matching half-width strips, preserving the same pattern, total width, species usage, and cost.
+- Automatically migrates older five-strip autosaves to the six-strip layout.
