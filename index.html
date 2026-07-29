@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Built By The Butts End Grain Designer Pro" />
   <title>Built By The Butts End Grain Designer Pro</title>
-  <link rel="stylesheet" href="styles.css?v=2.5.7" />
+  <link rel="stylesheet" href="styles.css?v=2.5.8" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>End Grain Designer Pro <span class="version-badge">v2.5.7</span></h1>
+      <h1>End Grain Designer Pro <span class="version-badge">v2.5.8</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -126,6 +126,7 @@
         <label>Added edge wood
           <select id="tipWood"></select>
         </label>
+        <p class="strip-help">Choose the species used for the replacement edge stock. Select “None” for a zero-edge board; edge material and cost will then be $0.00.</p>
         <label class="check-row"><input id="showLines" type="checkbox" checked /> Show glue lines</label>
         <label class="check-row"><input id="showFrame" type="checkbox" checked /> Show board perimeter</label>
       </section>
@@ -172,7 +173,7 @@
 
           <div class="engineering-metrics">
             <article><span>Center diamond</span><strong id="centerDiamondMetric">33.3%</strong><small id="centerDiamondDimension">0.500 in remaining</small></article>
-            <article><span>Added edge wood</span><strong id="addedWalnutMetric">0.035 bd ft</strong><small id="addedWalnutCostMetric">$0.98 estimated</small></article>
+            <article><span>Added edge wood + cost</span><strong id="addedWalnutMetric">0.035 bd ft</strong><small id="addedWalnutCostMetric">$0.98 estimated</small></article>
             <article><span>Reusable offcuts</span><strong id="offcutMetric">0.035 bd ft</strong><small>saved for other projects</small></article>
             <article><span>Total lumber cost</span><strong id="totalLumberCostMetric">$0.00</strong><small id="totalBoardFeetMetric">0.000 bd ft including waste</small></article>
           </div>
@@ -233,6 +234,6 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=2.5.7"></script>
+  <script src="app.js?v=2.5.8"></script>
 </body>
 </html>

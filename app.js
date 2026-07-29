@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.5.7");
+console.info("Built By The Butts End Grain Designer Pro v2.5.8");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -17,7 +17,7 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '2.5.7', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.5.8', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
   tipWood: 'walnut', showLines: true, showFrame: true,
   finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
@@ -29,7 +29,7 @@ let future = [];
 let isRestoring = false;
 
 const $ = id => document.getElementById(id);
-const controls = ['sizingMode','boardLength','boardWidth','columns','rows','trimAllowance','layout','orientation','edgeInset','spacing','tipWood','showLines','showFrame','finishedThickness','planingAllowance','wastePercent'];
+const controls = ['sizingMode','boardLength','boardWidth','columns','rows','trimAllowance','layout','orientation','edgeInset','spacing','showLines','showFrame','finishedThickness','planingAllowance','wastePercent'];
 
 function svgEl(name, attrs = {}) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -131,8 +131,16 @@ function toast(message) {
   clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 1800);
 }
 
-function woodOptions(selected) {
-  return Object.entries(WOODS).map(([k,w]) => `<option value="${k}" ${k===selected?'selected':''}>${w.name}</option>`).join('');
+function woodOptions(selected, includeNone = false) {
+  const none = includeNone ? `<option value="" ${!selected?'selected':''}>None — no edge strip</option>` : '';
+  return none + Object.entries(WOODS).map(([k,w]) => `<option value="${k}" ${k===selected?'selected':''}>${w.name}</option>`).join('');
+}
+function activeEdgeWoodKey() {
+  return Number(state.edgeInset || 0) > 0 && WOODS[state.tipWood] ? state.tipWood : '';
+}
+function activeEdgeWood() {
+  const key = activeEdgeWoodKey();
+  return key ? WOODS[key] : null;
 }
 function stripPairLabel(index) {
   const center = Math.floor(state.strips.length / 2);
@@ -287,7 +295,7 @@ function drawModule(svg, cx, cy, size, angle, prefix) {
   g.append(stripField);
 
   const insetValue = Math.max(0, Number(state.edgeInset ?? 0.5));
-  if (insetValue > 0) {
+  if (insetValue > 0 && activeEdgeWood()) {
     const insetRatio = Math.min(0.46, insetValue / total);
     const inward = h * insetRatio;
     const base = Math.min(h*.48, inward + size*.075);
@@ -329,7 +337,8 @@ function renderSchedule() {
     h.append(row);
   });
   const tip=document.createElement('div'); tip.className='schedule-row';
-  if (Number(state.edgeInset ?? 0) > 0) tip.innerHTML=`<strong>Two outside tip fills</strong><span class="badge">${WOODS[state.tipWood].name}</span>`;
+  const edgeWood = activeEdgeWood();
+  if (edgeWood) tip.innerHTML=`<strong>Two outside tip fills</strong><span class="badge">${edgeWood.name}</span>`;
   else tip.innerHTML='<strong>Edge replacement</strong><span class="badge">None — zero edge</span>';
   h.append(tip);
 }
@@ -346,7 +355,7 @@ function render() { applySizingRules(); renderBoard(); renderModule(); renderSch
 
 function syncControls() {
   controls.forEach(id => { const el=$(id); if (el.type==='checkbox') el.checked=Boolean(state[id]); else el.value=state[id]; });
-  $('tipWood').innerHTML = woodOptions(state.tipWood);
+  $('tipWood').innerHTML = woodOptions(state.tipWood, true);
 }
 function pullControl(id) {
   const el=$(id); let v = el.type==='checkbox' ? el.checked : el.value;
@@ -355,12 +364,29 @@ function pullControl(id) {
 }
 
 controls.forEach(id => $(id).addEventListener('change',()=>pullControl(id)));
+$('tipWood').addEventListener('change',()=>{
+  state.tipWood = $('tipWood').value;
+  if (!state.tipWood) {
+    state.edgeInset = 0;
+    $('edgeInset').value = 0;
+  } else if (Number(state.edgeInset || 0) <= 0) {
+    state.edgeInset = 0.125;
+    $('edgeInset').value = 0.125;
+  }
+  render(); commit();
+});
 // Keep the linked sizing fields live while the user types or uses the number-field arrows.
 // In dimensions mode, length/width recalculate rows and columns. In grid mode,
 // rows/columns recalculate finished dimensions, lumber use, and cost.
 ['boardLength','boardWidth','columns','rows','trimAllowance','finishedThickness','planingAllowance','wastePercent']
   .forEach(id => $(id).addEventListener('input',()=>pullControl(id)));
-$('edgeInset').addEventListener('input',()=>{ state.edgeInset=Number($('edgeInset').value); render(); });
+$('edgeInset').addEventListener('input',()=>{
+  state.edgeInset=Number($('edgeInset').value);
+  if (state.edgeInset <= 0) state.tipWood = '';
+  else if (!WOODS[state.tipWood]) state.tipWood = 'walnut';
+  $('tipWood').innerHTML = woodOptions(state.tipWood, true);
+  render();
+});
 $('spacing').addEventListener('input',()=>{ state.spacing=Number($('spacing').value); render(); });
 $('edgeInset').addEventListener('change',commit); $('spacing').addEventListener('change',commit);
 $('resetStripsBtn')?.addEventListener('click',()=>{ state.strips=structuredClone(DEFAULT_STRIPS); buildStripEditor(); render(); commit(); toast('Strip schedule reset'); });
@@ -400,7 +426,8 @@ function engineeringForInset(inset) {
   const centerPercent = centerRemaining / total * 100;
   // Two 45-degree triangular additions: total cross-sectional area ~= inset².
   const addedBoardFeet = (i * i * Number(state.boardLength || 0)) / 144;
-  const addedCost = addedBoardFeet * Number(state.woodPrices?.[state.tipWood] || 0);
+  const edgeKey = activeEdgeWoodKey();
+  const addedCost = edgeKey ? addedBoardFeet * Number(state.woodPrices?.[edgeKey] || 0) : 0;
   const originalWalnut = activeStrips().filter(s=>s.wood==='walnut').reduce((sum,s)=>sum+Number(s.width||0),0) / total;
   const addedFaceShare = Math.min(.95, 2*i/total);
   const walnutShare = Math.min(1, originalWalnut*(1-addedFaceShare) + addedFaceShare) * 100;
@@ -433,13 +460,14 @@ function wholeBoardCost() {
   const boardVolume = roughBoardFeet;
   const wasteFactor = 1 + Math.max(0, Number(state.wastePercent || 0)) / 100;
   const edge = engineeringForInset(state.edgeInset);
-  const replacementVolume = boardVolume * Math.min(0.95, (Number(state.edgeInset || 0) ** 2) / (total ** 2));
+  const edgeKey = activeEdgeWoodKey();
+  const replacementVolume = edgeKey ? edge.addedBoardFeet : 0;
   const species = {};
   for (const key of Object.keys(WOODS)) species[key] = { baseBf: 0, replacementBf: 0, purchaseBf: 0, cost: 0 };
   for (const strip of activeStrips()) {
     species[strip.wood].baseBf += boardVolume * Number(strip.width || 0) / total;
   }
-  species[state.tipWood].replacementBf += replacementVolume;
+  if (edgeKey) species[edgeKey].replacementBf += replacementVolume;
   let totalBf = 0, totalCost = 0;
   for (const key of Object.keys(WOODS)) {
     species[key].purchaseBf = (species[key].baseBf + species[key].replacementBf) * wasteFactor;
@@ -475,8 +503,9 @@ function renderEngineering() {
   const e=engineeringForInset(state.edgeInset);
   $('centerDiamondMetric').textContent=`${e.centerPercent.toFixed(1)}%`;
   $('centerDiamondDimension').textContent=`${e.centerRemaining.toFixed(3)} in remaining`;
-  $('addedWalnutMetric').textContent=`${e.addedBoardFeet.toFixed(3)} bd ft`;
-  $('addedWalnutCostMetric').textContent=`$${e.addedCost.toFixed(2)} estimated`;
+  const edgeWood = activeEdgeWood();
+  $('addedWalnutMetric').textContent=`${(edgeWood ? e.addedBoardFeet : 0).toFixed(3)} bd ft`;
+  $('addedWalnutCostMetric').textContent=edgeWood ? `${edgeWood.name} · $${e.addedCost.toFixed(2)} estimated` : 'No edge strip selected · $0.00';
   $('offcutMetric').textContent=`${e.offcutBoardFeet.toFixed(3)} bd ft`;
   const whole = wholeBoardCost();
   $('totalLumberCostMetric').textContent=`$${whole.totalCost.toFixed(2)}`;
@@ -491,13 +520,18 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-inset]');
   if (!b) return;
   state.edgeInset = Number(b.dataset.inset);
+  if (state.edgeInset <= 0) state.tipWood = '';
+  else if (!WOODS[state.tipWood]) state.tipWood = 'walnut';
   $('edgeInset').value = state.edgeInset;
+  $('tipWood').innerHTML = woodOptions(state.tipWood, true);
   render(); commit(); toast(`Inset changed to ${state.edgeInset.toFixed(3)} in`);
 });
 
 const saved=localStorage.getItem('bbtb-designer-autosave');
 if(saved) { try { state=JSON.parse(saved); } catch {} }
 if (!Number.isFinite(Number(state.edgeInset))) state.edgeInset = 0.500;
+if (Number(state.edgeInset) <= 0) state.tipWood = '';
+else if (!WOODS[state.tipWood]) state.tipWood = 'walnut';
 delete state.cutDepth;
 state.woodPrices = {...{ walnut:28, purpleheart:18, cherry:7, padauk:15, maple:7 }, ...(state.woodPrices || {})};
 if (Number.isFinite(Number(state.walnutPrice))) state.woodPrices.walnut = Number(state.walnutPrice);
@@ -674,16 +708,16 @@ function drawDiamondCore(svg, options={}) {
     labelSvg(svg,'Reusable laminated offcuts',550,440,{anchor:'middle',size:18});
   }
 
-  if(insetValue > 0 && options.walnutPieces){
+  if(insetValue > 0 && activeEdgeWood() && options.walnutPieces){
     const fill=`url(#timeline-${state.tipWood})`;
     svg.append(svgEl('polygon',{points:pts([[90,250],[leftCutX-28,leftTop-10],[leftCutX-28,leftBottom+10]]),fill,stroke:'#241710','stroke-width':'2'}));
     svg.append(svgEl('polygon',{points:pts([[1010,250],[rightCutX+28,rightTop-10],[rightCutX+28,rightBottom+10]]),fill,stroke:'#241710','stroke-width':'2'}));
     svg.append(svgEl('path',{d:`M285 250 L${leftCutX-8} 250`,stroke:'#6f3f24','stroke-width':'4','marker-end':'url(#timeline-arrow)'}));
     svg.append(svgEl('path',{d:`M815 250 L${rightCutX+8} 250`,stroke:'#6f3f24','stroke-width':'4','marker-end':'url(#timeline-arrow)'}));
-    labelSvg(svg,`${WOODS[state.tipWood].name} additions`,550,445,{anchor:'middle',size:18});
+    labelSvg(svg,`${activeEdgeWood().name} additions`,550,445,{anchor:'middle',size:18});
   }
 
-  if(insetValue > 0 && options.filled){
+  if(insetValue > 0 && activeEdgeWood() && options.filled){
     const fill=`url(#timeline-${state.tipWood})`;
     svg.append(svgEl('polygon',{points:pts([[g.left,g.cy],[leftCutX,leftTop],[leftCutX,leftBottom]]),fill,stroke:'#241710','stroke-width':'2'}));
     svg.append(svgEl('polygon',{points:pts([[g.right,g.cy],[rightCutX,rightTop],[rightCutX,rightBottom]]),fill,stroke:'#241710','stroke-width':'2'}));
@@ -701,7 +735,7 @@ function drawTimelineModule(svg,cx,cy,size) {
     x+=sw;
   });
   const insetValue=Math.max(0,Number(state.edgeInset ?? .5));
-  if (insetValue > 0) {
+  if (insetValue > 0 && activeEdgeWood()) {
     const insetRatio=Math.min(.42,insetValue/total);
     const d=h*insetRatio, fill=`url(#timeline-${state.tipWood})`;
     g.append(svgEl('polygon',{points:pts([[0,-h],[d,-h+d],[-d,-h+d]]),fill,stroke:'#241710','stroke-width':'2'}));
