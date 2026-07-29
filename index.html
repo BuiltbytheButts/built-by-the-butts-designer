@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Built By The Butts End Grain Designer Pro" />
   <title>Built By The Butts End Grain Designer Pro</title>
-  <link rel="stylesheet" href="styles.css?v=2.4" />
+  <link rel="stylesheet" href="styles.css?v=2.5" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>End Grain Designer Pro <span class="version-badge">v2.4</span></h1>
+      <h1>End Grain Designer Pro <span class="version-badge">v2.5</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -137,11 +137,6 @@
             <h2>Edge Rip Engineering</h2>
             <p class="timeline-description">See how the inset changes the center diamond, added edge wood, reusable offcuts, and total estimated lumber cost.</p>
           </div>
-          <div class="recommended-inset-card">
-            <span>Recommended inset</span>
-            <strong id="recommendedInsetMetric">0.500 in</strong>
-            <button id="applyRecommendedInsetBtn" class="primary" type="button">Apply</button>
-          </div>
         </div>
 
         <div class="engineering-grid">
@@ -160,17 +155,6 @@
                 </div>
               </div>
             </div>
-            <label>Goal for correct inset
-              <select id="insetGoal">
-                <option value="balanced">Balanced look and cost</option>
-                <option value="bold">Bold walnut frame</option>
-                <option value="economy">Lowest added walnut cost</option>
-                <option value="target">Target center diamond percentage</option>
-              </select>
-            </label>
-            <label id="targetCenterWrap">Target center diamond <span id="targetCenterLabel">35%</span>
-              <input id="targetCenterPercent" type="range" min="15" max="75" step="1" value="35" />
-            </label>
           </div>
 
           <div class="engineering-metrics">
@@ -241,6 +225,6 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=2.4"></script>
+  <script src="app.js?v=2.5"></script>
 </body>
 </html>

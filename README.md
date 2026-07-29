@@ -1,4 +1,4 @@
-# Built By The Butts End Grain Designer Pro v2.4
+# Built By The Butts End Grain Designer Pro v2.5
 
 This release restores the compact original strip editor layout, removes drag-and-drop, keeps individual strip on/off controls, and ensures the full wood-species selector remains visible in the sidebar. Cache-busting version tags are included so GitHub Pages loads the new CSS and JavaScript immediately.
 
@@ -23,10 +23,17 @@ Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the 
 - Fixed wood selectors so they remain visible in the control panel.
 
 
-## Version 2.4
+## Version 2.5
 
 - Added finished board thickness to Board Setup.
 - Added planing allowance per face from 1/8 in to 1/4 in.
 - Automatically calculates required rough slice thickness.
 - Whole-board material cost now uses rough thickness, so planing loss affects board feet and species cost.
 - Shows total planing loss in inches and board feet.
+
+
+## Version 2.5
+
+- Removed the Recommended Inset card and Apply button.
+- Removed the Goal for Correct Inset and target center-diamond controls.
+- Kept the Edge Rip Inset slider, preset tiles, Design Explorer, geometry metrics, and full-board cost calculations.

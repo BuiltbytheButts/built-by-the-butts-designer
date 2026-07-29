@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.4");
+console.info("Built By The Butts End Grain Designer Pro v2.5");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -18,7 +18,7 @@ const DEFAULT_STRIPS = [
 let state = {
   version: '2.1.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
   layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
-  tipWood: 'walnut', showLines: true, showFrame: true, insetGoal: 'balanced', targetCenterPercent: 35,
+  tipWood: 'walnut', showLines: true, showFrame: true,
   finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
   woodPrices: { walnut: 28, purpleheart: 18, cherry: 7, padauk: 15, maple: 7 },
   strips: structuredClone(DEFAULT_STRIPS)
@@ -28,7 +28,7 @@ let future = [];
 let isRestoring = false;
 
 const $ = id => document.getElementById(id);
-const controls = ['boardLength','boardWidth','columns','rows','layout','orientation','edgeInset','spacing','tipWood','showLines','showFrame','insetGoal','targetCenterPercent','finishedThickness','planingAllowance','wastePercent'];
+const controls = ['boardLength','boardWidth','columns','rows','layout','orientation','edgeInset','spacing','tipWood','showLines','showFrame','finishedThickness','planingAllowance','wastePercent'];
 
 function svgEl(name, attrs = {}) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -263,13 +263,12 @@ function syncControls() {
 }
 function pullControl(id) {
   const el=$(id); let v = el.type==='checkbox' ? el.checked : el.value;
-  if (['boardLength','boardWidth','columns','rows','edgeInset','spacing','targetCenterPercent','finishedThickness','planingAllowance','wastePercent'].includes(id)) v=Number(v);
+  if (['boardLength','boardWidth','columns','rows','edgeInset','spacing','finishedThickness','planingAllowance','wastePercent'].includes(id)) v=Number(v);
   state[id]=v; render(); commit();
 }
 
 controls.forEach(id => $(id).addEventListener('change',()=>pullControl(id)));
-['targetCenterPercent','finishedThickness','planingAllowance','wastePercent'].forEach(id => $(id).addEventListener('input',()=>pullControl(id)));
-$('insetGoal').addEventListener('input',()=>pullControl('insetGoal'));
+['finishedThickness','planingAllowance','wastePercent'].forEach(id => $(id).addEventListener('input',()=>pullControl(id)));
 $('edgeInset').addEventListener('input',()=>{ state.edgeInset=Number($('edgeInset').value); render(); });
 $('spacing').addEventListener('input',()=>{ state.spacing=Number($('spacing').value); render(); });
 $('edgeInset').addEventListener('change',commit); $('spacing').addEventListener('change',commit);
@@ -379,14 +378,6 @@ function snapInset(value) {
   return Math.max(min,Math.min(max,Math.round((value-min)/step)*step+min));
 }
 
-function recommendedInset() {
-  const total=totalWidth()||1;
-  if(state.insetGoal==='economy') return .125;
-  if(state.insetGoal==='bold') return .750;
-  if(state.insetGoal==='target') return snapInset((total*(1-Number(state.targetCenterPercent||35)/100))/2);
-  // Balanced: preserve roughly one-third center diamond while limiting added walnut.
-  return snapInset(total/3);
-}
 
 function miniModuleSvg(inset) {
   const total=totalWidth()||1, size=108, h=size/2;
@@ -421,7 +412,6 @@ function renderDesignExplorer() {
 function renderEngineering() {
   if(!$('centerDiamondMetric')) return;
   const e=engineeringForInset(state.edgeInset);
-  const rec=recommendedInset();
   $('centerDiamondMetric').textContent=`${e.centerPercent.toFixed(1)}%`;
   $('centerDiamondDimension').textContent=`${e.centerRemaining.toFixed(3)} in remaining`;
   $('addedWalnutMetric').textContent=`${e.addedBoardFeet.toFixed(3)} bd ft`;
@@ -432,17 +422,11 @@ function renderEngineering() {
   $('totalBoardFeetMetric').textContent=`${whole.totalBf.toFixed(3)} bd ft including waste`;
   if ($('roughThicknessMetric')) $('roughThicknessMetric').textContent = `${roughThickness().toFixed(3)} in`;
   if ($('planingLossMetric')) $('planingLossMetric').textContent = `${(2 * Number(state.planingAllowance || 0)).toFixed(3)} in total planing allowance · ${whole.planingBoardFeet.toFixed(3)} bd ft removed`;
-  $('recommendedInsetMetric').textContent=`${rec.toFixed(3)} in`;
-  $('targetCenterLabel').textContent=`${Number(state.targetCenterPercent).toFixed(0)}%`;
-  $('targetCenterWrap').style.display=state.insetGoal==='target'?'grid':'none';
   document.querySelectorAll('[data-inset]').forEach(b=>b.classList.toggle('active',Math.abs(Number(b.dataset.inset)-state.edgeInset)<.001));
   renderDesignExplorer();
   renderMaterialCostBreakdown();
 }
 
-$('applyRecommendedInsetBtn').addEventListener('click',()=>{
-  state.edgeInset=recommendedInset(); $('edgeInset').value=state.edgeInset; render(); commit(); toast('Recommended inset applied');
-});
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-inset]');
   if (!b) return;
@@ -462,10 +446,10 @@ if (!Number.isFinite(Number(state.finishedThickness))) state.finishedThickness =
 if (!Number.isFinite(Number(state.planingAllowance))) state.planingAllowance = 0.125;
 state.planingAllowance = Math.max(0.125, Math.min(0.250, Number(state.planingAllowance)));
 if (!Number.isFinite(Number(state.wastePercent))) state.wastePercent = 20;
-if (!state.insetGoal) state.insetGoal = 'balanced';
-if (!Number.isFinite(Number(state.targetCenterPercent))) state.targetCenterPercent = 35;
+delete state.insetGoal;
+delete state.targetCenterPercent;
 state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false}));
-state.version = '2.4.0';
+state.version = '2.5.0';
 syncControls(); buildStripEditor(); buildWoodPriceEditor(); refreshSavedScheduleSelect(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------
