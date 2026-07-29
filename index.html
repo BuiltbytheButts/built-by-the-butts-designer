@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Built By The Butts End Grain Designer Pro" />
   <title>Built By The Butts End Grain Designer Pro</title>
-  <link rel="stylesheet" href="styles.css?v=2.5.8" />
+  <link rel="stylesheet" href="styles.css?v=2.6.0" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>End Grain Designer Pro <span class="version-badge">v2.5.8</span></h1>
+      <h1>End Grain Designer Pro <span class="version-badge">v2.6.0</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -101,13 +101,29 @@
           <h2>Strip Schedule</h2>
           <button id="resetStripsBtn" class="text-button" type="button">Reset</button>
         </div>
+        <div class="module-width-controls">
+          <label>Module width control
+            <select id="moduleWidthMode">
+              <option value="auto">Auto — use strip schedule total</option>
+              <option value="manual">Manual — scale schedule to target</option>
+            </select>
+          </label>
+          <label>Target module width (in)
+            <input id="targetModuleWidth" type="number" min="0.375" max="6" step="0.0625" value="1.500" />
+          </label>
+          <div class="module-width-actions">
+            <button id="normalizeScheduleBtn" class="secondary" type="button">Normalize to Target</button>
+            <button id="restoreModuleWidthBtn" class="secondary" type="button">Return to 1.500″</button>
+          </div>
+          <p id="moduleWidthHelp" class="strip-help">Auto mode uses the active strip widths directly. Manual mode proportionally scales unlocked active strips to the target width.</p>
+        </div>
         <div class="strip-toolbar">
           <button id="addOuterPairBtn" class="secondary" type="button">+ Add Outer Pair</button>
           <button id="addInnerPairBtn" class="secondary" type="button">+ Add Inner Pair</button>
           <button id="removeOuterPairBtn" class="secondary" type="button">− Remove Outer Pair</button>
           <button id="removeInnerPairBtn" class="secondary" type="button">− Remove Inner Pair</button>
         </div>
-        <p class="strip-help">Use the checkbox to include or exclude a strip. Adjust each strip width and wood directly. Pair controls keep the schedule balanced around the center.</p>
+        <p class="strip-help">Use the checkbox to include or exclude a strip. Lock widths you want to preserve when scaling. Unlocked active strips share the remaining target width proportionally.</p>
         <div id="stripEditor"></div>
         <div class="saved-schedules">
           <label>Saved schedule
@@ -234,6 +250,6 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=2.5.8"></script>
+  <script src="app.js?v=2.6.0"></script>
 </body>
 </html>

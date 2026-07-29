@@ -211,3 +211,21 @@ button.small{padding:.48rem .35rem;font-size:.78rem}
   font-weight:700;
 }
 .sizing-help { margin-top:.15rem; }
+
+/* v2.6 module width controls */
+.module-width-controls{
+  display:grid;
+  gap:.7rem;
+  margin-bottom:1rem;
+  padding:.85rem;
+  border:1px solid var(--border, #d9cbbd);
+  border-radius:14px;
+  background:rgba(255,255,255,.38);
+}
+.module-width-controls label{margin:0!important}
+.module-width-actions{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+.module-width-actions button{width:100%}
+.strip-toggles{display:flex;align-items:center;gap:.45rem;font-size:.75rem;color:var(--muted)}
+.strip-toggles label{display:flex!important;align-items:center;gap:.2rem;margin:0!important;white-space:nowrap}
+.strip-toggles input[type=checkbox]{width:17px!important;height:17px!important}
+@media(max-width:410px){.module-width-actions{grid-template-columns:1fr}}

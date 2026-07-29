@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.5.8");
+console.info("Built By The Butts End Grain Designer Pro v2.6.0");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -8,19 +8,20 @@ const WOODS = {
 };
 
 const DEFAULT_STRIPS = [
-  { width: 0.500, wood: 'cherry', enabled: true },
-  { width: 0.125, wood: 'maple', enabled: true },
-  { width: 0.125, wood: 'walnut', enabled: true },
-  { width: 0.125, wood: 'walnut', enabled: true },
-  { width: 0.125, wood: 'maple', enabled: true },
-  { width: 0.500, wood: 'cherry', enabled: true }
+  { width: 0.500, wood: 'cherry', enabled: true, locked: false },
+  { width: 0.125, wood: 'maple', enabled: true, locked: false },
+  { width: 0.125, wood: 'walnut', enabled: true, locked: false },
+  { width: 0.125, wood: 'walnut', enabled: true, locked: false },
+  { width: 0.125, wood: 'maple', enabled: true, locked: false },
+  { width: 0.500, wood: 'cherry', enabled: true, locked: false }
 ];
 
 let state = {
-  version: '2.5.8', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.6.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
   tipWood: 'walnut', showLines: true, showFrame: true,
   finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
+  moduleWidthMode: 'auto', targetModuleWidth: 1.5,
   woodPrices: { walnut: 28, purpleheart: 18, cherry: 7, padauk: 15, maple: 7 },
   strips: structuredClone(DEFAULT_STRIPS)
 };
@@ -29,7 +30,7 @@ let future = [];
 let isRestoring = false;
 
 const $ = id => document.getElementById(id);
-const controls = ['sizingMode','boardLength','boardWidth','columns','rows','trimAllowance','layout','orientation','edgeInset','spacing','showLines','showFrame','finishedThickness','planingAllowance','wastePercent'];
+const controls = ['moduleWidthMode','targetModuleWidth','sizingMode','boardLength','boardWidth','columns','rows','trimAllowance','layout','orientation','edgeInset','spacing','showLines','showFrame','finishedThickness','planingAllowance','wastePercent'];
 
 function svgEl(name, attrs = {}) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -39,6 +40,49 @@ function svgEl(name, attrs = {}) {
 function pts(a) { return a.map(([x,y]) => `${x},${y}`).join(' '); }
 function activeStrips() { return state.strips.filter(x => x.enabled !== false); }
 function totalWidth() { return activeStrips().reduce((s,x) => s + Number(x.width || 0), 0); }
+function syncModuleWidthControls() {
+  if (!['auto','manual'].includes(state.moduleWidthMode)) state.moduleWidthMode = 'auto';
+  const current = totalWidth();
+  if (state.moduleWidthMode === 'auto') state.targetModuleWidth = current;
+  const mode = $('moduleWidthMode');
+  const target = $('targetModuleWidth');
+  const normalize = $('normalizeScheduleBtn');
+  if (mode) mode.value = state.moduleWidthMode;
+  if (target) {
+    target.value = Number(state.targetModuleWidth || current || 1.5).toFixed(4);
+    target.readOnly = state.moduleWidthMode === 'auto';
+    target.classList.toggle('calculated-input', state.moduleWidthMode === 'auto');
+  }
+  if (normalize) normalize.disabled = state.moduleWidthMode === 'auto';
+  const help = $('moduleWidthHelp');
+  if (help) help.textContent = state.moduleWidthMode === 'auto'
+    ? `Auto mode: the active strip schedule currently totals ${current.toFixed(3)} in.`
+    : `Manual mode: normalize unlocked active strips to ${Number(state.targetModuleWidth || 0).toFixed(3)} in. Locked widths stay unchanged.`;
+}
+function normalizeScheduleToTarget(target = state.targetModuleWidth, showMessage = true) {
+  target = Number(target);
+  if (!Number.isFinite(target) || target <= 0) { if (showMessage) toast('Enter a valid target module width'); return false; }
+  const active = activeStrips();
+  const locked = active.filter(s => s.locked === true);
+  const unlocked = active.filter(s => s.locked !== true);
+  const lockedTotal = locked.reduce((sum,s)=>sum+Number(s.width||0),0);
+  const remaining = target - lockedTotal;
+  const minWidth = 0.0625;
+  if (!unlocked.length) { if (showMessage) toast('Unlock at least one active strip to scale'); return false; }
+  if (remaining < unlocked.length * minWidth - 1e-9) { if (showMessage) toast('Target is too small for the locked strips'); return false; }
+  const unlockedTotal = unlocked.reduce((sum,s)=>sum+Number(s.width||0),0);
+  if (unlockedTotal <= 0) { if (showMessage) toast('Unlocked strips need a positive width'); return false; }
+  const scale = remaining / unlockedTotal;
+  unlocked.forEach(s => { s.width = Math.max(minWidth, Number(s.width||0) * scale); });
+  // Correct floating-point drift on the final unlocked strip.
+  const drift = target - totalWidth();
+  unlocked[unlocked.length-1].width += drift;
+  state.targetModuleWidth = target;
+  buildStripEditor();
+  render();
+  if (showMessage) toast(`Module normalized to ${target.toFixed(3)} in`);
+  return true;
+}
 function roughThickness() { return Math.max(0, Number(state.finishedThickness || 0)) + 2 * Math.max(0, Number(state.planingAllowance || 0)); }
 function roundDimension(value) { return Math.round(Math.max(0, value) * 1000) / 1000; }
 function moduleSizingGeometry() {
@@ -161,7 +205,7 @@ function buildStripEditor() {
     row.innerHTML = `
       <span class="swatch" style="background:${WOODS[strip.wood].color}" title="${WOODS[strip.wood].name}"></span>
       <label class="strip-field width-field">
-        <span class="strip-field-heading"><span>Strip ${i+1}</span><input data-enabled="${i}" type="checkbox" ${strip.enabled ? 'checked' : ''} aria-label="Use strip ${i+1}"></span>
+        <span class="strip-field-heading"><span>Strip ${i+1}</span><span class="strip-toggles"><label title="Lock this width while scaling"><input data-locked="${i}" type="checkbox" ${strip.locked ? 'checked' : ''} ${strip.enabled ? '' : 'disabled'} aria-label="Lock strip ${i+1} width"> Lock</label><input data-enabled="${i}" type="checkbox" ${strip.enabled ? 'checked' : ''} aria-label="Use strip ${i+1}"></span></span>
         <input data-width="${i}" type="number" min="0.0625" max="3" step="0.0625" value="${Number(strip.width).toFixed(4)}">
       </label>
       <label class="strip-field wood-field">Wood
@@ -177,10 +221,17 @@ function buildStripEditor() {
     buildStripEditor(); render(); commit();
   }));
 
+  holder.querySelectorAll('[data-locked]').forEach(el => el.addEventListener('change', e => {
+    const idx = Number(e.target.dataset.locked);
+    state.strips[idx].locked = e.target.checked;
+    buildStripEditor(); syncModuleWidthControls(); commit();
+  }));
+
   holder.querySelectorAll('[data-width]').forEach(el => el.addEventListener('change', e => {
     const idx = Number(e.target.dataset.width);
     const value = Number(e.target.value);
     if (value > 0) state.strips[idx].width = value;
+    if (state.moduleWidthMode === 'auto') state.targetModuleWidth = totalWidth();
     buildStripEditor(); render(); commit();
   }));
 
@@ -192,8 +243,8 @@ function buildStripEditor() {
 
 function addStripPair(position='outer') {
   const pair = [
-    { width: 0.125, wood: 'maple', enabled: true },
-    { width: 0.125, wood: 'maple', enabled: true }
+    { width: 0.125, wood: 'maple', enabled: true, locked: false },
+    { width: 0.125, wood: 'maple', enabled: true, locked: false }
   ];
   if (position === 'outer') {
     state.strips.unshift(pair[0]);
@@ -351,7 +402,7 @@ function renderMetrics() {
   $('edgeInsetLabel').textContent = `${Number(state.edgeInset ?? 0.5).toFixed(3)} in`;
   $('spacingLabel').textContent = `${(state.spacing/100).toFixed(3)} in`;
 }
-function render() { applySizingRules(); renderBoard(); renderModule(); renderSchedule(); renderMetrics(); renderEngineering(); updateUndoRedo(); }
+function render() { syncModuleWidthControls(); applySizingRules(); renderBoard(); renderModule(); renderSchedule(); renderMetrics(); renderEngineering(); updateUndoRedo(); }
 
 function syncControls() {
   controls.forEach(id => { const el=$(id); if (el.type==='checkbox') el.checked=Boolean(state[id]); else el.value=state[id]; });
@@ -359,8 +410,13 @@ function syncControls() {
 }
 function pullControl(id) {
   const el=$(id); let v = el.type==='checkbox' ? el.checked : el.value;
-  if (['boardLength','boardWidth','columns','rows','trimAllowance','edgeInset','spacing','finishedThickness','planingAllowance','wastePercent'].includes(id)) v=Number(v);
-  state[id]=v; render(); commit();
+  if (['targetModuleWidth','boardLength','boardWidth','columns','rows','trimAllowance','edgeInset','spacing','finishedThickness','planingAllowance','wastePercent'].includes(id)) v=Number(v);
+  state[id]=v;
+  if (id === 'moduleWidthMode') {
+    if (v === 'manual') state.targetModuleWidth = totalWidth();
+    else state.targetModuleWidth = totalWidth();
+  }
+  render(); commit();
 }
 
 controls.forEach(id => $(id).addEventListener('change',()=>pullControl(id)));
@@ -390,6 +446,12 @@ $('edgeInset').addEventListener('input',()=>{
 $('spacing').addEventListener('input',()=>{ state.spacing=Number($('spacing').value); render(); });
 $('edgeInset').addEventListener('change',commit); $('spacing').addEventListener('change',commit);
 $('resetStripsBtn')?.addEventListener('click',()=>{ state.strips=structuredClone(DEFAULT_STRIPS); buildStripEditor(); render(); commit(); toast('Strip schedule reset'); });
+$('normalizeScheduleBtn')?.addEventListener('click',()=>{ if (normalizeScheduleToTarget(state.targetModuleWidth)) commit(); });
+$('restoreModuleWidthBtn')?.addEventListener('click',()=>{
+  state.moduleWidthMode = 'manual';
+  state.targetModuleWidth = 1.5;
+  if (normalizeScheduleToTarget(1.5, false)) { commit(); toast('Module returned to 1.500 in'); }
+});
 $('addOuterPairBtn')?.addEventListener('click',()=>addStripPair('outer'));
 $('addInnerPairBtn')?.addEventListener('click',()=>addStripPair('inner'));
 $('removeOuterPairBtn')?.addEventListener('click',()=>removeStripPair('outer'));
@@ -545,7 +607,7 @@ if (!Number.isFinite(Number(state.trimAllowance))) state.trimAllowance = 0.0625;
 state.trimAllowance = Math.max(0, Math.min(0.250, Number(state.trimAllowance)));
 delete state.insetGoal;
 delete state.targetCenterPercent;
-state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false}));
+state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false, locked: s.locked === true}));
 // v2.5.4 migration: older saves started with five strips. Split the center
 // strip into two equal, matching strips so six rows appear without changing
 // the pattern, total glue-up width, wood volume, or material cost.
@@ -558,7 +620,9 @@ if (state.strips.length === 5) {
     {...centerStrip, width: halfWidth}
   );
 }
-state.version = '2.5.5';
+if (!['auto','manual'].includes(state.moduleWidthMode)) state.moduleWidthMode = 'auto';
+if (!Number.isFinite(Number(state.targetModuleWidth))) state.targetModuleWidth = totalWidth() || 1.5;
+state.version = '2.6.0';
 syncControls(); buildStripEditor(); buildWoodPriceEditor(); refreshSavedScheduleSelect(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------
