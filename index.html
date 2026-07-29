@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Built By The Butts End Grain Designer Pro" />
-  <title>Built By The Butts End Grain Designer Pro</title>
+  <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
+  <title>Diamond End Grain Designer</title>
   <link rel="stylesheet" href="styles.css?v=2.6.3" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>End Grain Designer Pro <span class="version-badge">v2.6.3</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v2.6.4</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -123,14 +123,20 @@
         <p class="strip-help">Use the checkbox to include or exclude a strip. Lock widths you want to preserve when scaling. Unlocked active strips share the remaining target width proportionally.</p>
         <div id="stripEditor"></div>
         <div class="saved-schedules">
-          <label>Saved schedule
-            <select id="savedScheduleSelect"><option value="">Choose a saved schedule</option></select>
+          <label>Projects
+            <select id="savedProjectSelect"><option value="">Open Project…</option></select>
           </label>
-          <div class="saved-schedule-actions">
-            <button id="saveScheduleBtn" class="secondary" type="button">Save Current</button>
-            <button id="loadScheduleBtn" class="secondary" type="button">Load</button>
-            <button id="deleteScheduleBtn" class="text-button danger" type="button">Delete</button>
+          <div class="saved-schedule-actions project-actions">
+            <button id="saveLocalProjectBtn" class="secondary" type="button">Save As…</button>
+            <button id="updateLocalProjectBtn" class="secondary" type="button">Save</button>
+            <button id="duplicateProjectBtn" class="secondary" type="button">Duplicate</button>
+            <button id="renameProjectBtn" class="secondary" type="button">Rename</button>
+            <button id="deleteLocalProjectBtn" class="text-button danger" type="button">Delete</button>
           </div>
+          <label>Project notes
+            <textarea id="projectNotes" rows="3" placeholder="Build intent, lumber source, test notes, or other details…"></textarea>
+          </label>
+          <p class="strip-help">Projects are stored in this browser and restore the full design.</p>
         </div>
       </section>
 

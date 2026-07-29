@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.6.3");
+console.info("Diamond End Grain Designer by Built By The Butts v2.6.4");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -17,7 +17,7 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '2.6.3', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.6.4', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   layout: 'grid', orientation: '0', edgeInset: 0.500,
   tipWood: 'walnut', showLines: true, showFrame: true,
   finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
@@ -271,36 +271,104 @@ function removeStripPair(position='outer') {
   buildStripEditor(); render(); commit(); toast(`${position === 'outer' ? 'Outer' : 'Inner'} strip pair removed`);
 }
 
-function savedSchedules() {
-  try { return JSON.parse(localStorage.getItem('bbtb-strip-schedules') || '{}'); }
-  catch { return {}; }
+const PROJECTS_STORAGE_KEY = 'diamond-end-grain-projects';
+let activeProjectName = '';
+
+function savedProjects() {
+  try {
+    const data = JSON.parse(localStorage.getItem(PROJECTS_STORAGE_KEY) || '{}');
+    return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+  } catch { return {}; }
 }
-function refreshSavedScheduleSelect(selected='') {
-  const select = $('savedScheduleSelect'); if (!select) return;
-  const names = Object.keys(savedSchedules()).sort();
-  select.innerHTML = '<option value="">Choose a saved schedule</option>' + names.map(name => `<option value="${name.replace(/"/g,'&quot;')}">${name}</option>`).join('');
-  if (selected) select.value = selected;
+function persistProjects(projects) { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects)); }
+function projectRecord(name, sourceState = state) {
+  const projectState = structuredClone(sourceState);
+  projectState.version = '2.6.4';
+  projectState.projectName = name;
+  projectState.projectNotes = $('projectNotes')?.value ?? projectState.projectNotes ?? '';
+  return { name, updatedAt: new Date().toISOString(), state: projectState };
 }
-function saveCurrentSchedule() {
-  const name = prompt('Name this strip schedule:');
-  if (!name || !name.trim()) return;
-  const schedules = savedSchedules();
-  schedules[name.trim()] = structuredClone(state.strips);
-  localStorage.setItem('bbtb-strip-schedules', JSON.stringify(schedules));
-  refreshSavedScheduleSelect(name.trim()); toast('Strip schedule saved');
+function escapeHtml(value) {
+  return String(value).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-function loadSelectedSchedule() {
-  const name = $('savedScheduleSelect')?.value; if (!name) { toast('Choose a saved schedule'); return; }
-  const schedule = savedSchedules()[name]; if (!schedule) return;
-  state.strips = structuredClone(schedule);
-  buildStripEditor(); render(); commit(); toast(`Loaded ${name}`);
+function refreshSavedProjectSelect(selected = activeProjectName) {
+  const select = $('savedProjectSelect'); if (!select) return;
+  const names = Object.keys(savedProjects()).sort((a,b)=>a.localeCompare(b));
+  select.innerHTML = '<option value="">Open Project…</option>' + names.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+  if (selected && names.includes(selected)) select.value = selected;
 }
-function deleteSelectedSchedule() {
-  const name = $('savedScheduleSelect')?.value; if (!name) { toast('Choose a saved schedule'); return; }
-  if (!confirm(`Delete “${name}”?`)) return;
-  const schedules = savedSchedules(); delete schedules[name];
-  localStorage.setItem('bbtb-strip-schedules', JSON.stringify(schedules));
-  refreshSavedScheduleSelect(); toast('Saved schedule deleted');
+function applyProjectRecord(record, name) {
+  const projectState = record?.state || record;
+  if (!projectState || !Array.isArray(projectState.strips)) return false;
+  restore(JSON.stringify(projectState));
+  activeProjectName = name || projectState.projectName || '';
+  state.projectName = activeProjectName;
+  state.projectNotes = projectState.projectNotes || '';
+  if ($('projectNotes')) $('projectNotes').value = state.projectNotes;
+  history = [snapshot()]; future = [];
+  refreshSavedProjectSelect(activeProjectName);
+  commit();
+  return true;
+}
+function loadLocalProject(name = $('savedProjectSelect')?.value) {
+  if (!name) return;
+  const record = savedProjects()[name];
+  if (!record) { toast('Saved project was not found'); return; }
+  toast(applyProjectRecord(record, name) ? `Opened “${name}”` : 'That project could not be opened');
+}
+function saveProjectAs() {
+  const suggested = activeProjectName ? `${activeProjectName} Copy` : 'Reference Build #001';
+  const name = prompt('Name this project:', suggested)?.trim();
+  if (!name) return;
+  const projects = savedProjects();
+  if (projects[name] && !confirm(`Replace the existing project “${name}”?`)) return;
+  activeProjectName = name; state.projectName = name;
+  projects[name] = projectRecord(name); persistProjects(projects);
+  refreshSavedProjectSelect(name); commit(); toast(`Saved “${name}”`);
+}
+function updateCurrentProject() {
+  if (!activeProjectName) { saveProjectAs(); return; }
+  const projects = savedProjects();
+  state.projectName = activeProjectName;
+  projects[activeProjectName] = projectRecord(activeProjectName); persistProjects(projects);
+  refreshSavedProjectSelect(activeProjectName); commit(); toast(`Saved “${activeProjectName}”`);
+}
+function duplicateCurrentProject() {
+  const sourceName = $('savedProjectSelect')?.value || activeProjectName;
+  if (!sourceName) { toast('Open a project to duplicate'); return; }
+  const projects = savedProjects(), source = projects[sourceName]; if (!source) return;
+  const name = prompt('Name the duplicate:', `${sourceName} Copy`)?.trim(); if (!name) return;
+  if (projects[name] && !confirm(`Replace the existing project “${name}”?`)) return;
+  const copy = structuredClone(source.state || source); copy.projectName = name;
+  projects[name] = projectRecord(name, copy); persistProjects(projects);
+  applyProjectRecord(projects[name], name); toast(`Duplicated as “${name}”`);
+}
+function renameCurrentProject() {
+  const oldName = $('savedProjectSelect')?.value || activeProjectName;
+  if (!oldName) { toast('Open a project to rename'); return; }
+  const name = prompt('Rename project:', oldName)?.trim(); if (!name || name === oldName) return;
+  const projects = savedProjects(); if (projects[name] && !confirm(`Replace “${name}”?`)) return;
+  const record = projects[oldName]; if (!record) return; delete projects[oldName];
+  const renamed = structuredClone(record.state || record); renamed.projectName = name;
+  projects[name] = projectRecord(name, renamed); persistProjects(projects);
+  activeProjectName = name; state.projectName = name; refreshSavedProjectSelect(name); commit(); toast(`Renamed to “${name}”`);
+}
+function deleteCurrentProject() {
+  const name = $('savedProjectSelect')?.value || activeProjectName;
+  if (!name) { toast('Choose a project to delete'); return; }
+  if (!confirm(`Delete “${name}”? This cannot be undone.`)) return;
+  const projects = savedProjects(); delete projects[name]; persistProjects(projects);
+  if (activeProjectName === name) { activeProjectName=''; state.projectName=''; }
+  refreshSavedProjectSelect(); toast(`Deleted “${name}”`);
+}
+function migrateLegacySchedules() {
+  let legacy={}; try { legacy=JSON.parse(localStorage.getItem('bbtb-strip-schedules') || '{}'); } catch {}
+  const projects=savedProjects(); let changed=false;
+  for (const [name,strips] of Object.entries(legacy || {})) if (!projects[name] && Array.isArray(strips)) {
+    const migrated=structuredClone(state); migrated.strips=structuredClone(strips); migrated.projectName=name; migrated.projectNotes='Migrated from a saved strip schedule.';
+    projects[name]=projectRecord(name,migrated); changed=true;
+  }
+  if (changed) persistProjects(projects);
 }
 
 function addPatterns(svg, prefix) {
@@ -409,7 +477,7 @@ function renderMetrics() {
   if (diagnostics) {
     const geometry = moduleSizingGeometry();
     diagnostics.textContent = [
-      `Version: v2.6.3`,
+      `Version: v2.6.4`,
       `Finished size: ${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`,
       `Module width: ${totalWidth().toFixed(3)} in`,
       `Final trim per edge: ${Number(state.trimAllowance).toFixed(3)} in`,
@@ -490,9 +558,13 @@ $('addOuterPairBtn')?.addEventListener('click',()=>addStripPair('outer'));
 $('addInnerPairBtn')?.addEventListener('click',()=>addStripPair('inner'));
 $('removeOuterPairBtn')?.addEventListener('click',()=>removeStripPair('outer'));
 $('removeInnerPairBtn')?.addEventListener('click',()=>removeStripPair('inner'));
-$('saveScheduleBtn')?.addEventListener('click',saveCurrentSchedule);
-$('loadScheduleBtn')?.addEventListener('click',loadSelectedSchedule);
-$('deleteScheduleBtn')?.addEventListener('click',deleteSelectedSchedule);
+$('savedProjectSelect')?.addEventListener('change',e=>{ if(e.target.value) loadLocalProject(e.target.value); });
+$('saveLocalProjectBtn')?.addEventListener('click',saveProjectAs);
+$('updateLocalProjectBtn')?.addEventListener('click',updateCurrentProject);
+$('duplicateProjectBtn')?.addEventListener('click',duplicateCurrentProject);
+$('renameProjectBtn')?.addEventListener('click',renameCurrentProject);
+$('deleteLocalProjectBtn')?.addEventListener('click',deleteCurrentProject);
+$('projectNotes')?.addEventListener('input',e=>{ state.projectNotes=e.target.value; commit(); });
 $('undoBtn').addEventListener('click',()=>{ if(history.length<=1)return; future.push(history.pop()); restore(history.at(-1)); updateUndoRedo(); });
 $('redoBtn').addEventListener('click',()=>{ if(!future.length)return; const next=future.pop(); history.push(next); restore(next); updateUndoRedo(); });
 
@@ -500,7 +572,7 @@ function download(name,type,text) {
   const blob=new Blob([text],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a');
   a.href=url; a.download=name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-$('saveProjectBtn').addEventListener('click',()=>download('built-by-the-butts-design.json','application/json',JSON.stringify(state,null,2)));
+$('saveProjectBtn').addEventListener('click',()=>download('diamond-end-grain-design.json','application/json',JSON.stringify(state,null,2)));
 $('openProjectInput').addEventListener('change',async e=>{
   const file=e.target.files[0]; if(!file)return;
   try { const loaded=JSON.parse(await file.text()); restore(JSON.stringify(loaded)); history=[snapshot()]; future=[]; toast('Project opened'); }
@@ -511,7 +583,7 @@ $('exportSvgBtn').addEventListener('click',()=>{
   const clone=$('boardSvg').cloneNode(true); clone.setAttribute('width','1200'); clone.setAttribute('height','760');
   clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
   const source='<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone);
-  download('built-by-the-butts-board.svg','image/svg+xml;charset=utf-8',source); toast('SVG exported');
+  download('diamond-end-grain-board.svg','image/svg+xml;charset=utf-8',source); toast('SVG exported');
 });
 
 
@@ -657,8 +729,11 @@ if (state.strips.length === 5) {
 }
 if (!['auto','manual'].includes(state.moduleWidthMode)) state.moduleWidthMode = 'auto';
 if (!Number.isFinite(Number(state.targetModuleWidth))) state.targetModuleWidth = totalWidth() || 1.5;
-state.version = '2.6.1';
-syncControls(); buildStripEditor(); buildWoodPriceEditor(); refreshSavedScheduleSelect(); render(); history=[snapshot()]; updateUndoRedo();
+state.version = '2.6.4';
+state.projectName = state.projectName || '';
+state.projectNotes = state.projectNotes || '';
+activeProjectName = state.projectName;
+syncControls(); buildStripEditor(); buildWoodPriceEditor(); migrateLegacySchedules(); refreshSavedProjectSelect(activeProjectName); if ($('projectNotes')) $('projectNotes').value = state.projectNotes; render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------
 // ---------- Step-by-step machining timeline ----------

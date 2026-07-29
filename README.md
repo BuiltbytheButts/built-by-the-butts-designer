@@ -1,8 +1,8 @@
-# Built By The Butts End Grain Designer Pro v2.5.8
+# Diamond End Grain Designer by Built By The Butts v2.5.8
 
 This release restores the compact original strip editor layout, removes drag-and-drop, keeps individual strip on/off controls, and ensures the full wood-species selector remains visible in the sidebar. Cache-busting version tags are included so GitHub Pages loads the new CSS and JavaScript immediately.
 
-# Built By The Butts End Grain Designer Pro v2.2
+# Diamond End Grain Designer by Built By The Butts v2.2
 
 This release adds:
 
@@ -100,7 +100,7 @@ Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the 
 - Whole-board species breakdown now places replacement edge stock under the selected species.
 
 
-## v2.6.3
+## v2.6.4
 
 - Target module width now rescales unlocked active strips immediately in Manual mode.
 - Preview, module geometry, and linked sizing refresh live.
@@ -108,13 +108,17 @@ Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the 
 - When Board dimensions determine grid, the outside board size remains fixed by design; module count changes, but total base-board cost may remain similar because the physical board volume is unchanged.
 
 
-## v2.6.3
+## v2.6.4
 
 - Removed the Module Spacing control; modules now assemble with zero artificial screen spacing.
 - Corrected the edge-inset preview so 3/4 in, 7/8 in, and 1 in each produce a distinct visible design.
 - Preserved live edge-species material and cost calculations for every inset preset.
 
 
-## v2.6.3 Release Candidate
+## v2.6.4 Release Candidate
 
 This stabilization release restores the known-good module renderer, keeps module spacing fully removed, makes every edge-width preset visibly distinct without polygon overlap, and adds a developer diagnostics panel for pre-build review. See `CHANGELOG.md` and `ROADMAP.md`.
+
+
+## Local projects
+Projects are stored in this browser and restore strips, dimensions, module settings, edge settings, machining values, wood prices, and notes. Download the JSON file for an external backup or transfer to another browser.

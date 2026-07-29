@@ -23,3 +23,10 @@
 
 ## v2.5.x
 - Added thickness planning, dynamic sizing, trim allowance, expanded engineering calculations, and manufacturing controls.
+
+## v2.6.4
+- Renamed the product to **Diamond End Grain Designer by Built By The Butts**.
+- Replaced strip-only saved schedules with full saved projects.
+- Selecting a project opens it immediately and restores the complete design.
+- Added Save, Save As, Duplicate, Rename, Delete, and Project Notes.
+- Migrates legacy saved strip schedules into projects.
