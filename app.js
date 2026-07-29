@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.5.5");
+console.info("Built By The Butts End Grain Designer Pro v2.5.6");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -17,7 +17,7 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '2.5.5', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.5.6', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
   tipWood: 'walnut', showLines: true, showFrame: true,
   finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
@@ -352,7 +352,11 @@ function pullControl(id) {
 }
 
 controls.forEach(id => $(id).addEventListener('change',()=>pullControl(id)));
-['finishedThickness','planingAllowance','wastePercent'].forEach(id => $(id).addEventListener('input',()=>pullControl(id)));
+// Keep the linked sizing fields live while the user types or uses the number-field arrows.
+// In dimensions mode, length/width recalculate rows and columns. In grid mode,
+// rows/columns recalculate finished dimensions, lumber use, and cost.
+['boardLength','boardWidth','columns','rows','trimAllowance','finishedThickness','planingAllowance','wastePercent']
+  .forEach(id => $(id).addEventListener('input',()=>pullControl(id)));
 $('edgeInset').addEventListener('input',()=>{ state.edgeInset=Number($('edgeInset').value); render(); });
 $('spacing').addEventListener('input',()=>{ state.spacing=Number($('spacing').value); render(); });
 $('edgeInset').addEventListener('change',commit); $('spacing').addEventListener('change',commit);
