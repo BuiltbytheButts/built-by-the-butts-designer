@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Built By The Butts End Grain Designer Pro" />
+  <title>Built By The Butts End Grain Designer Pro</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Built By The Butts</p>
+      <h1>End Grain Designer Pro</h1>
+    </div>
+    <div class="header-actions">
+      <button id="undoBtn" class="secondary" type="button">Undo</button>
+      <button id="redoBtn" class="secondary" type="button">Redo</button>
+      <button id="saveProjectBtn" class="secondary" type="button">Save Project</button>
+      <label class="secondary file-button">Open Project<input id="openProjectInput" type="file" accept="application/json" /></label>
+      <button id="exportSvgBtn" class="primary" type="button">Export SVG</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="panel controls-panel">
+      <section>
+        <h2>Board Setup</h2>
+        <div class="two-col">
+          <label>Length (in)
+            <input id="boardLength" type="number" min="4" max="60" step="0.125" value="20" />
+          </label>
+          <label>Width (in)
+            <input id="boardWidth" type="number" min="4" max="36" step="0.125" value="12.75" />
+          </label>
+        </div>
+        <div class="two-col">
+          <label>Columns
+            <input id="columns" type="number" min="1" max="20" step="1" value="8" />
+          </label>
+          <label>Rows
+            <input id="rows" type="number" min="1" max="16" step="1" value="5" />
+          </label>
+        </div>
+        <label>Pattern
+          <select id="layout">
+            <option value="grid">Straight grid</option>
+            <option value="stagger">Staggered rows</option>
+            <option value="single">Single row study</option>
+          </select>
+        </label>
+        <label>Orientation
+          <select id="orientation">
+            <option value="0">Diamond</option>
+            <option value="45">Turn all 45°</option>
+            <option value="90">Turn all 90°</option>
+            <option value="alternate">Alternate +45° / −45°</option>
+            <option value="checker">Alternate 0° / 90°</option>
+          </select>
+        </label>
+        <label>Tip cut inward <span id="cutDepthLabel">0.180 in</span>
+          <input id="cutDepth" type="range" min="0" max="38" value="12" />
+        </label>
+        <label>Module spacing <span id="spacingLabel">0.000 in</span>
+          <input id="spacing" type="range" min="0" max="30" value="0" />
+        </label>
+      </section>
+
+      <section>
+        <div class="section-heading-row">
+          <h2>Strip Schedule</h2>
+          <button id="resetStripsBtn" class="text-button" type="button">Reset</button>
+        </div>
+        <div id="stripEditor"></div>
+      </section>
+
+      <section>
+        <h2>Machining</h2>
+        <label>Tip fill wood
+          <select id="tipWood"></select>
+        </label>
+        <label class="check-row"><input id="showLines" type="checkbox" checked /> Show glue lines</label>
+        <label class="check-row"><input id="showFrame" type="checkbox" checked /> Show board perimeter</label>
+      </section>
+    </aside>
+
+    <section class="canvas-column">
+      <div class="metrics-grid">
+        <article><span>Module width</span><strong id="moduleWidthMetric">1.500 in</strong></article>
+        <article><span>Visible modules</span><strong id="moduleCountMetric">40</strong></article>
+        <article><span>Board size</span><strong id="boardSizeMetric">20.000 × 12.750 in</strong></article>
+        <article><span>Construction</span><strong>Continuous strips</strong></article>
+      </div>
+
+      <div class="canvas-shell">
+        <svg id="boardSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" aria-label="End-grain cutting board preview"></svg>
+      </div>
+
+      <div class="bottom-grid">
+        <section class="panel">
+          <h2>Single Module</h2>
+          <svg id="moduleSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" aria-label="Single module preview"></svg>
+        </section>
+        <section class="panel">
+          <h2>Manufacturing Schedule</h2>
+          <div id="schedule"></div>
+          <p class="note">This is a visual design tool. Confirm all saw setups, glue-line references, kerf allowances, and final dimensions in the shop before cutting.</p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
