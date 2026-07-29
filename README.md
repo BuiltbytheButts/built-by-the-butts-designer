@@ -1,4 +1,4 @@
-# Built By The Butts End Grain Designer Pro v2.5.1
+# Built By The Butts End Grain Designer Pro v2.5.2
 
 This release restores the compact original strip editor layout, removes drag-and-drop, keeps individual strip on/off controls, and ensures the full wood-species selector remains visible in the sidebar. Cache-busting version tags are included so GitHub Pages loads the new CSS and JavaScript immediately.
 
@@ -45,3 +45,9 @@ Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the 
 - Zero edge now produces no added-edge geometry, no added-edge material, and no added-edge cost.
 - Removed the Design Explorer edge-change thumbnails because the main preview and engineering calculations already update live.
 - Whole-board lumber cost remains driven by board dimensions, rough thickness, strip species, wood prices, and waste allowance.
+
+
+## Version 2.5.2
+
+- Corrected the zero-edge preview so the original strip woods extend continuously to every diamond corner.
+- Zero edge now removes only the added edge replacement; it no longer creates cleared gaps at the tips.

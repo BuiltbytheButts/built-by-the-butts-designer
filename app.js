@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.5.1");
+console.info("Built By The Butts End Grain Designer Pro v2.5.2");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -193,18 +193,36 @@ function addPatterns(svg, prefix) {
   svg.append(defs);
 }
 
+let moduleClipCounter = 0;
 function drawModule(svg, cx, cy, size, angle, prefix) {
   const total = totalWidth(); if (!total) return;
   const h = size/2;
   const g = svgEl('g',{transform:`translate(${cx} ${cy}) rotate(${angle})`});
+
+  // Draw every strip as a full-height rectangle, then clip the entire strip field
+  // to the diamond. This preserves all original strip wood at a zero edge inset
+  // and prevents the small cleared gaps that appeared at the diamond tips.
+  const clipId = `${prefix}-diamond-clip-${moduleClipCounter++}`;
+  const defs = svgEl('defs');
+  const clip = svgEl('clipPath',{id:clipId});
+  clip.append(svgEl('polygon',{points:pts([[0,-h],[h,0],[0,h],[-h,0]])}));
+  defs.append(clip);
+  svg.append(defs);
+
+  const stripField = svgEl('g',{'clip-path':`url(#${clipId})`});
   let x = -h;
   activeStrips().forEach(strip => {
     const w = size * strip.width / total;
-    const nx = x + w;
-    const polygon = [[x,-h+Math.abs(x)],[nx,-h+Math.abs(nx)],[nx,h-Math.abs(nx)],[x,h-Math.abs(x)]];
-    g.append(svgEl('polygon',{points:pts(polygon),fill:`url(#${prefix}-${strip.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':state.showLines?'.55':'0'}));
-    x = nx;
+    stripField.append(svgEl('rect',{
+      x, y:-h, width:w, height:size,
+      fill:`url(#${prefix}-${strip.wood})`,
+      stroke:state.showLines?'#241710':'none',
+      'stroke-width':state.showLines?'.55':'0'
+    }));
+    x += w;
   });
+  g.append(stripField);
+
   const insetValue = Math.max(0, Number(state.edgeInset ?? 0.5));
   if (insetValue > 0) {
     const insetRatio = Math.min(0.46, insetValue / total);
@@ -424,7 +442,7 @@ if (!Number.isFinite(Number(state.wastePercent))) state.wastePercent = 20;
 delete state.insetGoal;
 delete state.targetCenterPercent;
 state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false}));
-state.version = '2.5.1';
+state.version = '2.5.2';
 syncControls(); buildStripEditor(); buildWoodPriceEditor(); refreshSavedScheduleSelect(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------
