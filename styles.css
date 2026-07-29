@@ -142,3 +142,26 @@ button.small{padding:.48rem .35rem;font-size:.78rem}
 .material-name small,.material-cost small { display:block; color:var(--muted); font-size:.74rem; margin-top:.15rem; }
 .material-cost { text-align:right; }
 @media (max-width:650px){ .strip-toolbar{grid-template-columns:1fr}.material-cost-breakdown article{align-items:flex-start}.wood-price-editor label{grid-template-columns:1fr 100px} }
+
+
+/* v2.2 restored strip-selection layout */
+.strip-row {
+  display:grid !important;
+  grid-template-columns:30px 24px minmax(78px,.72fr) minmax(112px,1.28fr) !important;
+  gap:.5rem !important;
+  align-items:end !important;
+  width:100%;
+  margin-bottom:.72rem;
+}
+.strip-row .swatch { width:28px; height:40px; align-self:end; }
+.strip-row label { min-width:0; margin-bottom:0; }
+.strip-row input[type="number"],
+.strip-row select { min-width:0; width:100%; }
+.strip-row select { display:block; }
+.strip-enable { align-self:center !important; padding:0 !important; margin:0 !important; }
+.strip-enable input { width:18px; height:18px; }
+.drag-handle,.pair-chip { display:none !important; }
+@media(max-width:420px){
+  .strip-row{grid-template-columns:28px 22px 78px minmax(105px,1fr)!important;gap:.4rem!important}
+  .strip-row input[type="number"],.strip-row select{padding:.62rem .5rem}
+}

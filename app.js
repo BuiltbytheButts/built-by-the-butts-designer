@@ -78,20 +78,24 @@ function stripPairLabel(index) {
 
 function buildStripEditor() {
   const holder = $('stripEditor');
-  if (!holder) return;
   holder.innerHTML = '';
+
   state.strips.forEach((strip, i) => {
     if (strip.enabled === undefined) strip.enabled = true;
     const row = document.createElement('div');
     row.className = 'strip-row' + (strip.enabled ? '' : ' disabled');
-    row.draggable = true;
     row.dataset.index = i;
     row.innerHTML = `
-      <button class="drag-handle" type="button" title="Drag Strip ${i+1}" aria-label="Drag Strip ${i+1}">⋮⋮</button>
-      <span class="swatch" style="background:${WOODS[strip.wood].color}"></span>
-      <label class="strip-enable" title="Include Strip ${i+1}"><input data-enabled="${i}" type="checkbox" ${strip.enabled ? 'checked' : ''} aria-label="Use strip ${i+1}"></label>
-      <label>Strip ${i+1}<input data-width="${i}" type="number" min="0.0625" max="3" step="0.0625" value="${Number(strip.width).toFixed(4)}"></label>
-      <label>Wood<select data-wood="${i}">${woodOptions(strip.wood)}</select></label>`;
+      <span class="swatch" style="background:${WOODS[strip.wood].color}" title="${WOODS[strip.wood].name}"></span>
+      <label class="strip-enable" title="Include Strip ${i+1}">
+        <input data-enabled="${i}" type="checkbox" ${strip.enabled ? 'checked' : ''} aria-label="Use strip ${i+1}">
+      </label>
+      <label>Strip ${i+1}
+        <input data-width="${i}" type="number" min="0.0625" max="3" step="0.0625" value="${Number(strip.width).toFixed(4)}">
+      </label>
+      <label>Wood
+        <select data-wood="${i}" aria-label="Wood for strip ${i+1}">${woodOptions(strip.wood)}</select>
+      </label>`;
     holder.appendChild(row);
   });
 
@@ -101,42 +105,18 @@ function buildStripEditor() {
     if (!activeStrips().length) state.strips[idx].enabled = true;
     buildStripEditor(); render(); commit();
   }));
-  holder.querySelectorAll('[data-width]').forEach(el => el.addEventListener('input', e => {
-    const idx = Number(e.target.dataset.width); const value = Number(e.target.value);
+
+  holder.querySelectorAll('[data-width]').forEach(el => el.addEventListener('change', e => {
+    const idx = Number(e.target.dataset.width);
+    const value = Number(e.target.value);
     if (value > 0) state.strips[idx].width = value;
-    render();
+    buildStripEditor(); render(); commit();
   }));
-  holder.querySelectorAll('[data-width]').forEach(el => el.addEventListener('change', () => { buildStripEditor(); render(); commit(); }));
+
   holder.querySelectorAll('[data-wood]').forEach(el => el.addEventListener('change', e => {
     state.strips[Number(e.target.dataset.wood)].wood = e.target.value;
     buildStripEditor(); render(); commit();
   }));
-
-  let draggedIndex = null;
-  holder.querySelectorAll('.strip-row').forEach(row => {
-    row.addEventListener('dragstart', e => {
-      draggedIndex = Number(row.dataset.index);
-      row.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-    });
-    row.addEventListener('dragend', () => {
-      row.classList.remove('dragging');
-      holder.querySelectorAll('.strip-row').forEach(r => r.classList.remove('drag-over'));
-    });
-    row.addEventListener('dragover', e => {
-      e.preventDefault();
-      row.classList.add('drag-over');
-    });
-    row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
-    row.addEventListener('drop', e => {
-      e.preventDefault();
-      const targetIndex = Number(row.dataset.index);
-      if (draggedIndex === null || draggedIndex === targetIndex) return;
-      const [moved] = state.strips.splice(draggedIndex, 1);
-      state.strips.splice(targetIndex, 0, moved);
-      buildStripEditor(); render(); commit(); toast('Strip order updated');
-    });
-  });
 }
 
 function addStripPair(position='outer') {

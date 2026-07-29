@@ -1,4 +1,4 @@
-# Built By The Butts End Grain Designer Pro v2.1
+# Built By The Butts End Grain Designer Pro v2.2
 
 This release adds:
 
@@ -10,3 +10,10 @@ This release adds:
 - Edge-rip added-stock cost still updates with the inset and chosen edge wood.
 
 Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the GitHub repository and replace the existing files.
+
+
+## v2.2
+- Restored the original simple strip editor layout.
+- Removed drag-and-drop strip reordering.
+- Kept individual strip on/off controls and inner/outer pair controls.
+- Fixed wood selectors so they remain visible in the control panel.
