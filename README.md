@@ -1,4 +1,4 @@
-# Built By The Butts End Grain Designer Pro v2.5
+# Built By The Butts End Grain Designer Pro v2.5.1
 
 This release restores the compact original strip editor layout, removes drag-and-drop, keeps individual strip on/off controls, and ensures the full wood-species selector remains visible in the sidebar. Cache-busting version tags are included so GitHub Pages loads the new CSS and JavaScript immediately.
 
@@ -37,3 +37,11 @@ Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the 
 - Removed the Recommended Inset card and Apply button.
 - Removed the Goal for Correct Inset and target center-diamond controls.
 - Kept the Edge Rip Inset slider, preset tiles, Design Explorer, geometry metrics, and full-board cost calculations.
+
+
+## Version 2.5.1
+
+- Added a **Zero** edge-rip option for traditional diamond boards with no replacement edge wood.
+- Zero edge now produces no added-edge geometry, no added-edge material, and no added-edge cost.
+- Removed the Design Explorer edge-change thumbnails because the main preview and engineering calculations already update live.
+- Whole-board lumber cost remains driven by board dimensions, rough thickness, strip species, wood prices, and waste allowance.

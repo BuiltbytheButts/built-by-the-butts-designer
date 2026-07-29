@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Built By The Butts End Grain Designer Pro" />
   <title>Built By The Butts End Grain Designer Pro</title>
-  <link rel="stylesheet" href="styles.css?v=2.5" />
+  <link rel="stylesheet" href="styles.css?v=2.5.1" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>End Grain Designer Pro <span class="version-badge">v2.5</span></h1>
+      <h1>End Grain Designer Pro <span class="version-badge">v2.5.1</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -68,9 +68,10 @@
           </select>
         </label>
         <label>Edge rip inset <span id="edgeInsetLabel">0.500 in</span>
-          <input id="edgeInset" type="range" min="0.125" max="0.750" step="0.0625" value="0.500" />
+          <input id="edgeInset" type="range" min="0" max="0.750" step="0.0625" value="0.500" />
         </label>
         <div class="inset-quick-values" aria-label="Edge rip inset presets">
+          <button type="button" data-inset="0">Zero</button>
           <button type="button" data-inset="0.125">⅛″</button>
           <button type="button" data-inset="0.250">¼″</button>
           <button type="button" data-inset="0.375">⅜″</button>
@@ -172,11 +173,6 @@
           </div>
           <div id="materialCostBreakdown" class="material-cost-breakdown"></div>
         </div>
-        <div class="design-explorer-heading">
-          <div><h3>Design Explorer</h3><p>Click a variation to load it into the main designer.</p></div>
-          <span id="explorerRangeSummary" class="badge"></span>
-        </div>
-        <div id="designExplorer" class="design-explorer"></div>
         <p class="note">Cost values are planning estimates. Whole-board cost includes the finished board, material removed during top-and-bottom planing, the original laminated blank, replacement edge stock, and the selected waste allowance. Reusable offcuts are shown separately and are not credited back against cost.</p>
       </section>
 
@@ -225,6 +221,6 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=2.5"></script>
+  <script src="app.js?v=2.5.1"></script>
 </body>
 </html>

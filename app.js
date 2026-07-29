@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.5");
+console.info("Built By The Butts End Grain Designer Pro v2.5.1");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -205,12 +205,15 @@ function drawModule(svg, cx, cy, size, angle, prefix) {
     g.append(svgEl('polygon',{points:pts(polygon),fill:`url(#${prefix}-${strip.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':state.showLines?'.55':'0'}));
     x = nx;
   });
-  const insetRatio = Math.max(0.04, Math.min(0.46, Number(state.edgeInset || 0.5) / total));
-  const inward = h * insetRatio;
-  const base = Math.min(h*.48, inward + size*.075);
-  const fill = `url(#${prefix}-${state.tipWood})`;
-  g.append(svgEl('polygon',{points:pts([[0,-h],[base,-h+inward],[-base,-h+inward]]),fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'}));
-  g.append(svgEl('polygon',{points:pts([[0,h],[-base,h-inward],[base,h-inward]]),fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'}));
+  const insetValue = Math.max(0, Number(state.edgeInset ?? 0.5));
+  if (insetValue > 0) {
+    const insetRatio = Math.min(0.46, insetValue / total);
+    const inward = h * insetRatio;
+    const base = Math.min(h*.48, inward + size*.075);
+    const fill = `url(#${prefix}-${state.tipWood})`;
+    g.append(svgEl('polygon',{points:pts([[0,-h],[base,-h+inward],[-base,-h+inward]]),fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'}));
+    g.append(svgEl('polygon',{points:pts([[0,h],[-base,h-inward],[base,h-inward]]),fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'}));
+  }
   if (state.showLines) g.append(svgEl('polygon',{points:pts([[0,-h],[h,0],[0,h],[-h,0]]),fill:'none',stroke:'#241710','stroke-width':'1.25'}));
   svg.append(g);
 }
@@ -244,7 +247,10 @@ function renderSchedule() {
     row.innerHTML=`<div class="schedule-left"><span class="swatch" style="width:24px;height:24px;background:${WOODS[s.wood].color}"></span><div><strong>Strip ${i+1}</strong><br><small>${WOODS[s.wood].name}</small></div></div><span class="badge">${Number(s.width).toFixed(3)} in</span>`;
     h.append(row);
   });
-  const tip=document.createElement('div'); tip.className='schedule-row'; tip.innerHTML=`<strong>Two outside tip fills</strong><span class="badge">${WOODS[state.tipWood].name}</span>`; h.append(tip);
+  const tip=document.createElement('div'); tip.className='schedule-row';
+  if (Number(state.edgeInset ?? 0) > 0) tip.innerHTML=`<strong>Two outside tip fills</strong><span class="badge">${WOODS[state.tipWood].name}</span>`;
+  else tip.innerHTML='<strong>Edge replacement</strong><span class="badge">None — zero edge</span>';
+  h.append(tip);
 }
 function renderMetrics() {
   const rows = state.layout==='single'?1:Number(state.rows);
@@ -252,7 +258,7 @@ function renderMetrics() {
   $('moduleCountMetric').textContent = String(Number(state.columns)*rows);
   $('boardSizeMetric').textContent = `${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`;
   if ($('thicknessMetric')) $('thicknessMetric').textContent = `${Number(state.finishedThickness).toFixed(3)} / ${roughThickness().toFixed(3)} in`;
-  $('edgeInsetLabel').textContent = `${Number(state.edgeInset || 0.5).toFixed(3)} in`;
+  $('edgeInsetLabel').textContent = `${Number(state.edgeInset ?? 0.5).toFixed(3)} in`;
   $('spacingLabel').textContent = `${(state.spacing/100).toFixed(3)} in`;
 }
 function render() { renderBoard(); renderModule(); renderSchedule(); renderMetrics(); renderEngineering(); updateUndoRedo(); }
@@ -374,40 +380,10 @@ function renderMaterialCostBreakdown() {
 }
 
 function snapInset(value) {
-  const min=.125,max=.750,step=.0625;
-  return Math.max(min,Math.min(max,Math.round((value-min)/step)*step+min));
+  const min=0,max=.750,step=.0625;
+  return Math.max(min,Math.min(max,Math.round(value/step)*step));
 }
 
-
-function miniModuleSvg(inset) {
-  const total=totalWidth()||1, size=108, h=size/2;
-  let x=-h;
-  let shapes='';
-  activeStrips().forEach(strip=>{
-    const w=size*Number(strip.width)/total, nx=x+w;
-    const polygon=[[x,-h+Math.abs(x)],[nx,-h+Math.abs(nx)],[nx,h-Math.abs(nx)],[x,h-Math.abs(x)]].map(p=>p.join(',')).join(' ');
-    shapes += `<polygon points="${polygon}" fill="${WOODS[strip.wood].color}" stroke="#241710" stroke-width=".5"/>`;
-    x=nx;
-  });
-  const d=h*Math.max(.04,Math.min(.46,inset/total));
-  const base=Math.min(h*.48,d+size*.075), fill=WOODS[state.tipWood].color;
-  shapes += `<polygon points="0,${-h} ${base},${-h+d} ${-base},${-h+d}" fill="${fill}" stroke="#241710" stroke-width=".8"/>`;
-  shapes += `<polygon points="0,${h} ${-base},${h-d} ${base},${h-d}" fill="${fill}" stroke="#241710" stroke-width=".8"/>`;
-  return `<svg viewBox="-60 -60 120 120" aria-hidden="true"><g>${shapes}<polygon points="0,${-h} ${h},0 0,${h} ${-h},0" fill="none" stroke="#241710" stroke-width="1.2"/></g></svg>`;
-}
-
-function renderDesignExplorer() {
-  const holder=$('designExplorer'); if(!holder) return;
-  const values=[.125,.250,.375,.500,.625,.750];
-  holder.innerHTML='';
-  values.forEach(inset=>{
-    const e=engineeringForInset(inset);
-    const b=document.createElement('button'); b.type='button'; b.dataset.inset=String(inset); b.className='explorer-card'+(Math.abs(state.edgeInset-inset)<.001?' active':'');
-    b.innerHTML=`${miniModuleSvg(inset)}<strong>${inset.toFixed(3)} in</strong><small>${e.centerPercent.toFixed(0)}% center · $${e.addedCost.toFixed(2)}</small>`;
-    holder.append(b);
-  });
-  $('explorerRangeSummary').textContent=`$${engineeringForInset(.125).addedCost.toFixed(2)}–$${engineeringForInset(.750).addedCost.toFixed(2)} added walnut`;
-}
 
 function renderEngineering() {
   if(!$('centerDiamondMetric')) return;
@@ -423,7 +399,6 @@ function renderEngineering() {
   if ($('roughThicknessMetric')) $('roughThicknessMetric').textContent = `${roughThickness().toFixed(3)} in`;
   if ($('planingLossMetric')) $('planingLossMetric').textContent = `${(2 * Number(state.planingAllowance || 0)).toFixed(3)} in total planing allowance · ${whole.planingBoardFeet.toFixed(3)} bd ft removed`;
   document.querySelectorAll('[data-inset]').forEach(b=>b.classList.toggle('active',Math.abs(Number(b.dataset.inset)-state.edgeInset)<.001));
-  renderDesignExplorer();
   renderMaterialCostBreakdown();
 }
 
@@ -449,7 +424,7 @@ if (!Number.isFinite(Number(state.wastePercent))) state.wastePercent = 20;
 delete state.insetGoal;
 delete state.targetCenterPercent;
 state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false}));
-state.version = '2.5.0';
+state.version = '2.5.1';
 syncControls(); buildStripEditor(); buildWoodPriceEditor(); refreshSavedScheduleSelect(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------
@@ -561,21 +536,22 @@ function drawDiamondCore(svg, options={}) {
   svg.append(group);
   svg.append(svgEl('polygon',{points:pts([[g.left,g.cy],[g.cx,g.top],[g.right,g.cy],[g.cx,g.bottom]]),fill:'none',stroke:'#241710','stroke-width':'3'}));
 
-  const inset=Math.max(35,Math.min(150,(Number(state.edgeInset||.5)/(total||1))*300));
+  const insetValue=Math.max(0,Number(state.edgeInset ?? .5));
+  const inset=insetValue===0 ? 0 : Math.max(35,Math.min(150,(insetValue/(total||1))*300));
   const leftCutX=g.left+inset;
   const rightCutX=g.right-inset;
   const yOffset=g.halfH*(inset/g.halfW);
   const leftTop=g.cy-yOffset,leftBottom=g.cy+yOffset,rightTop=leftTop,rightBottom=leftBottom;
 
-  if(options.marks || options.cut || options.filled){
+  if(insetValue > 0 && (options.marks || options.cut || options.filled)){
     for(const [x,top,bottom] of [[leftCutX,leftTop,leftBottom],[rightCutX,rightTop,rightBottom]]){
       svg.append(svgEl('line',{x1:x,y1:top,x2:x,y2:bottom,stroke:'#c0392b','stroke-width':'5','stroke-dasharray':options.cut||options.filled?'0':'12 7'}));
     }
     svg.append(svgEl('line',{x1:g.left,y1:g.bottom+38,x2:leftCutX,y2:g.bottom+38,stroke:'#6f3f24','stroke-width':'3','marker-start':'url(#timeline-arrow)','marker-end':'url(#timeline-arrow)'}));
-    labelSvg(svg,`${Number(state.edgeInset||.5).toFixed(3)} in`,(g.left+leftCutX)/2,g.bottom+66,{anchor:'middle',size:15});
+    labelSvg(svg,`${Number(state.edgeInset ?? .5).toFixed(3)} in`,(g.left+leftCutX)/2,g.bottom+66,{anchor:'middle',size:15});
   }
 
-  if(options.cut){
+  if(insetValue > 0 && options.cut){
     const leftOff=[[g.left,g.cy],[g.cx,g.top],[leftCutX,leftTop],[leftCutX,leftBottom],[g.cx,g.bottom]];
     const rightOff=[[g.right,g.cy],[g.cx,g.top],[rightCutX,rightTop],[rightCutX,rightBottom],[g.cx,g.bottom]];
     svg.append(svgEl('polygon',{points:pts(leftOff),fill:'#fff','fill-opacity':'.75',stroke:'#c0392b','stroke-width':'2'}));
@@ -584,7 +560,7 @@ function drawDiamondCore(svg, options={}) {
     labelSvg(svg,'SAVE OFFCUT',855,250,{anchor:'middle',fill:'#9b2d20',size:15});
   }
 
-  if(options.separated){
+  if(insetValue > 0 && options.separated){
     // overlay a clean reduced core and show reusable offcuts below
     svg.append(svgEl('rect',{x:0,y:0,width:1100,height:500,fill:'#f8f4ee'}));
     const corePts=[[leftCutX,leftTop],[g.cx,g.top],[rightCutX,rightTop],[rightCutX,rightBottom],[g.cx,g.bottom],[leftCutX,leftBottom]];
@@ -598,7 +574,7 @@ function drawDiamondCore(svg, options={}) {
     labelSvg(svg,'Reusable laminated offcuts',550,440,{anchor:'middle',size:18});
   }
 
-  if(options.walnutPieces){
+  if(insetValue > 0 && options.walnutPieces){
     const fill=`url(#timeline-${state.tipWood})`;
     svg.append(svgEl('polygon',{points:pts([[90,250],[leftCutX-28,leftTop-10],[leftCutX-28,leftBottom+10]]),fill,stroke:'#241710','stroke-width':'2'}));
     svg.append(svgEl('polygon',{points:pts([[1010,250],[rightCutX+28,rightTop-10],[rightCutX+28,rightBottom+10]]),fill,stroke:'#241710','stroke-width':'2'}));
@@ -607,7 +583,7 @@ function drawDiamondCore(svg, options={}) {
     labelSvg(svg,`${WOODS[state.tipWood].name} additions`,550,445,{anchor:'middle',size:18});
   }
 
-  if(options.filled){
+  if(insetValue > 0 && options.filled){
     const fill=`url(#timeline-${state.tipWood})`;
     svg.append(svgEl('polygon',{points:pts([[g.left,g.cy],[leftCutX,leftTop],[leftCutX,leftBottom]]),fill,stroke:'#241710','stroke-width':'2'}));
     svg.append(svgEl('polygon',{points:pts([[g.right,g.cy],[rightCutX,rightTop],[rightCutX,rightBottom]]),fill,stroke:'#241710','stroke-width':'2'}));
@@ -624,10 +600,13 @@ function drawTimelineModule(svg,cx,cy,size) {
     g.append(svgEl('rect',{x,y:-h,width:sw,height:size,fill:`url(#timeline-${strip.wood})`,stroke:'#241710','stroke-width':'1'}));
     x+=sw;
   });
-  const insetRatio=Math.max(.05,Math.min(.42,Number(state.edgeInset||.5)/total));
-  const d=h*insetRatio, fill=`url(#timeline-${state.tipWood})`;
-  g.append(svgEl('polygon',{points:pts([[0,-h],[d,-h+d],[-d,-h+d]]),fill,stroke:'#241710','stroke-width':'2'}));
-  g.append(svgEl('polygon',{points:pts([[0,h],[-d,h-d],[d,h-d]]),fill,stroke:'#241710','stroke-width':'2'}));
+  const insetValue=Math.max(0,Number(state.edgeInset ?? .5));
+  if (insetValue > 0) {
+    const insetRatio=Math.min(.42,insetValue/total);
+    const d=h*insetRatio, fill=`url(#timeline-${state.tipWood})`;
+    g.append(svgEl('polygon',{points:pts([[0,-h],[d,-h+d],[-d,-h+d]]),fill,stroke:'#241710','stroke-width':'2'}));
+    g.append(svgEl('polygon',{points:pts([[0,h],[-d,h-d],[d,h-d]]),fill,stroke:'#241710','stroke-width':'2'}));
+  }
   g.append(svgEl('rect',{x:-h,y:-h,width:size,height:size,fill:'none',stroke:'#241710','stroke-width':'3'}));
   svg.append(g);
 }
