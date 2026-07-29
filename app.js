@@ -1,3 +1,4 @@
+console.info("Built By The Butts End Grain Designer Pro v2.3");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -87,13 +88,11 @@ function buildStripEditor() {
     row.dataset.index = i;
     row.innerHTML = `
       <span class="swatch" style="background:${WOODS[strip.wood].color}" title="${WOODS[strip.wood].name}"></span>
-      <label class="strip-enable" title="Include Strip ${i+1}">
-        <input data-enabled="${i}" type="checkbox" ${strip.enabled ? 'checked' : ''} aria-label="Use strip ${i+1}">
-      </label>
-      <label>Strip ${i+1}
+      <label class="strip-field width-field">
+        <span class="strip-field-heading"><span>Strip ${i+1}</span><input data-enabled="${i}" type="checkbox" ${strip.enabled ? 'checked' : ''} aria-label="Use strip ${i+1}"></span>
         <input data-width="${i}" type="number" min="0.0625" max="3" step="0.0625" value="${Number(strip.width).toFixed(4)}">
       </label>
-      <label>Wood
+      <label class="strip-field wood-field">Wood
         <select data-wood="${i}" aria-label="Wood for strip ${i+1}">${woodOptions(strip.wood)}</select>
       </label>`;
     holder.appendChild(row);

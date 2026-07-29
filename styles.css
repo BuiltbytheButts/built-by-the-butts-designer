@@ -165,3 +165,28 @@ button.small{padding:.48rem .35rem;font-size:.78rem}
   .strip-row{grid-template-columns:28px 22px 78px minmax(105px,1fr)!important;gap:.4rem!important}
   .strip-row input[type="number"],.strip-row select{padding:.62rem .5rem}
 }
+
+
+/* v2.3 compact original-style strip editor — no drag-and-drop */
+.version-badge{display:inline-block;font-size:.68rem;vertical-align:middle;padding:.2rem .42rem;border-radius:999px;background:#efe1d3;color:#744b30;font-weight:700;margin-left:.35rem}
+.strip-help{margin-bottom:.8rem}
+.strip-row{
+  display:grid !important;
+  grid-template-columns:28px minmax(92px,.82fr) minmax(132px,1.18fr) !important;
+  gap:.55rem !important;
+  align-items:end !important;
+  width:100% !important;
+  margin:0 0 .78rem !important;
+}
+.strip-row .swatch{width:28px !important;height:40px !important;align-self:end !important;margin:0 !important}
+.strip-field{display:block !important;min-width:0 !important;margin:0 !important;color:var(--muted)}
+.strip-field-heading{display:flex;align-items:center;justify-content:space-between;gap:.35rem;min-height:20px}
+.strip-field-heading input[type=checkbox]{width:18px;height:18px;margin:0;flex:0 0 auto}
+.strip-field input[type=number],.strip-field select{display:block !important;width:100% !important;min-width:0 !important;margin-top:.28rem !important;padding:.68rem .72rem !important}
+.strip-row.disabled{opacity:.48}
+.strip-row.disabled input[type=number],.strip-row.disabled select{pointer-events:none}
+.drag-handle,.pair-chip,.strip-enable{display:none !important}
+@media(max-width:410px){
+  .strip-row{grid-template-columns:26px minmax(84px,.8fr) minmax(116px,1.2fr)!important;gap:.4rem!important}
+  .strip-field input[type=number],.strip-field select{padding:.62rem .5rem!important}
+}

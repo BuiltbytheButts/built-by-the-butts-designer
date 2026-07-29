@@ -1,3 +1,7 @@
+# Built By The Butts End Grain Designer Pro v2.3
+
+This release restores the compact original strip editor layout, removes drag-and-drop, keeps individual strip on/off controls, and ensures the full wood-species selector remains visible in the sidebar. Cache-busting version tags are included so GitHub Pages loads the new CSS and JavaScript immediately.
+
 # Built By The Butts End Grain Designer Pro v2.2
 
 This release adds:
