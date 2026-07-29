@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Built By The Butts End Grain Designer Pro" />
   <title>Built By The Butts End Grain Designer Pro</title>
-  <link rel="stylesheet" href="styles.css?v=2.6.0" />
+  <link rel="stylesheet" href="styles.css?v=2.6.1" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>End Grain Designer Pro <span class="version-badge">v2.6.0</span></h1>
+      <h1>End Grain Designer Pro <span class="version-badge">v2.6.1</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -115,7 +115,7 @@
             <button id="normalizeScheduleBtn" class="secondary" type="button">Normalize to Target</button>
             <button id="restoreModuleWidthBtn" class="secondary" type="button">Return to 1.500″</button>
           </div>
-          <p id="moduleWidthHelp" class="strip-help">Auto mode uses the active strip widths directly. Manual mode proportionally scales unlocked active strips to the target width.</p>
+          <p id="moduleWidthHelp" class="strip-help">Auto mode uses the active strip widths directly. Manual mode proportionally scales unlocked active strips as the target width changes. To make module-width changes alter the finished board size and cost, use “Rows and columns determine board dimensions.”</p>
         </div>
         <div class="strip-toolbar">
           <button id="addOuterPairBtn" class="secondary" type="button">+ Add Outer Pair</button>
@@ -250,6 +250,6 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=2.6.0"></script>
+  <script src="app.js?v=2.5.8"></script>
 </body>
 </html>

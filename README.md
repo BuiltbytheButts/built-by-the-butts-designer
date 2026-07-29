@@ -1,4 +1,4 @@
-# Built By The Butts End Grain Designer Pro v2.6.0
+# Built By The Butts End Grain Designer Pro v2.5.8
 
 This release restores the compact original strip editor layout, removes drag-and-drop, keeps individual strip on/off controls, and ensures the full wood-species selector remains visible in the sidebar. Cache-busting version tags are included so GitHub Pages loads the new CSS and JavaScript immediately.
 
@@ -83,7 +83,7 @@ Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the 
 - Number-field arrow clicks and typed values now update the preview, lumber quantities, and costs without requiring an extra click outside the field.
 
 
-## v2.6.0 — Edge species cost correction
+## v2.5.8 — Edge species cost correction
 
 - Corrected linked sizing so each column and row uses the full physical module width.
 - A 1.500-inch module now contributes 1.500 inches per column and row before final trimming.
@@ -93,8 +93,16 @@ Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the 
 - Board dimensions, lumber quantities, and costs all use the corrected physical dimensions.
 
 
-## Version 2.6.0
+## Version 2.5.8
 - Added a **None — no edge strip** choice. Selecting it sets the edge inset to zero.
 - Edge stock board feet and cost now use the selected edge species and its $/board-foot price.
 - Selecting a positive edge inset automatically restores Walnut if no edge species is selected.
 - Whole-board species breakdown now places replacement edge stock under the selected species.
+
+
+## v2.6.1
+
+- Target module width now rescales unlocked active strips immediately in Manual mode.
+- Preview, module geometry, and linked sizing refresh live.
+- When Rows and columns determine board dimensions, module-width changes also update finished board dimensions, board feet, and material cost.
+- When Board dimensions determine grid, the outside board size remains fixed by design; module count changes, but total base-board cost may remain similar because the physical board volume is unchanged.

@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.6.0");
+console.info("Built By The Butts End Grain Designer Pro v2.6.1");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -17,7 +17,7 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '2.6.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.6.1', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
   tipWood: 'walnut', showLines: true, showFrame: true,
   finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
@@ -420,6 +420,20 @@ function pullControl(id) {
 }
 
 controls.forEach(id => $(id).addEventListener('change',()=>pullControl(id)));
+
+// In manual mode, changing the target module width immediately rescales the
+// unlocked active strips. This keeps the preview, grid geometry, board size
+// (when Grid Determines Size is selected), board feet, and material cost in sync.
+$('targetModuleWidth')?.addEventListener('input',()=>{
+  const target = Number($('targetModuleWidth').value);
+  state.targetModuleWidth = target;
+  if (state.moduleWidthMode === 'manual' && Number.isFinite(target) && target > 0) {
+    normalizeScheduleToTarget(target, false);
+  } else {
+    render();
+  }
+});
+
 $('tipWood').addEventListener('change',()=>{
   state.tipWood = $('tipWood').value;
   if (!state.tipWood) {
@@ -622,7 +636,7 @@ if (state.strips.length === 5) {
 }
 if (!['auto','manual'].includes(state.moduleWidthMode)) state.moduleWidthMode = 'auto';
 if (!Number.isFinite(Number(state.targetModuleWidth))) state.targetModuleWidth = totalWidth() || 1.5;
-state.version = '2.6.0';
+state.version = '2.6.1';
 syncControls(); buildStripEditor(); buildWoodPriceEditor(); refreshSavedScheduleSelect(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------
