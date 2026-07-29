@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.6.1");
+console.info("Built By The Butts End Grain Designer Pro v2.6.2");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -18,7 +18,7 @@ const DEFAULT_STRIPS = [
 
 let state = {
   version: '2.6.1', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
-  layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
+  layout: 'grid', orientation: '0', edgeInset: 0.500,
   tipWood: 'walnut', showLines: true, showFrame: true,
   finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
   moduleWidthMode: 'auto', targetModuleWidth: 1.5,
@@ -30,7 +30,7 @@ let future = [];
 let isRestoring = false;
 
 const $ = id => document.getElementById(id);
-const controls = ['moduleWidthMode','targetModuleWidth','sizingMode','boardLength','boardWidth','columns','rows','trimAllowance','layout','orientation','edgeInset','spacing','showLines','showFrame','finishedThickness','planingAllowance','wastePercent'];
+const controls = ['moduleWidthMode','targetModuleWidth','sizingMode','boardLength','boardWidth','columns','rows','trimAllowance','layout','orientation','edgeInset','showLines','showFrame','finishedThickness','planingAllowance','wastePercent'];
 
 function svgEl(name, attrs = {}) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -87,7 +87,7 @@ function roughThickness() { return Math.max(0, Number(state.finishedThickness ||
 function roundDimension(value) { return Math.round(Math.max(0, value) * 1000) / 1000; }
 function moduleSizingGeometry() {
   const module = Math.max(0.0625, totalWidth());
-  const gap = Math.max(0, Number(state.spacing || 0)) / 100;
+  const gap = 0;
 
   // A finished module occupies its full physical width in the board grid.
   // Rotating the strip pattern changes the artwork inside the module, not the
@@ -347,12 +347,21 @@ function drawModule(svg, cx, cy, size, angle, prefix) {
 
   const insetValue = Math.max(0, Number(state.edgeInset ?? 0.5));
   if (insetValue > 0 && activeEdgeWood()) {
-    const insetRatio = Math.min(0.46, insetValue / total);
-    const inward = h * insetRatio;
-    const base = Math.min(h*.48, inward + size*.075);
+    // Treat the inset as a true physical distance across the module. The old
+    // preview capped the geometry at about 3/4 in, which made 3/4, 7/8 and
+    // 1 in appear identical. Allow the two tip fills to continue growing;
+    // when their combined depth exceeds the module width, they meet/overlap
+    // at the center just as the machining geometry would imply.
+    const depth = size * (insetValue / total);
     const fill = `url(#${prefix}-${state.tipWood})`;
-    g.append(svgEl('polygon',{points:pts([[0,-h],[base,-h+inward],[-base,-h+inward]]),fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'}));
-    g.append(svgEl('polygon',{points:pts([[0,h],[-base,h-inward],[base,h-inward]]),fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'}));
+    g.append(svgEl('polygon',{
+      points:pts([[0,-h],[depth,-h+depth],[-depth,-h+depth]]),
+      fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'
+    }));
+    g.append(svgEl('polygon',{
+      points:pts([[0,h],[-depth,h-depth],[depth,h-depth]]),
+      fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'
+    }));
   }
   if (state.showLines) g.append(svgEl('polygon',{points:pts([[0,-h],[h,0],[0,h],[-h,0]]),fill:'none',stroke:'#241710','stroke-width':'1.25'}));
   svg.append(g);
@@ -369,7 +378,7 @@ function renderBoard() {
   if (state.showFrame) svg.append(svgEl('rect',{x:55,y:55,width:1090,height:650,rx:12,fill:'#f5efe7',stroke:'#9c8a7b','stroke-width':'3'}));
   const cols = Math.max(1,Number(state.columns));
   const rows = state.layout === 'single' ? 1 : Math.max(1,Number(state.rows));
-  const spacing = state.spacing * 2.4;
+  const spacing = 0;
   const size = Math.min(205, 1030/Math.max(cols*.71+.5,1), 600/Math.max(rows*.71+.5,1));
   const xStep = size*.707 + spacing, yStep = size*.707 + spacing;
   const tw = (cols-1)*xStep + size, th = (rows-1)*yStep + size;
@@ -400,7 +409,6 @@ function renderMetrics() {
   $('boardSizeMetric').textContent = `${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`;
   if ($('thicknessMetric')) $('thicknessMetric').textContent = `${Number(state.finishedThickness).toFixed(3)} / ${roughThickness().toFixed(3)} in`;
   $('edgeInsetLabel').textContent = `${Number(state.edgeInset ?? 0.5).toFixed(3)} in`;
-  $('spacingLabel').textContent = `${(state.spacing/100).toFixed(3)} in`;
 }
 function render() { syncModuleWidthControls(); applySizingRules(); renderBoard(); renderModule(); renderSchedule(); renderMetrics(); renderEngineering(); updateUndoRedo(); }
 
@@ -410,7 +418,7 @@ function syncControls() {
 }
 function pullControl(id) {
   const el=$(id); let v = el.type==='checkbox' ? el.checked : el.value;
-  if (['targetModuleWidth','boardLength','boardWidth','columns','rows','trimAllowance','edgeInset','spacing','finishedThickness','planingAllowance','wastePercent'].includes(id)) v=Number(v);
+  if (['targetModuleWidth','boardLength','boardWidth','columns','rows','trimAllowance','edgeInset','finishedThickness','planingAllowance','wastePercent'].includes(id)) v=Number(v);
   state[id]=v;
   if (id === 'moduleWidthMode') {
     if (v === 'manual') state.targetModuleWidth = totalWidth();
@@ -457,8 +465,7 @@ $('edgeInset').addEventListener('input',()=>{
   $('tipWood').innerHTML = woodOptions(state.tipWood, true);
   render();
 });
-$('spacing').addEventListener('input',()=>{ state.spacing=Number($('spacing').value); render(); });
-$('edgeInset').addEventListener('change',commit); $('spacing').addEventListener('change',commit);
+$('edgeInset').addEventListener('change',commit);
 $('resetStripsBtn')?.addEventListener('click',()=>{ state.strips=structuredClone(DEFAULT_STRIPS); buildStripEditor(); render(); commit(); toast('Strip schedule reset'); });
 $('normalizeScheduleBtn')?.addEventListener('click',()=>{ if (normalizeScheduleToTarget(state.targetModuleWidth)) commit(); });
 $('restoreModuleWidthBtn')?.addEventListener('click',()=>{
@@ -605,6 +612,7 @@ document.addEventListener('click', e => {
 
 const saved=localStorage.getItem('bbtb-designer-autosave');
 if(saved) { try { state=JSON.parse(saved); } catch {} }
+delete state.spacing; // Module spacing was retired in v2.6.2.
 if (!Number.isFinite(Number(state.edgeInset))) state.edgeInset = 0.500;
 if (Number(state.edgeInset) <= 0) state.tipWood = '';
 else if (!WOODS[state.tipWood]) state.tipWood = 'walnut';
