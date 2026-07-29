@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Built By The Butts End Grain Designer Pro" />
   <title>Built By The Butts End Grain Designer Pro</title>
-  <link rel="stylesheet" href="styles.css?v=2.3" />
+  <link rel="stylesheet" href="styles.css?v=2.4" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>End Grain Designer Pro <span class="version-badge">v2.3</span></h1>
+      <h1>End Grain Designer Pro <span class="version-badge">v2.4</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -34,6 +34,15 @@
             <input id="boardWidth" type="number" min="4" max="36" step="0.125" value="12.75" />
           </label>
         </div>
+        <div class="two-col">
+          <label>Finished board thickness (in)
+            <input id="finishedThickness" type="number" min="0.750" max="3" step="0.125" value="1.500" />
+          </label>
+          <label>Planing allowance per face (in)
+            <input id="planingAllowance" type="number" min="0.125" max="0.250" step="0.0625" value="0.125" />
+          </label>
+        </div>
+        <p class="strip-help thickness-help">Rough slice thickness equals the finished thickness plus the planing allowance on both faces.</p>
         <div class="two-col">
           <label>Columns
             <input id="columns" type="number" min="1" max="20" step="1" value="8" />
@@ -114,7 +123,7 @@
         <article><span>Module width</span><strong id="moduleWidthMetric">1.500 in</strong></article>
         <article><span>Visible modules</span><strong id="moduleCountMetric">40</strong></article>
         <article><span>Board size</span><strong id="boardSizeMetric">20.000 × 12.750 in</strong></article>
-        <article><span>Construction</span><strong>Continuous strips</strong></article>
+        <article><span>Finished / rough thickness</span><strong id="thicknessMetric">1.500 / 1.750 in</strong></article>
       </div>
 
       <div class="canvas-shell">
@@ -141,12 +150,14 @@
               <h3>Material pricing</h3>
               <div id="woodPriceEditor" class="wood-price-editor"></div>
               <div class="two-col">
-                <label>Finished thickness (in)
-                  <input id="finishedThickness" type="number" min="0.5" max="4" step="0.125" value="1.500" />
-                </label>
                 <label>Waste allowance (%)
                   <input id="wastePercent" type="number" min="0" max="100" step="1" value="20" />
                 </label>
+                <div class="calculated-field">
+                  <span>Required rough slice</span>
+                  <strong id="roughThicknessMetric">1.750 in</strong>
+                  <small id="planingLossMetric">0.250 in total planing allowance</small>
+                </div>
               </div>
             </div>
             <label>Goal for correct inset
@@ -173,7 +184,7 @@
 
         <div class="material-cost-breakdown-wrap">
           <div class="design-explorer-heading">
-            <div><h3>Whole-Board Material Cost</h3><p>Calculated from board size, finished thickness, active strip selections, edge replacement wood, species prices, and waste allowance.</p></div>
+            <div><h3>Whole-Board Material Cost</h3><p>Calculated from board size, required rough slice thickness, active strip selections, edge replacement wood, species prices, and waste allowance.</p></div>
           </div>
           <div id="materialCostBreakdown" class="material-cost-breakdown"></div>
         </div>
@@ -182,7 +193,7 @@
           <span id="explorerRangeSummary" class="badge"></span>
         </div>
         <div id="designExplorer" class="design-explorer"></div>
-        <p class="note">Cost values are planning estimates. Whole-board cost includes the original laminated blank, replacement edge stock, and the selected waste allowance. Reusable offcuts are shown separately and are not credited back against cost.</p>
+        <p class="note">Cost values are planning estimates. Whole-board cost includes the finished board, material removed during top-and-bottom planing, the original laminated blank, replacement edge stock, and the selected waste allowance. Reusable offcuts are shown separately and are not credited back against cost.</p>
       </section>
 
       <section class="panel machining-timeline-panel">
@@ -230,6 +241,6 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=2.3"></script>
+  <script src="app.js?v=2.4"></script>
 </body>
 </html>

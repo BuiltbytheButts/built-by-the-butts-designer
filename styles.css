@@ -190,3 +190,18 @@ button.small{padding:.48rem .35rem;font-size:.78rem}
   .strip-row{grid-template-columns:26px minmax(84px,.8fr) minmax(116px,1.2fr)!important;gap:.4rem!important}
   .strip-field input[type=number],.strip-field select{padding:.62rem .5rem!important}
 }
+
+/* v2.4 thickness planning */
+.thickness-help { margin-top: -4px; }
+.calculated-field {
+  border: 1px solid var(--border, #d9cbbd);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,.48);
+  display: grid;
+  gap: 3px;
+  align-content: center;
+}
+.calculated-field span { font-size: .82rem; color: #765f4e; }
+.calculated-field strong { font-size: 1.05rem; }
+.calculated-field small { color: #7c6a5b; line-height: 1.25; }

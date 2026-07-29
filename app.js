@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.3");
+console.info("Built By The Butts End Grain Designer Pro v2.4");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -19,7 +19,7 @@ let state = {
   version: '2.1.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
   layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
   tipWood: 'walnut', showLines: true, showFrame: true, insetGoal: 'balanced', targetCenterPercent: 35,
-  finishedThickness: 1.5, wastePercent: 20,
+  finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
   woodPrices: { walnut: 28, purpleheart: 18, cherry: 7, padauk: 15, maple: 7 },
   strips: structuredClone(DEFAULT_STRIPS)
 };
@@ -28,7 +28,7 @@ let future = [];
 let isRestoring = false;
 
 const $ = id => document.getElementById(id);
-const controls = ['boardLength','boardWidth','columns','rows','layout','orientation','edgeInset','spacing','tipWood','showLines','showFrame','insetGoal','targetCenterPercent','finishedThickness','wastePercent'];
+const controls = ['boardLength','boardWidth','columns','rows','layout','orientation','edgeInset','spacing','tipWood','showLines','showFrame','insetGoal','targetCenterPercent','finishedThickness','planingAllowance','wastePercent'];
 
 function svgEl(name, attrs = {}) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -38,6 +38,7 @@ function svgEl(name, attrs = {}) {
 function pts(a) { return a.map(([x,y]) => `${x},${y}`).join(' '); }
 function activeStrips() { return state.strips.filter(x => x.enabled !== false); }
 function totalWidth() { return activeStrips().reduce((s,x) => s + Number(x.width || 0), 0); }
+function roughThickness() { return Math.max(0, Number(state.finishedThickness || 0)) + 2 * Math.max(0, Number(state.planingAllowance || 0)); }
 function snapshot() { return JSON.stringify(state); }
 function commit() {
   if (isRestoring) return;
@@ -250,6 +251,7 @@ function renderMetrics() {
   $('moduleWidthMetric').textContent = `${totalWidth().toFixed(3)} in`;
   $('moduleCountMetric').textContent = String(Number(state.columns)*rows);
   $('boardSizeMetric').textContent = `${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`;
+  if ($('thicknessMetric')) $('thicknessMetric').textContent = `${Number(state.finishedThickness).toFixed(3)} / ${roughThickness().toFixed(3)} in`;
   $('edgeInsetLabel').textContent = `${Number(state.edgeInset || 0.5).toFixed(3)} in`;
   $('spacingLabel').textContent = `${(state.spacing/100).toFixed(3)} in`;
 }
@@ -261,12 +263,12 @@ function syncControls() {
 }
 function pullControl(id) {
   const el=$(id); let v = el.type==='checkbox' ? el.checked : el.value;
-  if (['boardLength','boardWidth','columns','rows','edgeInset','spacing','targetCenterPercent','finishedThickness','wastePercent'].includes(id)) v=Number(v);
+  if (['boardLength','boardWidth','columns','rows','edgeInset','spacing','targetCenterPercent','finishedThickness','planingAllowance','wastePercent'].includes(id)) v=Number(v);
   state[id]=v; render(); commit();
 }
 
 controls.forEach(id => $(id).addEventListener('change',()=>pullControl(id)));
-['targetCenterPercent','finishedThickness','wastePercent'].forEach(id => $(id).addEventListener('input',()=>pullControl(id)));
+['targetCenterPercent','finishedThickness','planingAllowance','wastePercent'].forEach(id => $(id).addEventListener('input',()=>pullControl(id)));
 $('insetGoal').addEventListener('input',()=>pullControl('insetGoal'));
 $('edgeInset').addEventListener('input',()=>{ state.edgeInset=Number($('edgeInset').value); render(); });
 $('spacing').addEventListener('input',()=>{ state.spacing=Number($('spacing').value); render(); });
@@ -335,7 +337,10 @@ function buildWoodPriceEditor() {
 
 function wholeBoardCost() {
   const total = totalWidth() || 1;
-  const boardVolume = Math.max(0, Number(state.boardLength || 0) * Number(state.boardWidth || 0) * Number(state.finishedThickness || 0) / 144);
+  const finishedBoardFeet = Math.max(0, Number(state.boardLength || 0) * Number(state.boardWidth || 0) * Number(state.finishedThickness || 0) / 144);
+  const roughBoardFeet = Math.max(0, Number(state.boardLength || 0) * Number(state.boardWidth || 0) * roughThickness() / 144);
+  const planingBoardFeet = Math.max(0, roughBoardFeet - finishedBoardFeet);
+  const boardVolume = roughBoardFeet;
   const wasteFactor = 1 + Math.max(0, Number(state.wastePercent || 0)) / 100;
   const edge = engineeringForInset(state.edgeInset);
   const replacementVolume = boardVolume * Math.min(0.95, (Number(state.edgeInset || 0) ** 2) / (total ** 2));
@@ -352,7 +357,7 @@ function wholeBoardCost() {
     totalBf += species[key].purchaseBf;
     totalCost += species[key].cost;
   }
-  return { boardVolume, replacementVolume, wasteFactor, species, totalBf, totalCost, offcutBf: edge.offcutBoardFeet };
+  return { boardVolume, finishedBoardFeet, roughBoardFeet, planingBoardFeet, replacementVolume, wasteFactor, species, totalBf, totalCost, offcutBf: edge.offcutBoardFeet };
 }
 
 function renderMaterialCostBreakdown() {
@@ -364,7 +369,7 @@ function renderMaterialCostBreakdown() {
     const item = c.species[key];
     if (item.purchaseBf <= 0.00001) continue;
     const row = document.createElement('article');
-    row.innerHTML = `<div class="material-name"><span class="swatch" style="background:${wood.color}"></span><div><strong>${wood.name}</strong><small>${item.baseBf.toFixed(3)} base + ${item.replacementBf.toFixed(3)} edge bd ft</small></div></div><div class="material-cost"><strong>$${item.cost.toFixed(2)}</strong><small>${item.purchaseBf.toFixed(3)} bd ft @ $${Number(state.woodPrices[key] || 0).toFixed(2)}</small></div>`;
+    row.innerHTML = `<div class="material-name"><span class="swatch" style="background:${wood.color}"></span><div><strong>${wood.name}</strong><small>${item.baseBf.toFixed(3)} rough blank + ${item.replacementBf.toFixed(3)} edge bd ft</small></div></div><div class="material-cost"><strong>$${item.cost.toFixed(2)}</strong><small>${item.purchaseBf.toFixed(3)} bd ft @ $${Number(state.woodPrices[key] || 0).toFixed(2)}</small></div>`;
     holder.append(row);
   }
 }
@@ -425,6 +430,8 @@ function renderEngineering() {
   const whole = wholeBoardCost();
   $('totalLumberCostMetric').textContent=`$${whole.totalCost.toFixed(2)}`;
   $('totalBoardFeetMetric').textContent=`${whole.totalBf.toFixed(3)} bd ft including waste`;
+  if ($('roughThicknessMetric')) $('roughThicknessMetric').textContent = `${roughThickness().toFixed(3)} in`;
+  if ($('planingLossMetric')) $('planingLossMetric').textContent = `${(2 * Number(state.planingAllowance || 0)).toFixed(3)} in total planing allowance · ${whole.planingBoardFeet.toFixed(3)} bd ft removed`;
   $('recommendedInsetMetric').textContent=`${rec.toFixed(3)} in`;
   $('targetCenterLabel').textContent=`${Number(state.targetCenterPercent).toFixed(0)}%`;
   $('targetCenterWrap').style.display=state.insetGoal==='target'?'grid':'none';
@@ -452,11 +459,13 @@ state.woodPrices = {...{ walnut:28, purpleheart:18, cherry:7, padauk:15, maple:7
 if (Number.isFinite(Number(state.walnutPrice))) state.woodPrices.walnut = Number(state.walnutPrice);
 delete state.walnutPrice;
 if (!Number.isFinite(Number(state.finishedThickness))) state.finishedThickness = 1.5;
+if (!Number.isFinite(Number(state.planingAllowance))) state.planingAllowance = 0.125;
+state.planingAllowance = Math.max(0.125, Math.min(0.250, Number(state.planingAllowance)));
 if (!Number.isFinite(Number(state.wastePercent))) state.wastePercent = 20;
 if (!state.insetGoal) state.insetGoal = 'balanced';
 if (!Number.isFinite(Number(state.targetCenterPercent))) state.targetCenterPercent = 35;
 state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false}));
-state.version = '2.1.0';
+state.version = '2.4.0';
 syncControls(); buildStripEditor(); buildWoodPriceEditor(); refreshSavedScheduleSelect(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------
@@ -502,7 +511,7 @@ const TIMELINE_STEPS = [
     title: 'Crosscut the modules',
     short: 'Slice, rotate, and assemble the end grain',
     description: 'Crosscut the completed long blank into repeated sections, rotate them to end grain, and arrange the board pattern.',
-    notes: '<strong>Final planning:</strong> Include blade kerf, flattening allowance, and the desired finished board thickness when calculating blank length and slice width.'
+    notes: '<strong>Final planning:</strong> The app calculates rough slice thickness as finished thickness plus the selected planing allowance on both faces. Include blade kerf separately when calculating blank length and slice count.'
   }
 ];
 
