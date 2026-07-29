@@ -15,7 +15,7 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '1.4.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
+  version: '2.0.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5,
   layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
   tipWood: 'walnut', showLines: true, showFrame: true, walnutPrice: 28, insetGoal: 'balanced', targetCenterPercent: 35,
   strips: structuredClone(DEFAULT_STRIPS)
@@ -66,27 +66,41 @@ function toast(message) {
 function woodOptions(selected) {
   return Object.entries(WOODS).map(([k,w]) => `<option value="${k}" ${k===selected?'selected':''}>${w.name}</option>`).join('');
 }
+function stripPairLabel(index) {
+  const center = Math.floor(state.strips.length / 2);
+  if (index === center && state.strips.length % 2 === 1) return 'C';
+  const distance = Math.abs(index - center);
+  return `P${distance || 1}`;
+}
+
 function buildStripEditor() {
-  const holder = $('stripEditor'); holder.innerHTML = '';
+  const holder = $('stripEditor');
+  if (!holder) return;
+  holder.innerHTML = '';
   state.strips.forEach((strip, i) => {
     if (strip.enabled === undefined) strip.enabled = true;
     const row = document.createElement('div');
     row.className = 'strip-row' + (strip.enabled ? '' : ' disabled');
+    row.draggable = true;
+    row.dataset.index = i;
     row.innerHTML = `
+      <button class="drag-handle" type="button" title="Drag Strip ${i+1}" aria-label="Drag Strip ${i+1}">⋮⋮</button>
       <span class="swatch" style="background:${WOODS[strip.wood].color}"></span>
       <label class="strip-enable" title="Include Strip ${i+1}"><input data-enabled="${i}" type="checkbox" ${strip.enabled ? 'checked' : ''} aria-label="Use strip ${i+1}"></label>
       <label>Strip ${i+1}<input data-width="${i}" type="number" min="0.0625" max="3" step="0.0625" value="${Number(strip.width).toFixed(4)}"></label>
       <label>Wood<select data-wood="${i}">${woodOptions(strip.wood)}</select></label>`;
     holder.appendChild(row);
   });
+
   holder.querySelectorAll('[data-enabled]').forEach(el => el.addEventListener('change', e => {
-    state.strips[Number(e.target.dataset.enabled)].enabled = e.target.checked;
-    if (!activeStrips().length) state.strips[Number(e.target.dataset.enabled)].enabled = true;
+    const idx = Number(e.target.dataset.enabled);
+    state.strips[idx].enabled = e.target.checked;
+    if (!activeStrips().length) state.strips[idx].enabled = true;
     buildStripEditor(); render(); commit();
   }));
   holder.querySelectorAll('[data-width]').forEach(el => el.addEventListener('input', e => {
-    const i = Number(e.target.dataset.width); const v = Number(e.target.value);
-    if (v > 0) state.strips[i].width = v;
+    const idx = Number(e.target.dataset.width); const value = Number(e.target.value);
+    if (value > 0) state.strips[idx].width = value;
     render();
   }));
   holder.querySelectorAll('[data-width]').forEach(el => el.addEventListener('change', () => { buildStripEditor(); render(); commit(); }));
@@ -94,26 +108,87 @@ function buildStripEditor() {
     state.strips[Number(e.target.dataset.wood)].wood = e.target.value;
     buildStripEditor(); render(); commit();
   }));
+
+  let draggedIndex = null;
+  holder.querySelectorAll('.strip-row').forEach(row => {
+    row.addEventListener('dragstart', e => {
+      draggedIndex = Number(row.dataset.index);
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      holder.querySelectorAll('.strip-row').forEach(r => r.classList.remove('drag-over'));
+    });
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      row.classList.add('drag-over');
+    });
+    row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      const targetIndex = Number(row.dataset.index);
+      if (draggedIndex === null || draggedIndex === targetIndex) return;
+      const [moved] = state.strips.splice(draggedIndex, 1);
+      state.strips.splice(targetIndex, 0, moved);
+      buildStripEditor(); render(); commit(); toast('Strip order updated');
+    });
+  });
 }
 
-function addStripPairs(pairCount) {
-  for (let n = 0; n < pairCount; n++) {
-    const centerIndex = Math.floor(state.strips.length / 2);
-    const left = { width: 0.125, wood: n % 2 ? 'cherry' : 'maple', enabled: true };
-    const right = { ...left };
-    state.strips.splice(centerIndex, 0, left);
-    state.strips.splice(centerIndex + 2, 0, right);
+function addStripPair(position='outer') {
+  const pair = [
+    { width: 0.125, wood: 'maple', enabled: true },
+    { width: 0.125, wood: 'maple', enabled: true }
+  ];
+  if (position === 'outer') {
+    state.strips.unshift(pair[0]);
+    state.strips.push(pair[1]);
+  } else {
+    const center = Math.floor(state.strips.length / 2);
+    state.strips.splice(center, 0, pair[0]);
+    state.strips.splice(center + 2, 0, pair[1]);
   }
-  buildStripEditor(); render(); commit();
-  toast(`${pairCount * 2} strips added`);
+  buildStripEditor(); render(); commit(); toast(`${position === 'outer' ? 'Outer' : 'Inner'} strip pair added`);
 }
 
 function removeStripPair() {
   if (state.strips.length <= 3) { toast('Keep at least 3 strips'); return; }
-  const centerIndex = Math.floor(state.strips.length / 2);
-  state.strips.splice(centerIndex - 1, 1);
-  state.strips.splice(centerIndex, 1);
-  buildStripEditor(); render(); commit(); toast('2 strips removed');
+  state.strips.shift();
+  state.strips.pop();
+  buildStripEditor(); render(); commit(); toast('Outer strip pair removed');
+}
+
+function savedSchedules() {
+  try { return JSON.parse(localStorage.getItem('bbtb-strip-schedules') || '{}'); }
+  catch { return {}; }
+}
+function refreshSavedScheduleSelect(selected='') {
+  const select = $('savedScheduleSelect'); if (!select) return;
+  const names = Object.keys(savedSchedules()).sort();
+  select.innerHTML = '<option value="">Choose a saved schedule</option>' + names.map(name => `<option value="${name.replace(/"/g,'&quot;')}">${name}</option>`).join('');
+  if (selected) select.value = selected;
+}
+function saveCurrentSchedule() {
+  const name = prompt('Name this strip schedule:');
+  if (!name || !name.trim()) return;
+  const schedules = savedSchedules();
+  schedules[name.trim()] = structuredClone(state.strips);
+  localStorage.setItem('bbtb-strip-schedules', JSON.stringify(schedules));
+  refreshSavedScheduleSelect(name.trim()); toast('Strip schedule saved');
+}
+function loadSelectedSchedule() {
+  const name = $('savedScheduleSelect')?.value; if (!name) { toast('Choose a saved schedule'); return; }
+  const schedule = savedSchedules()[name]; if (!schedule) return;
+  state.strips = structuredClone(schedule);
+  buildStripEditor(); render(); commit(); toast(`Loaded ${name}`);
+}
+function deleteSelectedSchedule() {
+  const name = $('savedScheduleSelect')?.value; if (!name) { toast('Choose a saved schedule'); return; }
+  if (!confirm(`Delete “${name}”?`)) return;
+  const schedules = savedSchedules(); delete schedules[name];
+  localStorage.setItem('bbtb-strip-schedules', JSON.stringify(schedules));
+  refreshSavedScheduleSelect(); toast('Saved schedule deleted');
 }
 
 function addPatterns(svg, prefix) {
@@ -207,10 +282,13 @@ $('insetGoal').addEventListener('input',()=>pullControl('insetGoal'));
 $('edgeInset').addEventListener('input',()=>{ state.edgeInset=Number($('edgeInset').value); render(); });
 $('spacing').addEventListener('input',()=>{ state.spacing=Number($('spacing').value); render(); });
 $('edgeInset').addEventListener('change',commit); $('spacing').addEventListener('change',commit);
-$('resetStripsBtn').addEventListener('click',()=>{ state.strips=structuredClone(DEFAULT_STRIPS); buildStripEditor(); render(); commit(); toast('Strip schedule reset'); });
-$('add2StripsBtn').addEventListener('click',()=>addStripPairs(1));
-$('add4StripsBtn').addEventListener('click',()=>addStripPairs(2));
-$('remove2StripsBtn').addEventListener('click',removeStripPair);
+$('resetStripsBtn')?.addEventListener('click',()=>{ state.strips=structuredClone(DEFAULT_STRIPS); buildStripEditor(); render(); commit(); toast('Strip schedule reset'); });
+$('addOuterPairBtn')?.addEventListener('click',()=>addStripPair('outer'));
+$('addInnerPairBtn')?.addEventListener('click',()=>addStripPair('inner'));
+$('removePairBtn')?.addEventListener('click',removeStripPair);
+$('saveScheduleBtn')?.addEventListener('click',saveCurrentSchedule);
+$('loadScheduleBtn')?.addEventListener('click',loadSelectedSchedule);
+$('deleteScheduleBtn')?.addEventListener('click',deleteSelectedSchedule);
 $('undoBtn').addEventListener('click',()=>{ if(history.length<=1)return; future.push(history.pop()); restore(history.at(-1)); updateUndoRedo(); });
 $('redoBtn').addEventListener('click',()=>{ if(!future.length)return; const next=future.pop(); history.push(next); restore(next); updateUndoRedo(); });
 
@@ -328,7 +406,7 @@ if (!state.insetGoal) state.insetGoal = 'balanced';
 if (!Number.isFinite(Number(state.targetCenterPercent))) state.targetCenterPercent = 35;
 state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false}));
 state.version = '1.4.0';
-syncControls(); buildStripEditor(); render(); history=[snapshot()]; updateUndoRedo();
+syncControls(); buildStripEditor(); refreshSavedScheduleSelect(); render(); history=[snapshot()]; updateUndoRedo();
 
 // ---------- Step-by-step machining timeline ----------
 // ---------- Step-by-step machining timeline ----------

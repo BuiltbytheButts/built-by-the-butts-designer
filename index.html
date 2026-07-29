@@ -79,13 +79,23 @@
           <h2>Strip Schedule</h2>
           <button id="resetStripsBtn" class="text-button" type="button">Reset</button>
         </div>
-        <p class="sidebar-help">Turn individual strips on or off, or add matching strip pairs to both sides of the center.</p>
-        <div class="strip-actions">
-          <button id="add2StripsBtn" class="secondary small" type="button">+ 2 strips</button>
-          <button id="add4StripsBtn" class="secondary small" type="button">+ 4 strips</button>
-          <button id="remove2StripsBtn" class="secondary small" type="button">− 2 strips</button>
+        <div class="strip-toolbar">
+          <button id="addOuterPairBtn" class="secondary" type="button">+ Add Outer Pair</button>
+          <button id="addInnerPairBtn" class="secondary" type="button">+ Add Inner Pair</button>
+          <button id="removePairBtn" class="secondary" type="button">− Remove Pair</button>
         </div>
+        <p class="strip-help">Drag a strip by its handle to reorder it. Switch any strip on or off. Pair controls keep the schedule balanced around the center.</p>
         <div id="stripEditor"></div>
+        <div class="saved-schedules">
+          <label>Saved schedule
+            <select id="savedScheduleSelect"><option value="">Choose a saved schedule</option></select>
+          </label>
+          <div class="saved-schedule-actions">
+            <button id="saveScheduleBtn" class="secondary" type="button">Save Current</button>
+            <button id="loadScheduleBtn" class="secondary" type="button">Load</button>
+            <button id="deleteScheduleBtn" class="text-button danger" type="button">Delete</button>
+          </div>
+        </div>
       </section>
 
       <section>
