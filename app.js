@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.5.6");
+console.info("Built By The Butts End Grain Designer Pro v2.5.7");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -17,7 +17,7 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '2.5.6', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.5.7', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   layout: 'grid', orientation: '0', edgeInset: 0.500, spacing: 0,
   tipWood: 'walnut', showLines: true, showFrame: true,
   finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
@@ -44,9 +44,12 @@ function roundDimension(value) { return Math.round(Math.max(0, value) * 1000) / 
 function moduleSizingGeometry() {
   const module = Math.max(0.0625, totalWidth());
   const gap = Math.max(0, Number(state.spacing || 0)) / 100;
-  const pitch = module / Math.SQRT2 + gap;
-  const turnedSquare = state.orientation === '45' || state.orientation === 'alternate';
-  const footprint = turnedSquare ? module / Math.SQRT2 : module;
+
+  // A finished module occupies its full physical width in the board grid.
+  // Rotating the strip pattern changes the artwork inside the module, not the
+  // finished length or width of the square module itself.
+  const footprint = module;
+  const pitch = module + gap;
   return { module, gap, pitch, footprint };
 }
 function gridFinishedDimensions(columns = state.columns, rows = state.rows) {
