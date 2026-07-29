@@ -1,4 +1,4 @@
-console.info("Built By The Butts End Grain Designer Pro v2.6.2");
+console.info("Built By The Butts End Grain Designer Pro v2.6.3");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -17,7 +17,7 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '2.6.1', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.6.3', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   layout: 'grid', orientation: '0', edgeInset: 0.500,
   tipWood: 'walnut', showLines: true, showFrame: true,
   finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
@@ -347,21 +347,17 @@ function drawModule(svg, cx, cy, size, angle, prefix) {
 
   const insetValue = Math.max(0, Number(state.edgeInset ?? 0.5));
   if (insetValue > 0 && activeEdgeWood()) {
-    // Treat the inset as a true physical distance across the module. The old
-    // preview capped the geometry at about 3/4 in, which made 3/4, 7/8 and
-    // 1 in appear identical. Allow the two tip fills to continue growing;
-    // when their combined depth exceeds the module width, they meet/overlap
-    // at the center just as the machining geometry would imply.
-    const depth = size * (insetValue / total);
+    // Preview edge geometry is intentionally bounded inside the diamond.
+    // Scale the visible replacement progressively across the full 0–1 inch
+    // control range so every preset is distinct without creating overlapping
+    // or saw-tooth polygons.
+    const normalizedInset = Math.min(1, insetValue / 1.0);
+    const insetRatio = normalizedInset * 0.46;
+    const inward = h * insetRatio;
+    const base = Math.min(h * 0.48, inward + size * 0.075);
     const fill = `url(#${prefix}-${state.tipWood})`;
-    g.append(svgEl('polygon',{
-      points:pts([[0,-h],[depth,-h+depth],[-depth,-h+depth]]),
-      fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'
-    }));
-    g.append(svgEl('polygon',{
-      points:pts([[0,h],[-depth,h-depth],[depth,h-depth]]),
-      fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'
-    }));
+    g.append(svgEl('polygon',{points:pts([[0,-h],[base,-h+inward],[-base,-h+inward]]),fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'}));
+    g.append(svgEl('polygon',{points:pts([[0,h],[-base,h-inward],[base,h-inward]]),fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'}));
   }
   if (state.showLines) g.append(svgEl('polygon',{points:pts([[0,-h],[h,0],[0,h],[-h,0]]),fill:'none',stroke:'#241710','stroke-width':'1.25'}));
   svg.append(g);
@@ -409,8 +405,25 @@ function renderMetrics() {
   $('boardSizeMetric').textContent = `${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`;
   if ($('thicknessMetric')) $('thicknessMetric').textContent = `${Number(state.finishedThickness).toFixed(3)} / ${roughThickness().toFixed(3)} in`;
   $('edgeInsetLabel').textContent = `${Number(state.edgeInset ?? 0.5).toFixed(3)} in`;
+  const diagnostics = $('diagnosticsOutput');
+  if (diagnostics) {
+    const geometry = moduleSizingGeometry();
+    diagnostics.textContent = [
+      `Version: v2.6.3`,
+      `Finished size: ${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`,
+      `Module width: ${totalWidth().toFixed(3)} in`,
+      `Final trim per edge: ${Number(state.trimAllowance).toFixed(3)} in`,
+      `Grid: ${state.columns} columns × ${state.rows} rows`,
+      `Sizing mode: ${state.sizingMode}`,
+      `Module pitch: ${geometry.pitch.toFixed(3)} × ${geometry.pitch.toFixed(3)} in`,
+      `Edge inset: ${Number(state.edgeInset).toFixed(3)} in`,
+      `Edge species: ${activeEdgeWood() ? WOODS[state.tipWood].name : 'None'}`,
+      `Finished / rough thickness: ${Number(state.finishedThickness).toFixed(3)} / ${roughThickness().toFixed(3)} in`,
+      `Estimated cost: ${$('totalLumberCostMetric')?.textContent || '$0.00'}`
+    ].join('\n');
+  }
 }
-function render() { syncModuleWidthControls(); applySizingRules(); renderBoard(); renderModule(); renderSchedule(); renderMetrics(); renderEngineering(); updateUndoRedo(); }
+function render() { syncModuleWidthControls(); applySizingRules(); renderBoard(); renderModule(); renderSchedule(); renderEngineering(); renderMetrics(); updateUndoRedo(); }
 
 function syncControls() {
   controls.forEach(id => { const el=$(id); if (el.type==='checkbox') el.checked=Boolean(state[id]); else el.value=state[id]; });
@@ -612,7 +625,7 @@ document.addEventListener('click', e => {
 
 const saved=localStorage.getItem('bbtb-designer-autosave');
 if(saved) { try { state=JSON.parse(saved); } catch {} }
-delete state.spacing; // Module spacing was retired in v2.6.2.
+delete state.spacing; // Module spacing was retired in v2.6.3.
 if (!Number.isFinite(Number(state.edgeInset))) state.edgeInset = 0.500;
 if (Number(state.edgeInset) <= 0) state.tipWood = '';
 else if (!WOODS[state.tipWood]) state.tipWood = 'walnut';

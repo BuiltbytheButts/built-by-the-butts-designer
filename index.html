@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Built By The Butts End Grain Designer Pro" />
   <title>Built By The Butts End Grain Designer Pro</title>
-  <link rel="stylesheet" href="styles.css?v=2.6.1" />
+  <link rel="stylesheet" href="styles.css?v=2.6.3" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>End Grain Designer Pro <span class="version-badge">v2.6.2</span></h1>
+      <h1>End Grain Designer Pro <span class="version-badge">v2.6.3</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -232,6 +232,13 @@
         <p class="note">The timeline models the revised process: shape the long blank to 45°, rip off and save both laminated edges, then glue on continuous walnut faces. Verify fence position, blade angle, kerf, grain orientation, and safe workholding before cutting.</p>
       </section>
 
+
+      <details class="panel diagnostics-panel">
+        <summary>Developer diagnostics</summary>
+        <p class="note">Use this readout to verify the geometry and cost inputs before a shop build.</p>
+        <pre id="diagnosticsOutput">Diagnostics loading…</pre>
+      </details>
+
       <div class="bottom-grid">
         <section class="panel">
           <h2>Single Module</h2>
@@ -247,6 +254,6 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=2.5.8"></script>
+  <script src="app.js?v=2.6.3"></script>
 </body>
 </html>

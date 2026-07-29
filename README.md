@@ -100,7 +100,7 @@ Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the 
 - Whole-board species breakdown now places replacement edge stock under the selected species.
 
 
-## v2.6.2
+## v2.6.3
 
 - Target module width now rescales unlocked active strips immediately in Manual mode.
 - Preview, module geometry, and linked sizing refresh live.
@@ -108,8 +108,13 @@ Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the 
 - When Board dimensions determine grid, the outside board size remains fixed by design; module count changes, but total base-board cost may remain similar because the physical board volume is unchanged.
 
 
-## v2.6.2
+## v2.6.3
 
 - Removed the Module Spacing control; modules now assemble with zero artificial screen spacing.
 - Corrected the edge-inset preview so 3/4 in, 7/8 in, and 1 in each produce a distinct visible design.
 - Preserved live edge-species material and cost calculations for every inset preset.
+
+
+## v2.6.3 Release Candidate
+
+This stabilization release restores the known-good module renderer, keeps module spacing fully removed, makes every edge-width preset visibly distinct without polygon overlap, and adds a developer diagnostics panel for pre-build review. See `CHANGELOG.md` and `ROADMAP.md`.
