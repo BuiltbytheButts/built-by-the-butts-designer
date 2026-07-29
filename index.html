@@ -82,7 +82,8 @@
         <div class="strip-toolbar">
           <button id="addOuterPairBtn" class="secondary" type="button">+ Add Outer Pair</button>
           <button id="addInnerPairBtn" class="secondary" type="button">+ Add Inner Pair</button>
-          <button id="removePairBtn" class="secondary" type="button">− Remove Pair</button>
+          <button id="removeOuterPairBtn" class="secondary" type="button">− Remove Outer Pair</button>
+          <button id="removeInnerPairBtn" class="secondary" type="button">− Remove Inner Pair</button>
         </div>
         <p class="strip-help">Drag a strip by its handle to reorder it. Switch any strip on or off. Pair controls keep the schedule balanced around the center.</p>
         <div id="stripEditor"></div>
@@ -125,7 +126,7 @@
           <div>
             <p class="eyebrow dark">Geometry + Cost</p>
             <h2>Edge Rip Engineering</h2>
-            <p class="timeline-description">See how the inset changes the center diamond, added walnut, reusable offcuts, and estimated material cost.</p>
+            <p class="timeline-description">See how the inset changes the center diamond, added edge wood, reusable offcuts, and total estimated lumber cost.</p>
           </div>
           <div class="recommended-inset-card">
             <span>Recommended inset</span>
@@ -136,9 +137,18 @@
 
         <div class="engineering-grid">
           <div class="engineering-controls">
-            <label>Walnut price ($/board foot)
-              <input id="walnutPrice" type="number" min="0" max="100" step="0.50" value="28.00" />
-            </label>
+            <div class="cost-settings">
+              <h3>Material pricing</h3>
+              <div id="woodPriceEditor" class="wood-price-editor"></div>
+              <div class="two-col">
+                <label>Finished thickness (in)
+                  <input id="finishedThickness" type="number" min="0.5" max="4" step="0.125" value="1.500" />
+                </label>
+                <label>Waste allowance (%)
+                  <input id="wastePercent" type="number" min="0" max="100" step="1" value="20" />
+                </label>
+              </div>
+            </div>
             <label>Goal for correct inset
               <select id="insetGoal">
                 <option value="balanced">Balanced look and cost</option>
@@ -154,18 +164,25 @@
 
           <div class="engineering-metrics">
             <article><span>Center diamond</span><strong id="centerDiamondMetric">33.3%</strong><small id="centerDiamondDimension">0.500 in remaining</small></article>
-            <article><span>Added walnut</span><strong id="addedWalnutMetric">0.035 bd ft</strong><small id="addedWalnutCostMetric">$0.98 estimated</small></article>
+            <article><span>Added edge wood</span><strong id="addedWalnutMetric">0.035 bd ft</strong><small id="addedWalnutCostMetric">$0.98 estimated</small></article>
             <article><span>Reusable offcuts</span><strong id="offcutMetric">0.035 bd ft</strong><small>saved for other projects</small></article>
-            <article><span>Walnut share</span><strong id="walnutShareMetric">33.3%</strong><small>of module face, estimated</small></article>
+            <article><span>Total lumber cost</span><strong id="totalLumberCostMetric">$0.00</strong><small id="totalBoardFeetMetric">0.000 bd ft including waste</small></article>
           </div>
         </div>
 
+
+        <div class="material-cost-breakdown-wrap">
+          <div class="design-explorer-heading">
+            <div><h3>Whole-Board Material Cost</h3><p>Calculated from board size, finished thickness, active strip selections, edge replacement wood, species prices, and waste allowance.</p></div>
+          </div>
+          <div id="materialCostBreakdown" class="material-cost-breakdown"></div>
+        </div>
         <div class="design-explorer-heading">
           <div><h3>Design Explorer</h3><p>Click a variation to load it into the main designer.</p></div>
           <span id="explorerRangeSummary" class="badge"></span>
         </div>
         <div id="designExplorer" class="design-explorer"></div>
-        <p class="note">Cost values are planning estimates based on triangular replacement stock and the current blank length. Actual lumber use will be higher after milling, kerf, defects, and flattening allowance.</p>
+        <p class="note">Cost values are planning estimates. Whole-board cost includes the original laminated blank, replacement edge stock, and the selected waste allowance. Reusable offcuts are shown separately and are not credited back against cost.</p>
       </section>
 
       <section class="panel machining-timeline-panel">

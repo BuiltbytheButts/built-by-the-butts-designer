@@ -1,19 +1,12 @@
-# Built By The Butts End Grain Designer Pro v2.0
+# Built By The Butts End Grain Designer Pro v2.1
 
-A standalone browser-based end-grain cutting-board designer tailored to continuous-strip construction.
+This release adds:
 
-## New in v2.0
+- Separate **Remove Outer Pair** and **Remove Inner Pair** controls.
+- Full species pricing for Walnut, Purpleheart, Cherry, Padauk, and Hard Maple.
+- Finished board thickness and waste allowance inputs.
+- Whole-board material cost driven by board dimensions, active strip widths, wood selections, replacement edge wood, and species prices.
+- Per-species board-foot and cost breakdown.
+- Edge-rip added-stock cost still updates with the inset and chosen edge wood.
 
-- Add unlimited symmetrical outer or inner strip pairs
-- Remove outer strip pairs while preserving a centered schedule
-- Turn each strip on or off without losing its settings
-- Drag and drop strips to change their order
-- Save, load, and delete favorite strip schedules in the browser
-- Fixed missing strip controls that previously stopped portions of the app JavaScript
-- Preserved live Edge Rip Engineering, Design Explorer presets, machining timeline, project save/open, and SVG export
-
-## GitHub Pages
-
-Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the repository. In GitHub, open Settings → Pages, deploy from the `main` branch and `/root`.
-
-Saved schedules and autosaved work are stored in the browser's local storage. Export a project JSON file for a portable backup.
+Upload `index.html`, `styles.css`, `app.js`, and `README.md` to the root of the GitHub repository and replace the existing files.

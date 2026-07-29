@@ -127,3 +127,18 @@ button.small{padding:.48rem .35rem;font-size:.78rem}
 
 /* v2.0 dynamic strip schedule */
 .strip-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.strip-toolbar #removePairBtn{grid-column:1/-1}.strip-help{font-size:.82rem;color:#766454;line-height:1.35;margin:0 0 10px}.strip-row{grid-template-columns:26px 24px 34px minmax(82px,.72fr) minmax(130px,1.15fr);align-items:end}.drag-handle{height:42px;border:1px solid #d8c8b8;border-radius:9px;background:#f7f1e9;color:#72543d;cursor:grab;font-size:18px;line-height:1}.drag-handle:active{cursor:grabbing}.strip-row.dragging{opacity:.45}.strip-row.drag-over{outline:2px dashed #9a5b35;outline-offset:3px}.strip-enable{align-self:center;padding-bottom:7px}.strip-enable input{width:18px;height:18px}.strip-row.disabled{opacity:.48}.strip-row.disabled input[type=number],.strip-row.disabled select{filter:grayscale(.5)}.saved-schedules{border-top:1px solid #ddcfc1;margin-top:12px;padding-top:12px}.saved-schedule-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.saved-schedule-actions button{flex:1;min-width:72px}.text-button.danger{color:#9f3128}.pair-chip{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:24px;padding:0 7px;border-radius:999px;background:#eee0d1;color:#684b36;font-size:.72rem;font-weight:700;align-self:center;margin-bottom:7px}
+
+/* v2.1 material-cost and pair controls */
+.strip-toolbar { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.cost-settings h3 { margin:.15rem 0 .6rem; font-size:.95rem; }
+.wood-price-editor { display:grid; gap:.5rem; margin-bottom:.75rem; }
+.wood-price-editor label { display:grid; grid-template-columns:minmax(0,1fr) 96px; gap:.6rem; align-items:center; margin:0; }
+.wood-price-editor label > span { display:flex; align-items:center; gap:.45rem; color:var(--text); font-size:.84rem; }
+.price-swatch { width:16px; height:16px; border-radius:4px; border:1px solid rgba(0,0,0,.2); display:inline-block; }
+.material-cost-breakdown-wrap { margin-top:1.1rem; }
+.material-cost-breakdown { display:grid; gap:.55rem; }
+.material-cost-breakdown article { display:flex; align-items:center; justify-content:space-between; gap:1rem; border:1px solid var(--line); border-radius:12px; padding:.7rem .8rem; background:#fff; }
+.material-name { display:flex; align-items:center; gap:.65rem; }
+.material-name small,.material-cost small { display:block; color:var(--muted); font-size:.74rem; margin-top:.15rem; }
+.material-cost { text-align:right; }
+@media (max-width:650px){ .strip-toolbar{grid-template-columns:1fr}.material-cost-breakdown article{align-items:flex-start}.wood-price-editor label{grid-template-columns:1fr 100px} }
