@@ -1,4 +1,4 @@
-console.info("Diamond End Grain Designer by Built By The Butts v2.7.2");
+console.info("Diamond End Grain Designer by Built By The Butts v2.7.3");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -17,7 +17,7 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '2.7.2', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.7.3', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   masterBlankLength: 24, bladeKerf: 0.125,
   layout: 'grid', orientation: '0', edgeInset: 0.500,
   tipWood: 'walnut', showLines: true, showFrame: true,
@@ -484,7 +484,14 @@ function renderBoard() {
   const svg = $('boardSvg'); svg.innerHTML = ''; addPatterns(svg,'board');
   if (state.showFrame) svg.append(svgEl('rect',{x:55,y:55,width:1090,height:650,rx:12,fill:'#f5efe7',stroke:'#9c8a7b','stroke-width':'3'}));
   const cols = Math.max(1,Number(state.columns));
-  const rows = state.layout === 'single' ? 1 : Math.max(1,Number(state.rows));
+  // In the true crosscut preview, each rendered row represents one physical
+  // end-grain crosscut. Use Crosscut Engineering's balanced EVEN count so the
+  // picture changes with blank length, kerf, finished thickness, or allowance.
+  // Other orientation studies continue to use the normal Rows control.
+  const engineeredCrosscuts = crosscutEngineering().lowerEven;
+  const rows = state.orientation === 'crosscut180'
+    ? Math.max(2, engineeredCrosscuts || 2)
+    : (state.layout === 'single' ? 1 : Math.max(1,Number(state.rows)));
   const spacing = 0;
   const size = Math.min(205, 1030/Math.max(cols*.71+.5,1), 600/Math.max(rows*.71+.5,1));
   const xStep = size*.707 + spacing, yStep = size*.707 + spacing;
@@ -510,7 +517,10 @@ function renderSchedule() {
   h.append(tip);
 }
 function renderMetrics() {
-  const rows = state.layout==='single'?1:Number(state.rows);
+  const engineeredCrosscuts = crosscutEngineering().lowerEven;
+  const rows = state.orientation === 'crosscut180'
+    ? Math.max(2, engineeredCrosscuts || 2)
+    : (state.layout==='single'?1:Number(state.rows));
   $('moduleWidthMetric').textContent = `${totalWidth().toFixed(3)} in`;
   $('moduleCountMetric').textContent = String(Number(state.columns)*rows);
   $('boardSizeMetric').textContent = `${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`;
@@ -542,9 +552,9 @@ function renderCrosscutEngineering() {
   const x = crosscutEngineering();
   const count = x.lowerEven;
   $('crosscutCountMetric').textContent = count ? `${count} crosscuts` : 'Not enough length';
-  $('crosscutCountDetail').textContent = count ? `${x.maxAtTarget % 2 ? `Odd result (${x.maxAtTarget}) corrected to the nearest lower even count.` : 'Balanced even count at the current rough thickness.'}` : 'Increase blank length or reduce rough slice thickness.';
+  $('crosscutCountDetail').textContent = count ? `${x.maxAtTarget % 2 ? `Odd result (${x.maxAtTarget}) corrected to the nearest lower even count. ` : 'Balanced even count at the current rough thickness. '}Approx. blank remaining: ${x.lowerWaste.toFixed(3)} in.` : 'Increase blank length or reduce rough slice thickness.';
   $('crosscutPrimaryThickness').textContent = count ? `${x.lowerThickness.toFixed(3)} in` : '—';
-  $('crosscutPrimaryWaste').textContent = count ? `${x.lowerWaste.toFixed(3)} in blank remaining` : '—';
+  $('crosscutPrimaryWaste').textContent = count ? `Finished target: ${Number(state.finishedThickness || 0).toFixed(3)} in` : '—';
   $('crosscutAltCount').textContent = `${x.nextEven} crosscuts`;
   $('crosscutAltThickness').textContent = `${x.nextThickness.toFixed(3)} in each`;
   $('crosscutAltStatus').textContent = x.nextViable

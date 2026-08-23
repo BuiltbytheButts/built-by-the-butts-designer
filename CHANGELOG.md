@@ -1,3 +1,11 @@
+# Changelog
+
+## v2.7.3
+- True crosscut-row preview now uses the balanced even count from Crosscut Engineering.
+- Every other rendered crosscut row rotates 180 degrees (0°, 180°, 0°, 180°...).
+- Preview row count updates automatically when blank length, blade kerf, finished thickness, or finishing allowance changes.
+- Moved approximate blank remaining into the balanced-count recommendation; the rough-target card now shows finished thickness target.
+
 # v2.7.2
 - Fixed legacy autosave/project migration after the rough-thickness model changed to a **total finishing allowance**.
 - Older saved values no longer carry forward the previous per-face allowance and incorrectly show an approximately 2.000 in rough crosscut target for a 1.500 in finished target.
