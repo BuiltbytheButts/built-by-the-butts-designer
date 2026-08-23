@@ -30,3 +30,11 @@
 - Selecting a project opens it immediately and restores the complete design.
 - Added Save, Save As, Duplicate, Rename, Delete, and Project Notes.
 - Migrates legacy saved strip schedules into projects.
+
+## v2.7.0 — Crosscut Engineering
+- Added master blank length and blade kerf inputs.
+- Added the prototype-proven even-crosscut rule for balanced alternating 180° diamond layouts.
+- If the raw crosscut count is odd, the Designer recommends the nearest lower even count instead of silently accepting the odd count.
+- Added a comparison showing the next even-count option and the maximum slice thickness that will fit the available blank after kerf.
+- Added a `Crosscut rows — alternate 0° / 180°` preview orientation.
+- Added crosscut diagnostics so shop math can be checked against real builds.

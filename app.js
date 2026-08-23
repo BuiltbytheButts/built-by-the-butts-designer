@@ -17,7 +17,8 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '2.6.4', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.7.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  masterBlankLength: 24, bladeKerf: 0.125,
   layout: 'grid', orientation: '0', edgeInset: 0.500,
   tipWood: 'walnut', showLines: true, showFrame: true,
   finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
@@ -30,7 +31,7 @@ let future = [];
 let isRestoring = false;
 
 const $ = id => document.getElementById(id);
-const controls = ['moduleWidthMode','targetModuleWidth','sizingMode','boardLength','boardWidth','columns','rows','trimAllowance','layout','orientation','edgeInset','showLines','showFrame','finishedThickness','planingAllowance','wastePercent'];
+const controls = ['moduleWidthMode','targetModuleWidth','sizingMode','boardLength','boardWidth','columns','rows','trimAllowance','layout','orientation','edgeInset','showLines','showFrame','finishedThickness','planingAllowance','wastePercent','masterBlankLength','bladeKerf'];
 
 function svgEl(name, attrs = {}) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -84,6 +85,27 @@ function normalizeScheduleToTarget(target = state.targetModuleWidth, showMessage
   return true;
 }
 function roughThickness() { return Math.max(0, Number(state.finishedThickness || 0)) + 2 * Math.max(0, Number(state.planingAllowance || 0)); }
+function crosscutEngineering() {
+  const blank = Math.max(0, Number(state.masterBlankLength || 0));
+  const kerf = Math.max(0, Number(state.bladeKerf || 0));
+  const target = Math.max(0.001, roughThickness());
+  const maxAtTarget = Math.max(0, Math.floor((blank + kerf + 1e-9) / (target + kerf)));
+  let recommendedEven = maxAtTarget;
+  if (recommendedEven % 2 !== 0) recommendedEven -= 1;
+  recommendedEven = Math.max(0, recommendedEven);
+  const lowerEven = recommendedEven >= 2 ? recommendedEven : 0;
+  const nextEven = lowerEven ? lowerEven + 2 : 2;
+  const thicknessForCount = count => {
+    if (!count || blank <= 0) return 0;
+    return Math.max(0, (blank - Math.max(0, count - 1) * kerf) / count);
+  };
+  const usedLength = (count, thickness) => count > 0 ? count * thickness + Math.max(0, count - 1) * kerf : 0;
+  const lowerThickness = lowerEven ? target : 0;
+  const lowerWaste = lowerEven ? Math.max(0, blank - usedLength(lowerEven, lowerThickness)) : blank;
+  const nextThickness = thicknessForCount(nextEven);
+  const nextViable = nextThickness >= Number(state.finishedThickness || 0);
+  return { blank, kerf, target, maxAtTarget, recommendedEven, lowerEven, lowerThickness, lowerWaste, nextEven, nextThickness, nextViable };
+}
 function roundDimension(value) { return Math.round(Math.max(0, value) * 1000) / 1000; }
 function moduleSizingGeometry() {
   const module = Math.max(0.0625, totalWidth());
@@ -283,7 +305,7 @@ function savedProjects() {
 function persistProjects(projects) { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects)); }
 function projectRecord(name, sourceState = state) {
   const projectState = structuredClone(sourceState);
-  projectState.version = '2.6.4';
+  projectState.version = '2.7.0';
   projectState.projectName = name;
   projectState.projectNotes = $('projectNotes')?.value ?? projectState.projectNotes ?? '';
   return { name, updatedAt: new Date().toISOString(), state: projectState };
@@ -435,6 +457,7 @@ function angleAt(r,c) {
   if (state.orientation === '90') return 90;
   if (state.orientation === 'alternate') return (r+c)%2 ? -45 : 45;
   if (state.orientation === 'checker') return (r+c)%2 ? 90 : 0;
+  if (state.orientation === 'crosscut180') return r%2 ? 180 : 0;
   return 0;
 }
 function renderBoard() {
@@ -477,7 +500,7 @@ function renderMetrics() {
   if (diagnostics) {
     const geometry = moduleSizingGeometry();
     diagnostics.textContent = [
-      `Version: v2.6.4`,
+      `Version: v2.7.0`,
       `Finished size: ${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`,
       `Module width: ${totalWidth().toFixed(3)} in`,
       `Final trim per edge: ${Number(state.trimAllowance).toFixed(3)} in`,
@@ -487,11 +510,29 @@ function renderMetrics() {
       `Edge inset: ${Number(state.edgeInset).toFixed(3)} in`,
       `Edge species: ${activeEdgeWood() ? WOODS[state.tipWood].name : 'None'}`,
       `Finished / rough thickness: ${Number(state.finishedThickness).toFixed(3)} / ${roughThickness().toFixed(3)} in`,
+      `Crosscut blank / kerf: ${Number(state.masterBlankLength).toFixed(3)} / ${Number(state.bladeKerf).toFixed(3)} in`,
+      `Balanced crosscut recommendation: ${crosscutEngineering().lowerEven || 'n/a'}`,
       `Estimated cost: ${$('totalLumberCostMetric')?.textContent || '$0.00'}`
     ].join('\n');
   }
 }
-function render() { syncModuleWidthControls(); applySizingRules(); renderBoard(); renderModule(); renderSchedule(); renderEngineering(); renderMetrics(); updateUndoRedo(); }
+function renderCrosscutEngineering() {
+  const panel = $('crosscutRecommendation');
+  if (!panel) return;
+  const x = crosscutEngineering();
+  const count = x.lowerEven;
+  $('crosscutCountMetric').textContent = count ? `${count} crosscuts` : 'Not enough length';
+  $('crosscutCountDetail').textContent = count ? `${x.maxAtTarget % 2 ? `Odd result (${x.maxAtTarget}) corrected to the nearest lower even count.` : 'Balanced even count at the current rough thickness.'}` : 'Increase blank length or reduce rough slice thickness.';
+  $('crosscutPrimaryThickness').textContent = count ? `${x.lowerThickness.toFixed(3)} in` : '—';
+  $('crosscutPrimaryWaste').textContent = count ? `${x.lowerWaste.toFixed(3)} in blank remaining` : '—';
+  $('crosscutAltCount').textContent = `${x.nextEven} crosscuts`;
+  $('crosscutAltThickness').textContent = `${x.nextThickness.toFixed(3)} in each`;
+  $('crosscutAltStatus').textContent = x.nextViable
+    ? `Viable: ${x.nextThickness.toFixed(3)} in is at or above the ${Number(state.finishedThickness).toFixed(3)} in finished target.`
+    : `Too thin: below the ${Number(state.finishedThickness).toFixed(3)} in finished target.`;
+  panel.classList.toggle('warning', x.maxAtTarget > 0 && x.maxAtTarget % 2 !== 0);
+}
+function render() { syncModuleWidthControls(); applySizingRules(); renderBoard(); renderModule(); renderSchedule(); renderEngineering(); renderCrosscutEngineering(); renderMetrics(); updateUndoRedo(); }
 
 function syncControls() {
   controls.forEach(id => { const el=$(id); if (el.type==='checkbox') el.checked=Boolean(state[id]); else el.value=state[id]; });
@@ -499,7 +540,7 @@ function syncControls() {
 }
 function pullControl(id) {
   const el=$(id); let v = el.type==='checkbox' ? el.checked : el.value;
-  if (['targetModuleWidth','boardLength','boardWidth','columns','rows','trimAllowance','edgeInset','finishedThickness','planingAllowance','wastePercent'].includes(id)) v=Number(v);
+  if (['targetModuleWidth','boardLength','boardWidth','columns','rows','trimAllowance','edgeInset','finishedThickness','planingAllowance','wastePercent','masterBlankLength','bladeKerf'].includes(id)) v=Number(v);
   state[id]=v;
   if (id === 'moduleWidthMode') {
     if (v === 'manual') state.targetModuleWidth = totalWidth();
@@ -537,7 +578,7 @@ $('tipWood').addEventListener('change',()=>{
 // Keep the linked sizing fields live while the user types or uses the number-field arrows.
 // In dimensions mode, length/width recalculate rows and columns. In grid mode,
 // rows/columns recalculate finished dimensions, lumber use, and cost.
-['boardLength','boardWidth','columns','rows','trimAllowance','finishedThickness','planingAllowance','wastePercent']
+['boardLength','boardWidth','columns','rows','trimAllowance','finishedThickness','planingAllowance','wastePercent','masterBlankLength','bladeKerf']
   .forEach(id => $(id).addEventListener('input',()=>pullControl(id)));
 $('edgeInset').addEventListener('input',()=>{
   state.edgeInset=Number($('edgeInset').value);
@@ -709,6 +750,10 @@ if (!Number.isFinite(Number(state.finishedThickness))) state.finishedThickness =
 if (!Number.isFinite(Number(state.planingAllowance))) state.planingAllowance = 0.125;
 state.planingAllowance = Math.max(0.125, Math.min(0.250, Number(state.planingAllowance)));
 if (!Number.isFinite(Number(state.wastePercent))) state.wastePercent = 20;
+if (!Number.isFinite(Number(state.masterBlankLength))) state.masterBlankLength = 24;
+if (!Number.isFinite(Number(state.bladeKerf))) state.bladeKerf = 0.125;
+state.masterBlankLength = Math.max(1, Number(state.masterBlankLength));
+state.bladeKerf = Math.max(0, Math.min(0.250, Number(state.bladeKerf)));
 if (!['dimensions','grid'].includes(state.sizingMode)) state.sizingMode = 'dimensions';
 if (!Number.isFinite(Number(state.trimAllowance))) state.trimAllowance = 0.0625;
 state.trimAllowance = Math.max(0, Math.min(0.250, Number(state.trimAllowance)));
@@ -729,7 +774,7 @@ if (state.strips.length === 5) {
 }
 if (!['auto','manual'].includes(state.moduleWidthMode)) state.moduleWidthMode = 'auto';
 if (!Number.isFinite(Number(state.targetModuleWidth))) state.targetModuleWidth = totalWidth() || 1.5;
-state.version = '2.6.4';
+state.version = '2.7.0';
 state.projectName = state.projectName || '';
 state.projectNotes = state.projectNotes || '';
 activeProjectName = state.projectName;

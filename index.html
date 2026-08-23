@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
   <title>Diamond End Grain Designer</title>
-  <link rel="stylesheet" href="styles.css?v=2.6.3" />
+  <link rel="stylesheet" href="styles.css?v=2.7.0" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>Diamond End Grain Designer <span class="version-badge">v2.6.4</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v2.7.0</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -75,6 +75,7 @@
             <option value="90">Turn all 90°</option>
             <option value="alternate">Alternate +45° / −45°</option>
             <option value="checker">Alternate 0° / 90°</option>
+            <option value="crosscut180">Crosscut rows — alternate 0° / 180°</option>
           </select>
         </label>
         <label>Edge rip inset <span id="edgeInsetLabel">0.500 in</span>
@@ -162,6 +163,44 @@
       <div class="canvas-shell">
         <svg id="boardSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" aria-label="End-grain cutting board preview"></svg>
       </div>
+
+
+      <section class="panel crosscut-panel">
+        <div class="engineering-heading">
+          <div>
+            <p class="eyebrow dark">Prototype Rule · v2.7</p>
+            <h2>Crosscut Engineering</h2>
+            <p class="timeline-description">Diamond boards using alternating 180° crosscut rotation should use an even number of crosscuts so every strip has a matching partner.</p>
+          </div>
+        </div>
+        <div class="crosscut-controls">
+          <label>Master blank length (in)
+            <input id="masterBlankLength" type="number" min="1" max="120" step="0.125" value="24" />
+          </label>
+          <label>Blade kerf (in)
+            <input id="bladeKerf" type="number" min="0" max="0.250" step="0.03125" value="0.125" />
+          </label>
+          <div class="calculated-field">
+            <span>Current rough crosscut target</span>
+            <strong id="crosscutPrimaryThickness">1.750 in</strong>
+            <small id="crosscutPrimaryWaste">Uses finished thickness + planing allowance</small>
+          </div>
+        </div>
+        <div id="crosscutRecommendation" class="crosscut-recommendation">
+          <article>
+            <span>Recommended balanced count</span>
+            <strong id="crosscutCountMetric">12 crosscuts</strong>
+            <small id="crosscutCountDetail">Balanced even count at the current rough thickness.</small>
+          </article>
+          <article>
+            <span>Next even-count option</span>
+            <strong id="crosscutAltCount">14 crosscuts</strong>
+            <small id="crosscutAltThickness">1.500 in each</small>
+            <small id="crosscutAltStatus">Viability check</small>
+          </article>
+        </div>
+        <p class="note">The Designer never silently recommends an odd crosscut count. If the raw math produces 13, for example, it recommends 12 at the current rough thickness and shows what thickness would be required to fit 14.</p>
+      </section>
 
       <section class="panel engineering-panel">
         <div class="engineering-heading">
@@ -260,6 +299,6 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=2.6.3"></script>
+  <script src="app.js?v=2.7.0"></script>
 </body>
 </html>

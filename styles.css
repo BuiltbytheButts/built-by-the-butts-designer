@@ -239,3 +239,14 @@ button.small{padding:.48rem .35rem;font-size:.78rem}
 .project-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .project-actions .danger { grid-column: 1 / -1; }
 .saved-schedules textarea { width: 100%; resize: vertical; min-height: 74px; box-sizing: border-box; }
+
+/* v2.7 crosscut engineering */
+.crosscut-panel{margin-top:.75rem}
+.crosscut-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin-top:1rem}
+.crosscut-controls label{margin:0}
+.crosscut-recommendation{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem;margin-top:.8rem}
+.crosscut-recommendation article{border:1px solid var(--line);border-radius:12px;padding:.8rem;background:#fff}
+.crosscut-recommendation span,.crosscut-recommendation small{display:block;color:var(--muted);font-size:.78rem}
+.crosscut-recommendation strong{display:block;margin:.28rem 0;font-size:1.15rem}
+.crosscut-recommendation.warning article:first-child{border-color:#bd7b35;background:#fff8ee}
+@media(max-width:700px){.crosscut-controls{grid-template-columns:1fr}.crosscut-recommendation{grid-template-columns:1fr}}
