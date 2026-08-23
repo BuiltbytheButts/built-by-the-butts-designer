@@ -250,3 +250,9 @@ button.small{padding:.48rem .35rem;font-size:.78rem}
 .crosscut-recommendation strong{display:block;margin:.28rem 0;font-size:1.15rem}
 .crosscut-recommendation.warning article:first-child{border-color:#bd7b35;background:#fff8ee}
 @media(max-width:700px){.crosscut-controls{grid-template-columns:1fr}.crosscut-recommendation{grid-template-columns:1fr}}
+
+/* v2.7.4 finished-dimension workflow + rough-cut guidance */
+.rough-recommendation{display:block;margin-top:.28rem;color:var(--muted);font-size:.72rem;line-height:1.3}
+.why-link{border:0;background:transparent;color:var(--accent);padding:0 .15rem;font-size:.72rem;text-decoration:underline;cursor:pointer}
+.why-link:hover{transform:none;color:var(--accent-dark)}
+.thickness-help strong{color:var(--ink)}

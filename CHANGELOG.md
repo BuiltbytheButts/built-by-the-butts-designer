@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.7.4 — Finished-dimension workflow + rough-cut guidance
+- Removed the sizing-mode choice and editable Rows/Columns controls. **Finished Board Dimensions** is now the single design workflow.
+- Board Setup now asks only for finished Length, Width, and Thickness.
+- Removed user-entered Finishing Allowance; machining overage is now Designer guidance rather than a required input.
+- Added approximate **Recommended rough rip** guidance beside every strip width (design width + ~1/16 in), with a Why? explanation.
+- Crosscut Engineering now shows an approximate **Recommended rough crosscut** (finished thickness + ~1/8 in) and clearly labels it as shop-dependent guidance.
+- Final-board preview automatically uses the balanced even crosscut count and rotates every other crosscut 180°.
+- Finished width still determines the internal pattern rows; rows/columns remain internal engineering values rather than user inputs.
+
+
 ## v2.7.3
 - True crosscut-row preview now uses the balanced even count from Crosscut Engineering.
 - Every other rendered crosscut row rotates 180 degrees (0°, 180°, 0°, 180°...).

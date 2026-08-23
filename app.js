@@ -1,4 +1,4 @@
-console.info("Diamond End Grain Designer by Built By The Butts v2.7.3");
+console.info("Diamond End Grain Designer by Built By The Butts v2.7.4");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -16,12 +16,20 @@ const DEFAULT_STRIPS = [
   { width: 0.500, wood: 'cherry', enabled: true, locked: false }
 ];
 
+const RECOMMENDED_STRIP_EXTRA = 0.0625;   // 1/16 in cleanup room per strip
+const RECOMMENDED_CROSSCUT_EXTRA = 0.125; // 1/8 in total rough-thickness guidance
+
+function recommendedRoughStrip(width) {
+  const design = Math.max(0, Number(width || 0));
+  return design > 0 ? design + RECOMMENDED_STRIP_EXTRA : 0;
+}
+
 let state = {
-  version: '2.7.3', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.7.4', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   masterBlankLength: 24, bladeKerf: 0.125,
-  layout: 'grid', orientation: '0', edgeInset: 0.500,
+  layout: 'grid', orientation: 'crosscut180', edgeInset: 0.500,
   tipWood: 'walnut', showLines: true, showFrame: true,
-  finishedThickness: 1.5, planingAllowance: 0.125, wastePercent: 20,
+  finishedThickness: 1.5, wastePercent: 20,
   moduleWidthMode: 'auto', targetModuleWidth: 1.5,
   woodPrices: { walnut: 28, purpleheart: 18, cherry: 7, padauk: 15, maple: 7 },
   strips: structuredClone(DEFAULT_STRIPS)
@@ -31,7 +39,7 @@ let future = [];
 let isRestoring = false;
 
 const $ = id => document.getElementById(id);
-const controls = ['moduleWidthMode','targetModuleWidth','sizingMode','boardLength','boardWidth','columns','rows','trimAllowance','layout','orientation','edgeInset','showLines','showFrame','finishedThickness','planingAllowance','wastePercent','masterBlankLength','bladeKerf'];
+const controls = ['moduleWidthMode','targetModuleWidth','boardLength','boardWidth','edgeInset','showLines','showFrame','finishedThickness','wastePercent','masterBlankLength','bladeKerf'];
 
 function svgEl(name, attrs = {}) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -84,10 +92,11 @@ function normalizeScheduleToTarget(target = state.targetModuleWidth, showMessage
   if (showMessage) toast(`Module normalized to ${target.toFixed(3)} in`);
   return true;
 }
-// Approximate rough crosscut thickness. The allowance is TOTAL extra material,
-// not an amount per face. Different shops may plane, drum-sand, or hand-sand,
-// so this is intentionally an estimate rather than a hard machining rule.
-function roughThickness() { return Math.max(0, Number(state.finishedThickness || 0)) + Math.max(0, Number(state.planingAllowance || 0)); }
+// Recommended rough crosscut thickness. This is intentionally guidance only:
+ // finished thickness plus a conservative 1/8 in starting margin validated by RB-001.
+function roughThickness() {
+  return Math.max(0, Number(state.finishedThickness || 0)) + RECOMMENDED_CROSSCUT_EXTRA;
+}
 function crosscutEngineering() {
   const blank = Math.max(0, Number(state.masterBlankLength || 0));
   const kerf = Math.max(0, Number(state.bladeKerf || 0));
@@ -143,48 +152,32 @@ function countForFinishedDimension(dimension, footprint, pitch, trim, extra = 0)
   return Math.max(1, Math.floor((assembledTarget - footprint + 1e-9) / pitch) + 1);
 }
 function applySizingRules() {
-  if (!['dimensions','grid'].includes(state.sizingMode)) state.sizingMode = 'dimensions';
-  state.trimAllowance = Math.max(0, Math.min(0.250, Number(state.trimAllowance || 0)));
+  // v2.7.4: Finished Board Dimensions is the only sizing mode.
+  // Rows/columns remain internal renderer outputs, never user inputs.
+  state.sizingMode = 'dimensions';
+  state.layout = 'grid';
+  state.orientation = 'crosscut180';
+  state.trimAllowance = 0.0625;
+
+  state.boardLength = Math.max(0.125, Number(state.boardLength) || 0.125);
+  state.boardWidth = Math.max(0.125, Number(state.boardWidth) || 0.125);
+
   const g = moduleSizingGeometry();
   const trim = state.trimAllowance;
-  if (state.sizingMode === 'grid') {
-    state.columns = Math.max(1, Math.round(Number(state.columns) || 1));
-    state.rows = state.layout === 'single' ? 1 : Math.max(1, Math.round(Number(state.rows) || 1));
-    const dims = gridFinishedDimensions();
-    state.boardLength = roundDimension(dims.length);
-    state.boardWidth = roundDimension(dims.width);
-  } else {
-    state.boardLength = Math.max(0.125, Number(state.boardLength) || 0.125);
-    state.boardWidth = Math.max(0.125, Number(state.boardWidth) || 0.125);
-    state.rows = state.layout === 'single' ? 1 : countForFinishedDimension(state.boardWidth, g.footprint, g.pitch, trim);
-    const stagger = state.layout === 'stagger' && state.rows > 1 ? g.pitch / 2 : 0;
-    state.columns = countForFinishedDimension(state.boardLength, g.footprint, g.pitch, trim, stagger);
-  }
-  const lengthInput = $('boardLength'), widthInput = $('boardWidth');
-  const columnsInput = $('columns'), rowsInput = $('rows');
-  if (lengthInput) { lengthInput.readOnly = state.sizingMode === 'grid'; lengthInput.classList.toggle('calculated-input', state.sizingMode === 'grid'); lengthInput.value = state.boardLength; }
-  if (widthInput) { widthInput.readOnly = state.sizingMode === 'grid'; widthInput.classList.toggle('calculated-input', state.sizingMode === 'grid'); widthInput.value = state.boardWidth; }
-  if (columnsInput) { columnsInput.readOnly = state.sizingMode === 'dimensions'; columnsInput.classList.toggle('calculated-input', state.sizingMode === 'dimensions'); columnsInput.value = state.columns; }
-  if (rowsInput) { rowsInput.readOnly = state.sizingMode === 'dimensions' || state.layout === 'single'; rowsInput.classList.toggle('calculated-input', state.sizingMode === 'dimensions' || state.layout === 'single'); rowsInput.value = state.rows; }
-  const help = $('sizingHelp');
-  if (help) help.textContent = state.sizingMode === 'grid'
-    ? 'Rows and columns are editable. Finished length, width, lumber use, and cost are recalculated automatically.'
-    : 'Board dimensions are editable. Rows and columns are calculated from the current module geometry.';
+  state.rows = countForFinishedDimension(state.boardWidth, g.footprint, g.pitch, trim);
+  state.columns = countForFinishedDimension(state.boardLength, g.footprint, g.pitch, trim);
 }
 
 function migrateStateForCurrentVersion(inputState) {
   const migrated = inputState && typeof inputState === 'object' ? inputState : {};
-  const priorVersion = String(migrated.version || '0');
-  // v2.7.1 changed planingAllowance from the older per-face interpretation
-  // to one TOTAL finishing allowance. Older autosaves/projects can otherwise
-  // carry forward a value that makes a 1.500 in target appear as ~2.000 in.
-  if (!['2.7.1','2.7.2','2.7.3'].includes(priorVersion)) {
-    migrated.planingAllowance = 0.125;
-  }
   if (!Number.isFinite(Number(migrated.finishedThickness))) migrated.finishedThickness = 1.5;
-  if (!Number.isFinite(Number(migrated.planingAllowance))) migrated.planingAllowance = 0.125;
-  migrated.planingAllowance = Math.max(0, Math.min(0.375, Number(migrated.planingAllowance)));
-  migrated.version = '2.7.3';
+  // v2.7.4 retires user-entered finishing allowance and grid sizing.
+  delete migrated.planingAllowance;
+  migrated.sizingMode = 'dimensions';
+  migrated.layout = 'grid';
+  migrated.orientation = 'crosscut180';
+  migrated.trimAllowance = 0.0625;
+  migrated.version = '2.7.4';
   return migrated;
 }
 
@@ -249,6 +242,7 @@ function buildStripEditor() {
       <label class="strip-field width-field">
         <span class="strip-field-heading"><span>Strip ${i+1}</span><span class="strip-toggles"><label title="Lock this width while scaling"><input data-locked="${i}" type="checkbox" ${strip.locked ? 'checked' : ''} ${strip.enabled ? '' : 'disabled'} aria-label="Lock strip ${i+1} width"> Lock</label><input data-enabled="${i}" type="checkbox" ${strip.enabled ? 'checked' : ''} aria-label="Use strip ${i+1}"></span></span>
         <input data-width="${i}" type="number" min="0.0625" max="3" step="0.0625" value="${Number(strip.width).toFixed(4)}">
+        <small class="rough-recommendation" title="Approximate only. Cut slightly oversized, then mill to the exact design width.">Recommended rough rip: ~${recommendedRoughStrip(strip.width).toFixed(4)} in <button type="button" class="why-link" data-rough-why="${i}">Why?</button></small>
       </label>
       <label class="strip-field wood-field">Wood
         <select data-wood="${i}" aria-label="Wood for strip ${i+1}">${woodOptions(strip.wood)}</select>
@@ -325,7 +319,7 @@ function savedProjects() {
 function persistProjects(projects) { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects)); }
 function projectRecord(name, sourceState = state) {
   const projectState = structuredClone(sourceState);
-  projectState.version = '2.7.3';
+  projectState.version = '2.7.0';
   projectState.projectName = name;
   projectState.projectNotes = $('projectNotes')?.value ?? projectState.projectNotes ?? '';
   return { name, updatedAt: new Date().toISOString(), state: projectState };
@@ -483,23 +477,22 @@ function angleAt(r,c) {
 function renderBoard() {
   const svg = $('boardSvg'); svg.innerHTML = ''; addPatterns(svg,'board');
   if (state.showFrame) svg.append(svgEl('rect',{x:55,y:55,width:1090,height:650,rx:12,fill:'#f5efe7',stroke:'#9c8a7b','stroke-width':'3'}));
-  const cols = Math.max(1,Number(state.columns));
-  // In the true crosscut preview, each rendered row represents one physical
-  // end-grain crosscut. Use Crosscut Engineering's balanced EVEN count so the
-  // picture changes with blank length, kerf, finished thickness, or allowance.
-  // Other orientation studies continue to use the normal Rows control.
+
+  // Final-board preview: physical crosscuts run across the finished length.
+  // The engineered even crosscut count is shown as columns; finished width
+  // determines the internal row count. Every other crosscut rotates 180°.
   const engineeredCrosscuts = crosscutEngineering().lowerEven;
-  const rows = state.orientation === 'crosscut180'
-    ? Math.max(2, engineeredCrosscuts || 2)
-    : (state.layout === 'single' ? 1 : Math.max(1,Number(state.rows)));
+  const cols = Math.max(2, engineeredCrosscuts || 2);
+  const rows = Math.max(1, Number(state.rows) || 1);
   const spacing = 0;
   const size = Math.min(205, 1030/Math.max(cols*.71+.5,1), 600/Math.max(rows*.71+.5,1));
   const xStep = size*.707 + spacing, yStep = size*.707 + spacing;
   const tw = (cols-1)*xStep + size, th = (rows-1)*yStep + size;
   const sx = 600 - tw/2 + size/2, sy = 380 - th/2 + size/2;
+
   for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
-    let x = sx + c*xStep; if (state.layout==='stagger' && r%2) x += xStep/2;
-    drawModule(svg,x,sy+r*yStep,size,angleAt(r,c),'board');
+    const angle = c % 2 ? 180 : 0;
+    drawModule(svg,sx+c*xStep,sy+r*yStep,size,angle,'board');
   }
 }
 function renderModule() { const svg=$('moduleSvg'); svg.innerHTML=''; addPatterns(svg,'module'); drawModule(svg,160,160,245,0,'module'); }
@@ -517,12 +510,10 @@ function renderSchedule() {
   h.append(tip);
 }
 function renderMetrics() {
-  const engineeredCrosscuts = crosscutEngineering().lowerEven;
-  const rows = state.orientation === 'crosscut180'
-    ? Math.max(2, engineeredCrosscuts || 2)
-    : (state.layout==='single'?1:Number(state.rows));
+  const engineeredCrosscuts = Math.max(2, crosscutEngineering().lowerEven || 2);
+  const rows = Math.max(1, Number(state.rows) || 1);
   $('moduleWidthMetric').textContent = `${totalWidth().toFixed(3)} in`;
-  $('moduleCountMetric').textContent = String(Number(state.columns)*rows);
+  $('moduleCountMetric').textContent = String(engineeredCrosscuts * rows);
   $('boardSizeMetric').textContent = `${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`;
   if ($('thicknessMetric')) $('thicknessMetric').textContent = `${Number(state.finishedThickness).toFixed(3)} in`;
   $('edgeInsetLabel').textContent = `${Number(state.edgeInset ?? 0.5).toFixed(3)} in`;
@@ -530,20 +521,18 @@ function renderMetrics() {
   if (diagnostics) {
     const geometry = moduleSizingGeometry();
     diagnostics.textContent = [
-      `Version: v2.7.3`,
-      `Finished size: ${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`,
-      `Module width: ${totalWidth().toFixed(3)} in`,
-      `Final trim per edge: ${Number(state.trimAllowance).toFixed(3)} in`,
-      `Grid: ${state.columns} columns × ${state.rows} rows`,
-      `Sizing mode: ${state.sizingMode}`,
-      `Module pitch: ${geometry.pitch.toFixed(3)} × ${geometry.pitch.toFixed(3)} in`,
+      `Version: v2.7.4`,
+      `Finished size target: ${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} × ${Number(state.finishedThickness).toFixed(3)} in`,
+      `Module design width: ${totalWidth().toFixed(3)} in`,
+      `Internal width rows: ${state.rows}`,
+      `Final-preview crosscuts: ${engineeredCrosscuts}`,
+      `Recommended rough crosscut: ${roughThickness().toFixed(3)} in`,
+      `Module pitch: ${geometry.pitch.toFixed(3)} in`,
       `Edge inset: ${Number(state.edgeInset).toFixed(3)} in`,
       `Edge species: ${activeEdgeWood() ? WOODS[state.tipWood].name : 'None'}`,
-      `Finished thickness: ${Number(state.finishedThickness).toFixed(3)} in`,
       `Crosscut blank / kerf: ${Number(state.masterBlankLength).toFixed(3)} / ${Number(state.bladeKerf).toFixed(3)} in`,
-      `Balanced crosscut recommendation: ${crosscutEngineering().lowerEven || 'n/a'}`,
       `Estimated cost: ${$('totalLumberCostMetric')?.textContent || '$0.00'}`
-    ].join('\n');
+    ].join('\\n');
   }
 }
 function renderCrosscutEngineering() {
@@ -553,8 +542,8 @@ function renderCrosscutEngineering() {
   const count = x.lowerEven;
   $('crosscutCountMetric').textContent = count ? `${count} crosscuts` : 'Not enough length';
   $('crosscutCountDetail').textContent = count ? `${x.maxAtTarget % 2 ? `Odd result (${x.maxAtTarget}) corrected to the nearest lower even count. ` : 'Balanced even count at the current rough thickness. '}Approx. blank remaining: ${x.lowerWaste.toFixed(3)} in.` : 'Increase blank length or reduce rough slice thickness.';
-  $('crosscutPrimaryThickness').textContent = count ? `${x.lowerThickness.toFixed(3)} in` : '—';
-  $('crosscutPrimaryWaste').textContent = count ? `Finished target: ${Number(state.finishedThickness || 0).toFixed(3)} in` : '—';
+  $('crosscutPrimaryThickness').textContent = count ? `~${x.lowerThickness.toFixed(3)} in` : '—';
+  $('crosscutPrimaryWaste').textContent = count ? `Approximate starting cut for a ${Number(state.finishedThickness || 0).toFixed(3)} in finished target` : '—';
   $('crosscutAltCount').textContent = `${x.nextEven} crosscuts`;
   $('crosscutAltThickness').textContent = `${x.nextThickness.toFixed(3)} in each`;
   $('crosscutAltStatus').textContent = x.nextViable
@@ -570,7 +559,7 @@ function syncControls() {
 }
 function pullControl(id) {
   const el=$(id); let v = el.type==='checkbox' ? el.checked : el.value;
-  if (['targetModuleWidth','boardLength','boardWidth','columns','rows','trimAllowance','edgeInset','finishedThickness','planingAllowance','wastePercent','masterBlankLength','bladeKerf'].includes(id)) v=Number(v);
+  if (['targetModuleWidth','boardLength','boardWidth','edgeInset','finishedThickness','wastePercent','masterBlankLength','bladeKerf'].includes(id)) v=Number(v);
   state[id]=v;
   if (id === 'moduleWidthMode') {
     if (v === 'manual') state.targetModuleWidth = totalWidth();
@@ -606,9 +595,8 @@ $('tipWood').addEventListener('change',()=>{
   render(); commit();
 });
 // Keep the linked sizing fields live while the user types or uses the number-field arrows.
-// In dimensions mode, length/width recalculate rows and columns. In grid mode,
-// rows/columns recalculate finished dimensions, lumber use, and cost.
-['boardLength','boardWidth','columns','rows','trimAllowance','finishedThickness','planingAllowance','wastePercent','masterBlankLength','bladeKerf']
+// Finished dimensions are the only sizing inputs. Internal grid values recalculate automatically.
+['boardLength','boardWidth','finishedThickness','wastePercent','masterBlankLength','bladeKerf']
   .forEach(id => $(id).addEventListener('input',()=>pullControl(id)));
 $('edgeInset').addEventListener('input',()=>{
   state.edgeInset=Number($('edgeInset').value);
@@ -749,13 +737,18 @@ function renderEngineering() {
   const whole = wholeBoardCost();
   $('totalLumberCostMetric').textContent=`$${whole.totalCost.toFixed(2)}`;
   $('totalBoardFeetMetric').textContent=`${whole.totalBf.toFixed(3)} bd ft including waste`;
-  if ($('roughThicknessMetric')) $('roughThicknessMetric').textContent = `${roughThickness().toFixed(3)} in`;
-  if ($('planingLossMetric')) $('planingLossMetric').textContent = `${Number(state.planingAllowance || 0).toFixed(3)} in total finishing allowance · ${whole.planingBoardFeet.toFixed(3)} bd ft estimated removal`;
+  if ($('roughThicknessMetric')) $('roughThicknessMetric').textContent = `~${roughThickness().toFixed(3)} in`;
+  if ($('planingLossMetric')) $('planingLossMetric').textContent = `Approximate shop recommendation · ${whole.planingBoardFeet.toFixed(3)} bd ft estimated cleanup material`;
   document.querySelectorAll('[data-inset]').forEach(b=>b.classList.toggle('active',Math.abs(Number(b.dataset.inset)-state.edgeInset)<.001));
   renderMaterialCostBreakdown();
 }
 
 document.addEventListener('click', e => {
+  const why = e.target.closest('[data-rough-why]');
+  if (why) {
+    alert('Recommended rough rip is approximate. The Designer adds about 1/16 in so you can remove saw marks and mill to the exact design width. A cleaner blade, drum sander, planer setup, or your own shop process may need more or less.');
+    return;
+  }
   const b = e.target.closest('[data-inset]');
   if (!b) return;
   state.edgeInset = Number(b.dataset.inset);
@@ -778,16 +771,15 @@ state.woodPrices = {...{ walnut:28, purpleheart:18, cherry:7, padauk:15, maple:7
 if (Number.isFinite(Number(state.walnutPrice))) state.woodPrices.walnut = Number(state.walnutPrice);
 delete state.walnutPrice;
 if (!Number.isFinite(Number(state.finishedThickness))) state.finishedThickness = 1.5;
-if (!Number.isFinite(Number(state.planingAllowance))) state.planingAllowance = 0.125;
-state.planingAllowance = Math.max(0, Math.min(0.375, Number(state.planingAllowance)));
 if (!Number.isFinite(Number(state.wastePercent))) state.wastePercent = 20;
 if (!Number.isFinite(Number(state.masterBlankLength))) state.masterBlankLength = 24;
 if (!Number.isFinite(Number(state.bladeKerf))) state.bladeKerf = 0.125;
 state.masterBlankLength = Math.max(1, Number(state.masterBlankLength));
 state.bladeKerf = Math.max(0, Math.min(0.250, Number(state.bladeKerf)));
-if (!['dimensions','grid'].includes(state.sizingMode)) state.sizingMode = 'dimensions';
-if (!Number.isFinite(Number(state.trimAllowance))) state.trimAllowance = 0.0625;
-state.trimAllowance = Math.max(0, Math.min(0.250, Number(state.trimAllowance)));
+state.sizingMode = 'dimensions';
+state.layout = 'grid';
+state.orientation = 'crosscut180';
+state.trimAllowance = 0.0625;
 delete state.insetGoal;
 delete state.targetCenterPercent;
 state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false, locked: s.locked === true}));
@@ -805,7 +797,7 @@ if (state.strips.length === 5) {
 }
 if (!['auto','manual'].includes(state.moduleWidthMode)) state.moduleWidthMode = 'auto';
 if (!Number.isFinite(Number(state.targetModuleWidth))) state.targetModuleWidth = totalWidth() || 1.5;
-state.version = '2.7.3';
+state.version = '2.7.0';
 state.projectName = state.projectName || '';
 state.projectNotes = state.projectNotes || '';
 activeProjectName = state.projectName;

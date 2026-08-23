@@ -1,3 +1,17 @@
+# Diamond End Grain Designer by Built By The Butts v2.7.4
+
+This release simplifies the Designer around how a woodworker actually plans a board: start with the **finished length, width, and thickness**, then let the Designer calculate the internal pattern and provide approximate rough-cut guidance.
+
+## v2.7.4 highlights
+- Finished Board Dimensions is the only sizing workflow.
+- Rows and columns are internal calculations, not design inputs.
+- Final preview uses the recommended even crosscut count with alternating 0° / 180° rotation.
+- Each strip shows an approximate recommended rough rip beside its exact design width.
+- Crosscut Engineering shows an approximate rough starting cut for the desired finished thickness.
+- Rough recommendations are guidance only and may be adjusted for blade quality, glue-up quality, planer, drum sander, or hand-sanding process.
+
+Upload `index.html`, `styles.css`, `app.js`, `README.md`, `CHANGELOG.md`, and `ROADMAP.md` to the root of the GitHub repository and replace the existing files.
+
 # Diamond End Grain Designer by Built By The Butts v2.5.8
 
 This release restores the compact original strip editor layout, removes drag-and-drop, keeps individual strip on/off controls, and ensures the full wood-species selector remains visible in the sidebar. Cache-busting version tags are included so GitHub Pages loads the new CSS and JavaScript immediately.

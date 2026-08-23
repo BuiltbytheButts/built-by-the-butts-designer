@@ -3,7 +3,7 @@
 ## Production Ready
 - Validate estimated dimensions, board feet, waste, and cost against a complete shop build.
 - Record actual strip widths, glue-up dimensions, kerf loss, planing loss, final dimensions, and species costs.
-- Calibrate waste and machining assumptions from measured results.
+- Calibrate waste and recommended rough-machining guidance from measured results.
 - Freeze Version 2 except for verified bug fixes.
 
 ## Version 3

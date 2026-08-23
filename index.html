@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
   <title>Diamond End Grain Designer</title>
-  <link rel="stylesheet" href="styles.css?v=2.7.3" />
+  <link rel="stylesheet" href="styles.css?v=2.7.4" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>Diamond End Grain Designer <span class="version-badge">v2.7.3</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v2.7.4</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -25,60 +25,20 @@
   <main class="workspace">
     <aside class="panel controls-panel">
       <section>
-        <h2>Board Setup</h2>
-        <label>Sizing mode
-          <select id="sizingMode">
-            <option value="dimensions">Board dimensions determine grid</option>
-            <option value="grid">Rows and columns determine board dimensions</option>
-          </select>
-        </label>
+        <h2>Finished Board Dimensions</h2>
+        <p class="strip-help">Start with the board you want to build. The Designer calculates the pattern grid and machining guidance from the finished dimensions.</p>
         <div class="two-col">
-          <label>Length (in)
+          <label>Finished length (in)
             <input id="boardLength" type="number" min="1" max="60" step="0.125" value="20" />
           </label>
-          <label>Width (in)
+          <label>Finished width (in)
             <input id="boardWidth" type="number" min="1" max="36" step="0.125" value="12.75" />
           </label>
         </div>
-        <div class="two-col">
-          <label>Finished board thickness (in)
-            <input id="finishedThickness" type="number" min="0.750" max="3" step="0.125" value="1.500" />
-          </label>
-          <label>Approx. finishing allowance — total (in)
-            <input id="planingAllowance" type="number" min="0" max="0.375" step="0.03125" value="0.125" />
-          </label>
-        </div>
-        <p class="strip-help thickness-help">Approximate only. Rough crosscut target = finished thickness + this total allowance. A careful glue-up or drum sander may need less; planer-heavy flattening may need more.</p>
-        <div class="two-col">
-          <label>Columns
-            <input id="columns" type="number" min="1" max="40" step="1" value="8" />
-          </label>
-          <label>Rows
-            <input id="rows" type="number" min="1" max="30" step="1" value="5" />
-          </label>
-        </div>
-        <label>Final trim per edge (in)
-          <input id="trimAllowance" type="number" min="0" max="0.250" step="0.03125" value="0.0625" />
+        <label>Finished thickness (in)
+          <input id="finishedThickness" type="number" min="0.750" max="3" step="0.125" value="1.500" />
         </label>
-        <p id="sizingHelp" class="strip-help sizing-help">Board dimensions are editable. Rows and columns are calculated from the current module geometry.</p>
-        <label>Pattern
-          <select id="layout">
-            <option value="grid">Straight grid</option>
-            <option value="stagger">Staggered rows</option>
-            <option value="single">Single row study</option>
-          </select>
-        </label>
-        <label>Orientation
-          <select id="orientation">
-            <option value="0">Diamond</option>
-            <option value="45">Turn all 45°</option>
-            <option value="90">Turn all 90°</option>
-            <option value="alternate">Alternate +45° / −45°</option>
-            <option value="checker">Alternate 0° / 90°</option>
-            <option value="crosscut180">Crosscut rows — alternate 0° / 180°</option>
-          </select>
-        </label>
-        <p class="strip-help">When “Crosscut rows — alternate 0° / 180°” is selected, the preview uses Crosscut Engineering’s recommended even count. Changing blank length, kerf, finished thickness, or finishing allowance updates the number of visible crosscut rows.</p>
+        <p class="strip-help thickness-help"><strong>Designer recommendation:</strong> rough machining dimensions are shown beside the strip schedule and in Crosscut Engineering. They are approximate starting points, not required cut dimensions.</p>
         <label>Edge rip inset <span id="edgeInsetLabel">0.500 in</span>
           <input id="edgeInset" type="range" min="0" max="1.000" step="0.0625" value="0.500" />
         </label>
@@ -114,7 +74,7 @@
             <button id="normalizeScheduleBtn" class="secondary" type="button">Normalize to Target</button>
             <button id="restoreModuleWidthBtn" class="secondary" type="button">Return to 1.500″</button>
           </div>
-          <p id="moduleWidthHelp" class="strip-help">Auto mode uses the active strip widths directly. Manual mode proportionally scales unlocked active strips as the target width changes. To make module-width changes alter the finished board size and cost, use “Rows and columns determine board dimensions.”</p>
+          <p id="moduleWidthHelp" class="strip-help">Auto mode uses the active strip widths directly. Manual mode proportionally scales unlocked active strips to the target. Finished board dimensions remain the design goal; the Designer recalculates the internal pattern grid automatically.</p>
         </div>
         <div class="strip-toolbar">
           <button id="addOuterPairBtn" class="secondary" type="button">+ Add Outer Pair</button>
@@ -182,9 +142,9 @@
             <input id="bladeKerf" type="number" min="0" max="0.250" step="0.03125" value="0.125" />
           </label>
           <div class="calculated-field">
-            <span>Approx. rough crosscut target</span>
-            <strong id="crosscutPrimaryThickness">1.625 in</strong>
-            <small id="crosscutPrimaryWaste">Finished thickness + total finishing allowance</small>
+            <span>Recommended rough crosscut</span>
+            <strong id="crosscutPrimaryThickness">~1.625 in</strong>
+            <small id="crosscutPrimaryWaste">Approximate starting cut for a 1.500 in finished target</small>
           </div>
         </div>
         <div id="crosscutRecommendation" class="crosscut-recommendation">
@@ -200,7 +160,7 @@
             <small id="crosscutAltStatus">Viability check</small>
           </article>
         </div>
-        <p class="note"><strong>Approximation:</strong> The Designer never silently recommends an odd crosscut count. Rough crosscut thickness is a starting target, not a machining requirement. Drum sanding, careful cauls/bracing, hand sanding, or planer use can change how much extra thickness an individual builder needs.</p>
+        <p class="note"><strong>Approximation:</strong> The Designer never silently recommends an odd crosscut count. Recommended rough crosscut thickness is a starting point, not a machining requirement. Drum sanding, careful cauls/bracing, hand sanding, or planer use can change how much extra thickness an individual builder needs.</p>
       </section>
 
       <section class="panel engineering-panel">
@@ -222,9 +182,9 @@
                   <input id="wastePercent" type="number" min="0" max="100" step="1" value="20" />
                 </label>
                 <div class="calculated-field">
-                  <span>Approx. rough crosscut</span>
-                  <strong id="roughThicknessMetric">1.625 in</strong>
-                  <small id="planingLossMetric">0.125 in total finishing allowance</small>
+                  <span>Recommended rough crosscut</span>
+                  <strong id="roughThicknessMetric">~1.625 in</strong>
+                  <small id="planingLossMetric">Approximate shop recommendation</small>
                 </div>
               </div>
             </div>
@@ -300,6 +260,6 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=2.7.3"></script>
+  <script src="app.js?v=2.7.4"></script>
 </body>
 </html>
