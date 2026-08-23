@@ -1,4 +1,4 @@
-console.info("Diamond End Grain Designer by Built By The Butts v2.7.5");
+console.info("Diamond End Grain Designer by Built By The Butts v2.7.6");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -25,7 +25,7 @@ function recommendedRoughStrip(width) {
 }
 
 let state = {
-  version: '2.7.5', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.7.6', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   masterBlankLength: 24, bladeKerf: 0.125,
   layout: 'grid', orientation: 'crosscut180', edgeInset: 0.500,
   tipWood: 'walnut', showLines: true, showFrame: true,
@@ -98,25 +98,48 @@ function roughThickness() {
   return Math.max(0, Number(state.finishedThickness || 0)) + RECOMMENDED_CROSSCUT_EXTRA;
 }
 function crosscutEngineering() {
+  const finishedLength = Math.max(0.125, Number(state.boardLength || 0));
+  const finishedThickness = Math.max(0.125, Number(state.finishedThickness || 0));
   const blank = Math.max(0, Number(state.masterBlankLength || 0));
   const kerf = Math.max(0, Number(state.bladeKerf || 0));
   const target = Math.max(0.001, roughThickness());
+
+  // Finished board LENGTH is created by placing finished crosscuts side-by-side.
+  // Therefore the desired crosscut count comes from finished length / finished
+  // thickness. The pattern must use an EVEN count to stay balanced.
+  const desiredCount = finishedLength / finishedThickness;
+  const lowerEven = Math.max(2, Math.floor(desiredCount / 2) * 2);
+  const upperEven = Math.max(lowerEven + 2, Math.ceil(desiredCount / 2) * 2);
+  const lowerFinishedLength = lowerEven * finishedThickness;
+  const upperFinishedLength = upperEven * finishedThickness;
+  const lowerDelta = Math.abs(finishedLength - lowerFinishedLength);
+  const upperDelta = Math.abs(upperFinishedLength - finishedLength);
+  // On an exact tie, prefer the lower count so we never silently oversize.
+  const recommendedEven = lowerDelta <= upperDelta ? lowerEven : upperEven;
+  const recommendedFinishedLength = recommendedEven * finishedThickness;
+  const targetIsExact = Math.abs(desiredCount - Math.round(desiredCount)) < 1e-6;
+  const targetWouldBeOdd = targetIsExact && Math.round(desiredCount) % 2 !== 0;
+
+  const requiredBlankForCount = count => count > 0
+    ? count * target + Math.max(0, count - 1) * kerf
+    : 0;
   const maxAtTarget = Math.max(0, Math.floor((blank + kerf + 1e-9) / (target + kerf)));
-  let recommendedEven = maxAtTarget;
-  if (recommendedEven % 2 !== 0) recommendedEven -= 1;
-  recommendedEven = Math.max(0, recommendedEven);
-  const lowerEven = recommendedEven >= 2 ? recommendedEven : 0;
-  const nextEven = lowerEven ? lowerEven + 2 : 2;
-  const thicknessForCount = count => {
-    if (!count || blank <= 0) return 0;
-    return Math.max(0, (blank - Math.max(0, count - 1) * kerf) / count);
+  const requiredBlank = requiredBlankForCount(recommendedEven);
+  const blankRemaining = blank - requiredBlank;
+  const fitsAvailableBlank = blank + 1e-9 >= requiredBlank;
+
+  const alternateEven = recommendedEven === lowerEven ? upperEven : lowerEven;
+  const alternateFinishedLength = alternateEven * finishedThickness;
+  const alternateRequiredBlank = requiredBlankForCount(alternateEven);
+  const alternateFitsBlank = blank + 1e-9 >= alternateRequiredBlank;
+
+  return {
+    blank, kerf, target, desiredCount, maxAtTarget,
+    lowerEven, upperEven, recommendedEven, recommendedFinishedLength,
+    lowerFinishedLength, upperFinishedLength, targetWouldBeOdd,
+    requiredBlank, blankRemaining, fitsAvailableBlank,
+    alternateEven, alternateFinishedLength, alternateRequiredBlank, alternateFitsBlank
   };
-  const usedLength = (count, thickness) => count > 0 ? count * thickness + Math.max(0, count - 1) * kerf : 0;
-  const lowerThickness = lowerEven ? target : 0;
-  const lowerWaste = lowerEven ? Math.max(0, blank - usedLength(lowerEven, lowerThickness)) : blank;
-  const nextThickness = thicknessForCount(nextEven);
-  const nextViable = nextThickness >= Number(state.finishedThickness || 0);
-  return { blank, kerf, target, maxAtTarget, recommendedEven, lowerEven, lowerThickness, lowerWaste, nextEven, nextThickness, nextViable };
 }
 function roundDimension(value) { return Math.round(Math.max(0, value) * 1000) / 1000; }
 function moduleSizingGeometry() {
@@ -152,32 +175,33 @@ function countForFinishedDimension(dimension, footprint, pitch, trim, extra = 0)
   return Math.max(1, Math.floor((assembledTarget - footprint + 1e-9) / pitch) + 1);
 }
 function applySizingRules() {
-  // v2.7.5: Finished Board Dimensions is the only sizing mode.
-  // Rows/columns remain internal renderer outputs, never user inputs.
+  // Finished dimensions are the DESIGN GOAL and must never be overwritten by
+  // renderer math. Rows/columns are internal outputs only.
   state.sizingMode = 'dimensions';
   state.layout = 'grid';
   state.orientation = 'crosscut180';
-  state.trimAllowance = 0.0625;
+  state.trimAllowance = 0;
 
   state.boardLength = Math.max(0.125, Number(state.boardLength) || 0.125);
   state.boardWidth = Math.max(0.125, Number(state.boardWidth) || 0.125);
 
-  const g = moduleSizingGeometry();
-  const trim = state.trimAllowance;
-  state.rows = countForFinishedDimension(state.boardWidth, g.footprint, g.pitch, trim);
-  state.columns = countForFinishedDimension(state.boardLength, g.footprint, g.pitch, trim);
+  const module = Math.max(0.0625, totalWidth());
+  const engineered = crosscutEngineering();
+  // Along the finished length, physical crosscuts determine the count.
+  state.columns = Math.max(2, engineered.recommendedEven || 2);
+  // Across the width, keep enough laminated modules to cover the target width.
+  state.rows = Math.max(1, Math.ceil(state.boardWidth / module));
 }
-
 function migrateStateForCurrentVersion(inputState) {
   const migrated = inputState && typeof inputState === 'object' ? inputState : {};
   if (!Number.isFinite(Number(migrated.finishedThickness))) migrated.finishedThickness = 1.5;
-  // v2.7.5 retires user-entered finishing allowance and grid sizing.
+  // v2.7.6 retires user-entered finishing allowance and grid sizing.
   delete migrated.planingAllowance;
   migrated.sizingMode = 'dimensions';
   migrated.layout = 'grid';
   migrated.orientation = 'crosscut180';
-  migrated.trimAllowance = 0.0625;
-  migrated.version = '2.7.4';
+  migrated.trimAllowance = 0;
+  migrated.version = '2.7.6';
   return migrated;
 }
 
@@ -319,7 +343,7 @@ function savedProjects() {
 function persistProjects(projects) { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects)); }
 function projectRecord(name, sourceState = state) {
   const projectState = structuredClone(sourceState);
-  projectState.version = '2.7.0';
+  projectState.version = '2.7.6';
   projectState.projectName = name;
   projectState.projectNotes = $('projectNotes')?.value ?? projectState.projectNotes ?? '';
   return { name, updatedAt: new Date().toISOString(), state: projectState };
@@ -479,16 +503,16 @@ function renderBoard() {
   svg.innerHTML = '';
   addPatterns(svg,'board');
 
-  // v2.7.5: Render a continuous, edge-to-edge diamond field and crop it to the
-  // requested FINISHED board aspect ratio. The previous renderer spaced each
-  // diamond independently, which created white gaps and did not resemble the
-  // physical glue-up.
+  // v2.7.6: restore the proven v2.6.x diamond renderer. Finished dimensions
+  // determine the physical scale and crop window; they NEVER stretch one tile.
+  // Each module keeps a fixed physical size based on the strip-schedule total.
   const targetLength = Math.max(0.125, Number(state.boardLength || 18));
   const targetWidth = Math.max(0.125, Number(state.boardWidth || 12));
+  const moduleInches = Math.max(0.0625, totalWidth());
   const maxW = 1090, maxH = 650;
-  const scale = Math.min(maxW / targetLength, maxH / targetWidth);
-  const boardW = targetLength * scale;
-  const boardH = targetWidth * scale;
+  const pxPerIn = Math.min(maxW / targetLength, maxH / targetWidth);
+  const boardW = targetLength * pxPerIn;
+  const boardH = targetWidth * pxPerIn;
   const boardX = 600 - boardW / 2;
   const boardY = 380 - boardH / 2;
 
@@ -505,26 +529,28 @@ function renderBoard() {
   const field = svgEl('g',{'clip-path':`url(#${clipId})`});
   svg.append(field);
 
-  const engineeredCrosscuts = Math.max(2, crosscutEngineering().lowerEven || 2);
-  // Two alternating 0°/180° physical crosscuts complete one repeating diamond
-  // motif, so an even count becomes half as many visual motif columns.
-  const motifCols = Math.max(1, engineeredCrosscuts / 2);
-  const size = boardW / motifCols;
-  const xStep = size;
-  const yStep = size / 2;
-  const visualRows = Math.ceil(boardH / yStep) + 3;
-  const visualCols = motifCols + 3;
+  // The known-good renderer spaces diamond centers by 0.707 × tile size.
+  // Choose tile size so that center-to-center pitch equals the physical module
+  // width in the shop. That keeps a 1.500 in module looking like 1.500 in,
+  // regardless of finished board size.
+  const pitch = moduleInches * pxPerIn;
+  const tileSize = pitch / 0.7071067811865476;
+  const xStep = pitch;
+  const yStep = pitch;
 
-  for (let r = -1; r < visualRows; r++) {
-    const y = boardY + r * yStep;
-    const offset = (r & 1) ? size / 2 : 0;
-    for (let c = -1; c < visualCols; c++) {
-      const x = boardX + c * xStep + offset;
-      // Alternate the underlying crosscut orientation while preserving a
-      // continuous tessellation. This gives the same paired visual rhythm the
-      // shop build creates without exposing rows/columns as user controls.
-      const angle = (c + r) % 2 ? 180 : 0;
-      drawModule(field,x,y,size,angle,'board');
+  const engineered = crosscutEngineering();
+  const crosscuts = Math.max(2, engineered.recommendedEven || 2);
+  const widthModules = Math.max(1, Math.ceil(targetWidth / moduleInches));
+
+  // Draw a small safety margin outside the crop so no white holes appear at
+  // the perimeter. Alternating 180° by physical crosscut mirrors the strip
+  // order and creates the nested-diamond rhythm seen in the real glue-up.
+  for (let r = -1; r <= widthModules; r++) {
+    const y = boardY + (r + 0.5) * yStep;
+    for (let c = -1; c <= crosscuts; c++) {
+      const x = boardX + (c + 0.5) * xStep;
+      const angle = c % 2 ? 180 : 0;
+      drawModule(field,x,y,tileSize,angle,'board');
     }
   }
 
@@ -558,7 +584,7 @@ function renderMetrics() {
   if (diagnostics) {
     const geometry = moduleSizingGeometry();
     diagnostics.textContent = [
-      `Version: v2.7.5`,
+      `Version: v2.7.6`,
       `Finished size target: ${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} × ${Number(state.finishedThickness).toFixed(3)} in`,
       `Module design width: ${totalWidth().toFixed(3)} in`,
       `Internal width rows: ${state.rows}`,
@@ -576,17 +602,27 @@ function renderCrosscutEngineering() {
   const panel = $('crosscutRecommendation');
   if (!panel) return;
   const x = crosscutEngineering();
-  const count = x.lowerEven;
-  $('crosscutCountMetric').textContent = count ? `${count} crosscuts` : 'Not enough length';
-  $('crosscutCountDetail').textContent = count ? `${x.maxAtTarget % 2 ? `Odd result (${x.maxAtTarget}) corrected to the nearest lower even count. ` : 'Balanced even count at the current rough thickness. '}Approx. blank remaining: ${x.lowerWaste.toFixed(3)} in.` : 'Increase blank length or reduce rough slice thickness.';
-  $('crosscutPrimaryThickness').textContent = count ? `~${x.lowerThickness.toFixed(3)} in` : '—';
-  $('crosscutPrimaryWaste').textContent = count ? `Approximate starting cut for a ${Number(state.finishedThickness || 0).toFixed(3)} in finished target` : '—';
-  $('crosscutAltCount').textContent = `${x.nextEven} crosscuts`;
-  $('crosscutAltThickness').textContent = `${x.nextThickness.toFixed(3)} in each`;
-  $('crosscutAltStatus').textContent = x.nextViable
-    ? `Viable: ${x.nextThickness.toFixed(3)} in is at or above the ${Number(state.finishedThickness).toFixed(3)} in finished target.`
-    : `Too thin: below the ${Number(state.finishedThickness).toFixed(3)} in finished target.`;
-  panel.classList.toggle('warning', x.maxAtTarget > 0 && x.maxAtTarget % 2 !== 0);
+  const count = x.recommendedEven;
+  $('crosscutCountMetric').textContent = `${count} crosscuts`;
+
+  const targetNote = x.targetWouldBeOdd
+    ? `Your exact finished-length target would require an odd count. Balanced recommendation: ${count} crosscuts = ${x.recommendedFinishedLength.toFixed(3)} in finished length.`
+    : `Balanced count for approximately ${Number(state.boardLength).toFixed(3)} in finished length: ${count} crosscuts = ${x.recommendedFinishedLength.toFixed(3)} in.`;
+  const blankNote = x.fitsAvailableBlank
+    ? ` Required rough blank: ~${x.requiredBlank.toFixed(3)} in; approx. ${Math.max(0,x.blankRemaining).toFixed(3)} in remaining from the entered blank.`
+    : ` Requires ~${x.requiredBlank.toFixed(3)} in of rough blank, which is ${Math.abs(x.blankRemaining).toFixed(3)} in longer than the entered blank.`;
+  $('crosscutCountDetail').textContent = targetNote + blankNote;
+
+  $('crosscutPrimaryThickness').textContent = `~${x.target.toFixed(3)} in`;
+  $('crosscutPrimaryWaste').textContent = `Recommended rough starting cut for ${Number(state.finishedThickness).toFixed(3)} in finished thickness`;
+
+  $('crosscutAltCount').textContent = `${x.alternateEven} crosscuts`;
+  $('crosscutAltThickness').textContent = `${x.alternateFinishedLength.toFixed(3)} in finished length`;
+  $('crosscutAltStatus').textContent = x.alternateFitsBlank
+    ? `Also fits the entered blank; rough blank required ~${x.alternateRequiredBlank.toFixed(3)} in.`
+    : `Would require ~${x.alternateRequiredBlank.toFixed(3)} in rough blank.`;
+
+  panel.classList.toggle('warning', x.targetWouldBeOdd || !x.fitsAvailableBlank);
 }
 function render() { syncModuleWidthControls(); applySizingRules(); renderBoard(); renderModule(); renderSchedule(); renderEngineering(); renderCrosscutEngineering(); renderMetrics(); updateUndoRedo(); }
 
@@ -816,7 +852,7 @@ state.bladeKerf = Math.max(0, Math.min(0.250, Number(state.bladeKerf)));
 state.sizingMode = 'dimensions';
 state.layout = 'grid';
 state.orientation = 'crosscut180';
-state.trimAllowance = 0.0625;
+state.trimAllowance = 0;
 delete state.insetGoal;
 delete state.targetCenterPercent;
 state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false, locked: s.locked === true}));
@@ -834,7 +870,7 @@ if (state.strips.length === 5) {
 }
 if (!['auto','manual'].includes(state.moduleWidthMode)) state.moduleWidthMode = 'auto';
 if (!Number.isFinite(Number(state.targetModuleWidth))) state.targetModuleWidth = totalWidth() || 1.5;
-state.version = '2.7.0';
+state.version = '2.7.6';
 state.projectName = state.projectName || '';
 state.projectNotes = state.projectNotes || '';
 activeProjectName = state.projectName;

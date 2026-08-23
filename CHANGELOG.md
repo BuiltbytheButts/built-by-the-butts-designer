@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.7.6 — Proven renderer restoration + finished-size engineering
+- Restored the known-good v2.6.x diamond-module renderer instead of stretching a single module across the board.
+- Finished length, width, and thickness remain the design goal and are never overwritten by hidden grid math.
+- Final-board preview keeps module geometry at its physical strip-schedule size, crops to the finished board aspect ratio, and mirrors every other physical crosscut 180°.
+- Crosscut count is now derived from finished board length ÷ finished thickness and corrected to a balanced even count.
+- Master blank length is now a feasibility check: Crosscut Engineering shows the rough blank required and whether the entered blank is long enough.
+- Fixed internal version migration so saves/projects are stamped v2.7.6 consistently.
+
 ## v2.7.5 — Final-board preview repair
 - Rebuilt the final-board renderer so diamonds tessellate edge-to-edge with no white gaps.
 - Preview is cropped to the requested Finished Board Dimensions aspect ratio instead of repeating isolated diamond tiles.
