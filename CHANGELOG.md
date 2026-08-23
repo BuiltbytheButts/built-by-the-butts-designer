@@ -1,3 +1,8 @@
+# v2.7.2
+- Fixed legacy autosave/project migration after the rough-thickness model changed to a **total finishing allowance**.
+- Older saved values no longer carry forward the previous per-face allowance and incorrectly show an approximately 2.000 in rough crosscut target for a 1.500 in finished target.
+- Legacy projects now migrate to the new default: **1.500 in finished + 0.125 in total allowance = 1.625 in approximate rough crosscut target**.
+
 # v2.7.1 — Thickness terminology + realistic crosscut allowance
 
 - Renamed the top Module Width metric to **Module design width (strip total)** so it is not confused with board thickness.

@@ -1,4 +1,4 @@
-console.info("Diamond End Grain Designer by Built By The Butts v2.7.1");
+console.info("Diamond End Grain Designer by Built By The Butts v2.7.2");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -17,7 +17,7 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '2.7.1', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.7.2', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   masterBlankLength: 24, bladeKerf: 0.125,
   layout: 'grid', orientation: '0', edgeInset: 0.500,
   tipWood: 'walnut', showLines: true, showFrame: true,
@@ -171,6 +171,23 @@ function applySizingRules() {
     ? 'Rows and columns are editable. Finished length, width, lumber use, and cost are recalculated automatically.'
     : 'Board dimensions are editable. Rows and columns are calculated from the current module geometry.';
 }
+
+function migrateStateForCurrentVersion(inputState) {
+  const migrated = inputState && typeof inputState === 'object' ? inputState : {};
+  const priorVersion = String(migrated.version || '0');
+  // v2.7.1 changed planingAllowance from the older per-face interpretation
+  // to one TOTAL finishing allowance. Older autosaves/projects can otherwise
+  // carry forward a value that makes a 1.500 in target appear as ~2.000 in.
+  if (priorVersion !== '2.7.1' && priorVersion !== '2.7.2') {
+    migrated.planingAllowance = 0.125;
+  }
+  if (!Number.isFinite(Number(migrated.finishedThickness))) migrated.finishedThickness = 1.5;
+  if (!Number.isFinite(Number(migrated.planingAllowance))) migrated.planingAllowance = 0.125;
+  migrated.planingAllowance = Math.max(0, Math.min(0.375, Number(migrated.planingAllowance)));
+  migrated.version = '2.7.2';
+  return migrated;
+}
+
 function snapshot() { return JSON.stringify(state); }
 function commit() {
   if (isRestoring) return;
@@ -183,7 +200,7 @@ function commit() {
 }
 function restore(serialized) {
   isRestoring = true;
-  state = JSON.parse(serialized);
+  state = migrateStateForCurrentVersion(JSON.parse(serialized));
   syncControls();
   buildStripEditor();
   buildWoodPriceEditor();
@@ -740,7 +757,8 @@ document.addEventListener('click', e => {
 });
 
 const saved=localStorage.getItem('bbtb-designer-autosave');
-if(saved) { try { state=JSON.parse(saved); } catch {} }
+if(saved) { try { state=migrateStateForCurrentVersion(JSON.parse(saved)); } catch {} }
+else { state=migrateStateForCurrentVersion(state); }
 delete state.spacing; // Module spacing was retired in v2.6.3.
 if (!Number.isFinite(Number(state.edgeInset))) state.edgeInset = 0.500;
 if (Number(state.edgeInset) <= 0) state.tipWood = '';
