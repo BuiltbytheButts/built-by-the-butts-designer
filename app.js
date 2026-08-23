@@ -1,4 +1,4 @@
-console.info("Diamond End Grain Designer by Built By The Butts v2.7.4");
+console.info("Diamond End Grain Designer by Built By The Butts v2.7.5");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -25,7 +25,7 @@ function recommendedRoughStrip(width) {
 }
 
 let state = {
-  version: '2.7.4', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.7.5', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   masterBlankLength: 24, bladeKerf: 0.125,
   layout: 'grid', orientation: 'crosscut180', edgeInset: 0.500,
   tipWood: 'walnut', showLines: true, showFrame: true,
@@ -152,7 +152,7 @@ function countForFinishedDimension(dimension, footprint, pitch, trim, extra = 0)
   return Math.max(1, Math.floor((assembledTarget - footprint + 1e-9) / pitch) + 1);
 }
 function applySizingRules() {
-  // v2.7.4: Finished Board Dimensions is the only sizing mode.
+  // v2.7.5: Finished Board Dimensions is the only sizing mode.
   // Rows/columns remain internal renderer outputs, never user inputs.
   state.sizingMode = 'dimensions';
   state.layout = 'grid';
@@ -171,7 +171,7 @@ function applySizingRules() {
 function migrateStateForCurrentVersion(inputState) {
   const migrated = inputState && typeof inputState === 'object' ? inputState : {};
   if (!Number.isFinite(Number(migrated.finishedThickness))) migrated.finishedThickness = 1.5;
-  // v2.7.4 retires user-entered finishing allowance and grid sizing.
+  // v2.7.5 retires user-entered finishing allowance and grid sizing.
   delete migrated.planingAllowance;
   migrated.sizingMode = 'dimensions';
   migrated.layout = 'grid';
@@ -475,24 +475,61 @@ function angleAt(r,c) {
   return 0;
 }
 function renderBoard() {
-  const svg = $('boardSvg'); svg.innerHTML = ''; addPatterns(svg,'board');
-  if (state.showFrame) svg.append(svgEl('rect',{x:55,y:55,width:1090,height:650,rx:12,fill:'#f5efe7',stroke:'#9c8a7b','stroke-width':'3'}));
+  const svg = $('boardSvg');
+  svg.innerHTML = '';
+  addPatterns(svg,'board');
 
-  // Final-board preview: physical crosscuts run across the finished length.
-  // The engineered even crosscut count is shown as columns; finished width
-  // determines the internal row count. Every other crosscut rotates 180°.
-  const engineeredCrosscuts = crosscutEngineering().lowerEven;
-  const cols = Math.max(2, engineeredCrosscuts || 2);
-  const rows = Math.max(1, Number(state.rows) || 1);
-  const spacing = 0;
-  const size = Math.min(205, 1030/Math.max(cols*.71+.5,1), 600/Math.max(rows*.71+.5,1));
-  const xStep = size*.707 + spacing, yStep = size*.707 + spacing;
-  const tw = (cols-1)*xStep + size, th = (rows-1)*yStep + size;
-  const sx = 600 - tw/2 + size/2, sy = 380 - th/2 + size/2;
+  // v2.7.5: Render a continuous, edge-to-edge diamond field and crop it to the
+  // requested FINISHED board aspect ratio. The previous renderer spaced each
+  // diamond independently, which created white gaps and did not resemble the
+  // physical glue-up.
+  const targetLength = Math.max(0.125, Number(state.boardLength || 18));
+  const targetWidth = Math.max(0.125, Number(state.boardWidth || 12));
+  const maxW = 1090, maxH = 650;
+  const scale = Math.min(maxW / targetLength, maxH / targetWidth);
+  const boardW = targetLength * scale;
+  const boardH = targetWidth * scale;
+  const boardX = 600 - boardW / 2;
+  const boardY = 380 - boardH / 2;
 
-  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
-    const angle = c % 2 ? 180 : 0;
-    drawModule(svg,sx+c*xStep,sy+r*yStep,size,angle,'board');
+  if (state.showFrame) {
+    svg.append(svgEl('rect',{x:boardX,y:boardY,width:boardW,height:boardH,rx:8,fill:'#f5efe7',stroke:'#9c8a7b','stroke-width':'3'}));
+  }
+
+  const clipId = 'final-board-clip';
+  const defs = svgEl('defs');
+  const clip = svgEl('clipPath',{id:clipId});
+  clip.append(svgEl('rect',{x:boardX,y:boardY,width:boardW,height:boardH,rx:6}));
+  defs.append(clip);
+  svg.append(defs);
+  const field = svgEl('g',{'clip-path':`url(#${clipId})`});
+  svg.append(field);
+
+  const engineeredCrosscuts = Math.max(2, crosscutEngineering().lowerEven || 2);
+  // Two alternating 0°/180° physical crosscuts complete one repeating diamond
+  // motif, so an even count becomes half as many visual motif columns.
+  const motifCols = Math.max(1, engineeredCrosscuts / 2);
+  const size = boardW / motifCols;
+  const xStep = size;
+  const yStep = size / 2;
+  const visualRows = Math.ceil(boardH / yStep) + 3;
+  const visualCols = motifCols + 3;
+
+  for (let r = -1; r < visualRows; r++) {
+    const y = boardY + r * yStep;
+    const offset = (r & 1) ? size / 2 : 0;
+    for (let c = -1; c < visualCols; c++) {
+      const x = boardX + c * xStep + offset;
+      // Alternate the underlying crosscut orientation while preserving a
+      // continuous tessellation. This gives the same paired visual rhythm the
+      // shop build creates without exposing rows/columns as user controls.
+      const angle = (c + r) % 2 ? 180 : 0;
+      drawModule(field,x,y,size,angle,'board');
+    }
+  }
+
+  if (state.showFrame) {
+    svg.append(svgEl('rect',{x:boardX,y:boardY,width:boardW,height:boardH,rx:8,fill:'none',stroke:'#9c8a7b','stroke-width':'3'}));
   }
 }
 function renderModule() { const svg=$('moduleSvg'); svg.innerHTML=''; addPatterns(svg,'module'); drawModule(svg,160,160,245,0,'module'); }
@@ -521,7 +558,7 @@ function renderMetrics() {
   if (diagnostics) {
     const geometry = moduleSizingGeometry();
     diagnostics.textContent = [
-      `Version: v2.7.4`,
+      `Version: v2.7.5`,
       `Finished size target: ${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} × ${Number(state.finishedThickness).toFixed(3)} in`,
       `Module design width: ${totalWidth().toFixed(3)} in`,
       `Internal width rows: ${state.rows}`,

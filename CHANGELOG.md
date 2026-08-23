@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.7.5 — Final-board preview repair
+- Rebuilt the final-board renderer so diamonds tessellate edge-to-edge with no white gaps.
+- Preview is cropped to the requested Finished Board Dimensions aspect ratio instead of repeating isolated diamond tiles.
+- Uses the engineered even crosscut count as paired repeating motifs; two alternating 0°/180° crosscuts form one visual diamond repeat.
+- Rows and columns remain internal only and are not exposed as design inputs.
+
 ## v2.7.4 — Finished-dimension workflow + rough-cut guidance
 - Removed the sizing-mode choice and editable Rows/Columns controls. **Finished Board Dimensions** is now the single design workflow.
 - Board Setup now asks only for finished Length, Width, and Thickness.
