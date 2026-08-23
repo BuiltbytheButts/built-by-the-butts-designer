@@ -178,13 +178,13 @@ function migrateStateForCurrentVersion(inputState) {
   // v2.7.1 changed planingAllowance from the older per-face interpretation
   // to one TOTAL finishing allowance. Older autosaves/projects can otherwise
   // carry forward a value that makes a 1.500 in target appear as ~2.000 in.
-  if (priorVersion !== '2.7.1' && priorVersion !== '2.7.2') {
+  if (!['2.7.1','2.7.2','2.7.3'].includes(priorVersion)) {
     migrated.planingAllowance = 0.125;
   }
   if (!Number.isFinite(Number(migrated.finishedThickness))) migrated.finishedThickness = 1.5;
   if (!Number.isFinite(Number(migrated.planingAllowance))) migrated.planingAllowance = 0.125;
   migrated.planingAllowance = Math.max(0, Math.min(0.375, Number(migrated.planingAllowance)));
-  migrated.version = '2.7.2';
+  migrated.version = '2.7.3';
   return migrated;
 }
 
@@ -325,7 +325,7 @@ function savedProjects() {
 function persistProjects(projects) { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects)); }
 function projectRecord(name, sourceState = state) {
   const projectState = structuredClone(sourceState);
-  projectState.version = '2.7.0';
+  projectState.version = '2.7.3';
   projectState.projectName = name;
   projectState.projectNotes = $('projectNotes')?.value ?? projectState.projectNotes ?? '';
   return { name, updatedAt: new Date().toISOString(), state: projectState };
@@ -530,7 +530,7 @@ function renderMetrics() {
   if (diagnostics) {
     const geometry = moduleSizingGeometry();
     diagnostics.textContent = [
-      `Version: v2.7.0`,
+      `Version: v2.7.3`,
       `Finished size: ${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`,
       `Module width: ${totalWidth().toFixed(3)} in`,
       `Final trim per edge: ${Number(state.trimAllowance).toFixed(3)} in`,
@@ -805,7 +805,7 @@ if (state.strips.length === 5) {
 }
 if (!['auto','manual'].includes(state.moduleWidthMode)) state.moduleWidthMode = 'auto';
 if (!Number.isFinite(Number(state.targetModuleWidth))) state.targetModuleWidth = totalWidth() || 1.5;
-state.version = '2.7.0';
+state.version = '2.7.3';
 state.projectName = state.projectName || '';
 state.projectNotes = state.projectNotes || '';
 activeProjectName = state.projectName;
