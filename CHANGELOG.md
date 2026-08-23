@@ -1,3 +1,11 @@
+# v2.7.1 — Thickness terminology + realistic crosscut allowance
+
+- Renamed the top Module Width metric to **Module design width (strip total)** so it is not confused with board thickness.
+- Top thickness metric now shows **Finished thickness** only and follows the Finished board thickness control.
+- Reworked rough crosscut allowance from a per-face planing assumption to a **total adjustable finishing allowance**.
+- Default 1.500 in finished thickness + 0.125 in allowance now yields an **approx. 1.625 in rough crosscut target**.
+- Added guidance that rough thickness is an estimate and varies with glue-up quality, drum sanding, hand sanding, or planer use.
+
 # Changelog
 
 ## v2.6.3 — Release Candidate

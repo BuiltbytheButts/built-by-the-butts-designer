@@ -1,4 +1,4 @@
-console.info("Diamond End Grain Designer by Built By The Butts v2.6.4");
+console.info("Diamond End Grain Designer by Built By The Butts v2.7.1");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -17,7 +17,7 @@ const DEFAULT_STRIPS = [
 ];
 
 let state = {
-  version: '2.7.0', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.7.1', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   masterBlankLength: 24, bladeKerf: 0.125,
   layout: 'grid', orientation: '0', edgeInset: 0.500,
   tipWood: 'walnut', showLines: true, showFrame: true,
@@ -84,7 +84,10 @@ function normalizeScheduleToTarget(target = state.targetModuleWidth, showMessage
   if (showMessage) toast(`Module normalized to ${target.toFixed(3)} in`);
   return true;
 }
-function roughThickness() { return Math.max(0, Number(state.finishedThickness || 0)) + 2 * Math.max(0, Number(state.planingAllowance || 0)); }
+// Approximate rough crosscut thickness. The allowance is TOTAL extra material,
+// not an amount per face. Different shops may plane, drum-sand, or hand-sand,
+// so this is intentionally an estimate rather than a hard machining rule.
+function roughThickness() { return Math.max(0, Number(state.finishedThickness || 0)) + Math.max(0, Number(state.planingAllowance || 0)); }
 function crosscutEngineering() {
   const blank = Math.max(0, Number(state.masterBlankLength || 0));
   const kerf = Math.max(0, Number(state.bladeKerf || 0));
@@ -494,7 +497,7 @@ function renderMetrics() {
   $('moduleWidthMetric').textContent = `${totalWidth().toFixed(3)} in`;
   $('moduleCountMetric').textContent = String(Number(state.columns)*rows);
   $('boardSizeMetric').textContent = `${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`;
-  if ($('thicknessMetric')) $('thicknessMetric').textContent = `${Number(state.finishedThickness).toFixed(3)} / ${roughThickness().toFixed(3)} in`;
+  if ($('thicknessMetric')) $('thicknessMetric').textContent = `${Number(state.finishedThickness).toFixed(3)} in`;
   $('edgeInsetLabel').textContent = `${Number(state.edgeInset ?? 0.5).toFixed(3)} in`;
   const diagnostics = $('diagnosticsOutput');
   if (diagnostics) {
@@ -509,7 +512,7 @@ function renderMetrics() {
       `Module pitch: ${geometry.pitch.toFixed(3)} × ${geometry.pitch.toFixed(3)} in`,
       `Edge inset: ${Number(state.edgeInset).toFixed(3)} in`,
       `Edge species: ${activeEdgeWood() ? WOODS[state.tipWood].name : 'None'}`,
-      `Finished / rough thickness: ${Number(state.finishedThickness).toFixed(3)} / ${roughThickness().toFixed(3)} in`,
+      `Finished thickness: ${Number(state.finishedThickness).toFixed(3)} in`,
       `Crosscut blank / kerf: ${Number(state.masterBlankLength).toFixed(3)} / ${Number(state.bladeKerf).toFixed(3)} in`,
       `Balanced crosscut recommendation: ${crosscutEngineering().lowerEven || 'n/a'}`,
       `Estimated cost: ${$('totalLumberCostMetric')?.textContent || '$0.00'}`
@@ -720,7 +723,7 @@ function renderEngineering() {
   $('totalLumberCostMetric').textContent=`$${whole.totalCost.toFixed(2)}`;
   $('totalBoardFeetMetric').textContent=`${whole.totalBf.toFixed(3)} bd ft including waste`;
   if ($('roughThicknessMetric')) $('roughThicknessMetric').textContent = `${roughThickness().toFixed(3)} in`;
-  if ($('planingLossMetric')) $('planingLossMetric').textContent = `${(2 * Number(state.planingAllowance || 0)).toFixed(3)} in total planing allowance · ${whole.planingBoardFeet.toFixed(3)} bd ft removed`;
+  if ($('planingLossMetric')) $('planingLossMetric').textContent = `${Number(state.planingAllowance || 0).toFixed(3)} in total finishing allowance · ${whole.planingBoardFeet.toFixed(3)} bd ft estimated removal`;
   document.querySelectorAll('[data-inset]').forEach(b=>b.classList.toggle('active',Math.abs(Number(b.dataset.inset)-state.edgeInset)<.001));
   renderMaterialCostBreakdown();
 }
@@ -748,7 +751,7 @@ if (Number.isFinite(Number(state.walnutPrice))) state.woodPrices.walnut = Number
 delete state.walnutPrice;
 if (!Number.isFinite(Number(state.finishedThickness))) state.finishedThickness = 1.5;
 if (!Number.isFinite(Number(state.planingAllowance))) state.planingAllowance = 0.125;
-state.planingAllowance = Math.max(0.125, Math.min(0.250, Number(state.planingAllowance)));
+state.planingAllowance = Math.max(0, Math.min(0.375, Number(state.planingAllowance)));
 if (!Number.isFinite(Number(state.wastePercent))) state.wastePercent = 20;
 if (!Number.isFinite(Number(state.masterBlankLength))) state.masterBlankLength = 24;
 if (!Number.isFinite(Number(state.bladeKerf))) state.bladeKerf = 0.125;

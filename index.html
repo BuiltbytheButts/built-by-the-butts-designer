@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
   <title>Diamond End Grain Designer</title>
-  <link rel="stylesheet" href="styles.css?v=2.7.0" />
+  <link rel="stylesheet" href="styles.css?v=2.7.1" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>Diamond End Grain Designer <span class="version-badge">v2.7.0</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v2.7.1</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -44,11 +44,11 @@
           <label>Finished board thickness (in)
             <input id="finishedThickness" type="number" min="0.750" max="3" step="0.125" value="1.500" />
           </label>
-          <label>Planing allowance per face (in)
-            <input id="planingAllowance" type="number" min="0.125" max="0.250" step="0.0625" value="0.125" />
+          <label>Approx. finishing allowance — total (in)
+            <input id="planingAllowance" type="number" min="0" max="0.375" step="0.03125" value="0.125" />
           </label>
         </div>
-        <p class="strip-help thickness-help">Rough slice thickness equals the finished thickness plus the planing allowance on both faces.</p>
+        <p class="strip-help thickness-help">Approximate only. Rough crosscut target = finished thickness + this total allowance. A careful glue-up or drum sander may need less; planer-heavy flattening may need more.</p>
         <div class="two-col">
           <label>Columns
             <input id="columns" type="number" min="1" max="40" step="1" value="8" />
@@ -154,10 +154,10 @@
 
     <section class="canvas-column">
       <div class="metrics-grid">
-        <article><span>Module width</span><strong id="moduleWidthMetric">1.500 in</strong></article>
+        <article><span>Module design width <small>(strip total)</small></span><strong id="moduleWidthMetric">1.500 in</strong></article>
         <article><span>Visible modules</span><strong id="moduleCountMetric">40</strong></article>
         <article><span>Board size</span><strong id="boardSizeMetric">20.000 × 12.750 in</strong></article>
-        <article><span>Finished / rough thickness</span><strong id="thicknessMetric">1.500 / 1.750 in</strong></article>
+        <article><span>Finished thickness</span><strong id="thicknessMetric">1.500 in</strong></article>
       </div>
 
       <div class="canvas-shell">
@@ -181,9 +181,9 @@
             <input id="bladeKerf" type="number" min="0" max="0.250" step="0.03125" value="0.125" />
           </label>
           <div class="calculated-field">
-            <span>Current rough crosscut target</span>
-            <strong id="crosscutPrimaryThickness">1.750 in</strong>
-            <small id="crosscutPrimaryWaste">Uses finished thickness + planing allowance</small>
+            <span>Approx. rough crosscut target</span>
+            <strong id="crosscutPrimaryThickness">1.625 in</strong>
+            <small id="crosscutPrimaryWaste">Finished thickness + total finishing allowance</small>
           </div>
         </div>
         <div id="crosscutRecommendation" class="crosscut-recommendation">
@@ -199,7 +199,7 @@
             <small id="crosscutAltStatus">Viability check</small>
           </article>
         </div>
-        <p class="note">The Designer never silently recommends an odd crosscut count. If the raw math produces 13, for example, it recommends 12 at the current rough thickness and shows what thickness would be required to fit 14.</p>
+        <p class="note"><strong>Approximation:</strong> The Designer never silently recommends an odd crosscut count. Rough crosscut thickness is a starting target, not a machining requirement. Drum sanding, careful cauls/bracing, hand sanding, or planer use can change how much extra thickness an individual builder needs.</p>
       </section>
 
       <section class="panel engineering-panel">
@@ -221,9 +221,9 @@
                   <input id="wastePercent" type="number" min="0" max="100" step="1" value="20" />
                 </label>
                 <div class="calculated-field">
-                  <span>Required rough slice</span>
-                  <strong id="roughThicknessMetric">1.750 in</strong>
-                  <small id="planingLossMetric">0.250 in total planing allowance</small>
+                  <span>Approx. rough crosscut</span>
+                  <strong id="roughThicknessMetric">1.625 in</strong>
+                  <small id="planingLossMetric">0.125 in total finishing allowance</small>
                 </div>
               </div>
             </div>
