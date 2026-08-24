@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.0';
+const VERSION = '3.0.1';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -108,32 +108,63 @@ function addWoodPatterns(svg) {
 
 let clipSequence = 0;
 
+function edgeCutGeometry(x, y, size, slope) {
+  const total = Math.max(0.001, moduleWidth());
+  const cutDepth = clamp(number(state.edgeInset), 0, 1);
+  const leg = clamp((cutDepth / total) * size, 0, size / 2);
+
+  if (slope >= 0) {
+    return [
+      [[x, y], [x + leg, y], [x, y + leg]],
+      [[x + size, y + size], [x + size - leg, y + size], [x + size, y + size - leg]]
+    ];
+  }
+
+  return [
+    [[x + size, y], [x + size - leg, y], [x + size, y + leg]],
+    [[x, y + size], [x + leg, y + size], [x, y + size - leg]]
+  ];
+}
+
 function drawEndGrainCell(svg, x, y, size, slope, rotate180 = false) {
   const strips = activeStrips();
   const total = moduleWidth();
   if (!strips.length || total <= 0) return;
 
-  const outerWood = strips[0].wood;
-  svg.append(svgEl('rect', { x, y, width: size, height: size, fill: `url(#wood-${outerWood})` }));
-
-  const clipId = `cell-clip-${clipSequence++}`;
+  const cellClipId = `cell-clip-${clipSequence++}`;
+  const laminateMaskId = `laminate-mask-${clipSequence++}`;
   const defs = svgEl('defs');
-  const clip = svgEl('clipPath', { id: clipId });
-  clip.append(svgEl('rect', { x, y, width: size, height: size }));
-  defs.append(clip);
+
+  const cellClip = svgEl('clipPath', { id: cellClipId });
+  cellClip.append(svgEl('rect', { x, y, width: size, height: size }));
+  defs.append(cellClip);
+
+  const cutTriangles = edgeCutGeometry(x, y, size, slope);
+  const laminateMask = svgEl('mask', { id: laminateMaskId, maskUnits: 'userSpaceOnUse', x, y, width: size, height: size });
+  laminateMask.append(svgEl('rect', { x, y, width: size, height: size, fill: '#fff' }));
+  if (number(state.edgeInset) > 0) {
+    cutTriangles.forEach(triangle => laminateMask.append(svgEl('polygon', { points: points(triangle), fill: '#000' })));
+  }
+  defs.append(laminateMask);
   svg.append(defs);
 
+  // The laminate is always generated from the strip schedule. Edge Rip never
+  // rescales or distorts it; the mask only removes the two 45-degree corners.
   const cx = x + size / 2;
   const cy = y + size / 2;
   const angle = slope >= 0 ? 45 : -45;
   const groupRotation = rotate180 ? angle + 180 : angle;
-  const field = svgEl('g', { 'clip-path': `url(#${clipId})`, transform: `rotate(${groupRotation} ${cx} ${cy})` });
+  const laminate = svgEl('g', {
+    'clip-path': `url(#${cellClipId})`,
+    mask: `url(#${laminateMaskId})`,
+    transform: `rotate(${groupRotation} ${cx} ${cy})`
+  });
 
   const stripeSpan = size * Math.SQRT2;
   let cursor = cx - stripeSpan / 2;
   strips.forEach(strip => {
     const width = stripeSpan * number(strip.width) / total;
-    field.append(svgEl('rect', {
+    laminate.append(svgEl('rect', {
       x: cursor,
       y: y - size,
       width,
@@ -142,23 +173,29 @@ function drawEndGrainCell(svg, x, y, size, slope, rotate180 = false) {
     }));
     cursor += width;
   });
-  svg.append(field);
+  svg.append(laminate);
 
-  const inset = clamp(number(state.edgeInset), 0, 1);
-  if (inset > 0 && WOODS[state.edgeWood]) {
-    const leg = clamp((inset / Math.max(total, 0.001)) * size, 0, size * 0.46);
+  // Replacement stock occupies only the material removed by the Edge Rip.
+  // At Zero there is no cut and therefore no replacement geometry.
+  if (number(state.edgeInset) > 0 && WOODS[state.edgeWood]) {
     const fill = `url(#wood-${state.edgeWood})`;
-    const stroke = '#241710';
-    if (slope >= 0) {
-      svg.append(svgEl('polygon', { points: points([[x, y], [x + leg, y], [x, y + leg]]), fill, stroke, 'stroke-width': '.55' }));
-      svg.append(svgEl('polygon', { points: points([[x + size, y + size], [x + size - leg, y + size], [x + size, y + size - leg]]), fill, stroke, 'stroke-width': '.55' }));
-    } else {
-      svg.append(svgEl('polygon', { points: points([[x + size, y], [x + size - leg, y], [x + size, y + leg]]), fill, stroke, 'stroke-width': '.55' }));
-      svg.append(svgEl('polygon', { points: points([[x, y + size], [x + leg, y + size], [x, y + size - leg]]), fill, stroke, 'stroke-width': '.55' }));
-    }
+    cutTriangles.forEach(triangle => {
+      svg.append(svgEl('polygon', {
+        points: points(triangle),
+        fill,
+        stroke: '#241710',
+        'stroke-width': '.55'
+      }));
+    });
   }
 
-  svg.append(svgEl('rect', { x, y, width: size, height: size, fill: 'none', stroke: '#4d382d', 'stroke-opacity': '.45', 'stroke-width': '.7' }));
+  svg.append(svgEl('rect', {
+    x, y, width: size, height: size,
+    fill: 'none',
+    stroke: '#4d382d',
+    'stroke-opacity': '.45',
+    'stroke-width': '.7'
+  }));
 }
 
 function renderBoard() {

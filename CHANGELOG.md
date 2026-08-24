@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.0.1 — Edge Rip geometry correction
+- Edge Rip now removes two 45° corner triangles from the unchanged laminated crosscut geometry.
+- Replacement wood fills only the removed cut area.
+- Changing Edge Rip no longer scales, stretches, or redefines the strip field.
+- Zero means no cut and no replacement geometry.
+- No other board, strip, crosscut, or sizing behavior was changed.
+
+
 ## v3.0.0 — Clean foundation rebuild
 - Rebuilt the application from a minimal state model instead of patching v2.7.x.
 - Removed rows, columns, sizing modes, layout modes, orientation modes, trim allowance, and finishing allowance from the architecture.

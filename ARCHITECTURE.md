@@ -28,3 +28,6 @@ No rows, columns, sizing mode, layout mode, orientation mode, trim allowance, or
 
 ## Persistence
 v3 uses its own local-storage key and JSON schema so old v2 autosaves cannot silently inject retired fields.
+
+## Edge Rip invariant
+The strip field is immutable under Edge Rip. Edge Rip is modeled as a subtractive 45-degree corner cut, followed by replacement stock filling exactly the removed triangular area.
