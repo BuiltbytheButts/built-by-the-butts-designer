@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.7.8 — Physical crosscut-cell renderer
+- Replaced isolated diamond tiles with edge-to-edge square end-grain crosscut cells.
+- Neighboring laminated blanks mirror diagonal strip direction; every other crosscut row rotates 180°.
+- Finished board dimensions crop the physical field without stretching individual cell geometry.
+- Main metric now reports balanced crosscuts instead of screen tile count.
+
+
 ## v2.7.7 — Renderer stability correction
 - Restored the exact proven v2.6.x diamond-field renderer instead of resizing or reinventing module geometry.
 - Finished length and width now calculate hidden internal rows/columns from the physical module width.

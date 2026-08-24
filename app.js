@@ -1,4 +1,4 @@
-console.info("Diamond End Grain Designer by Built By The Butts v2.7.7");
+console.info("Diamond End Grain Designer by Built By The Butts v2.7.8");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -25,7 +25,7 @@ function recommendedRoughStrip(width) {
 }
 
 let state = {
-  version: '2.7.7', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.7.8', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   masterBlankLength: 24, bladeKerf: 0.125,
   layout: 'grid', orientation: '0', edgeInset: 0.500,
   tipWood: 'walnut', showLines: true, showFrame: true,
@@ -175,7 +175,7 @@ function countForFinishedDimension(dimension, footprint, pitch, trim, extra = 0)
   return Math.max(1, Math.floor((assembledTarget - footprint + 1e-9) / pitch) + 1);
 }
 function applySizingRules() {
-  // v2.7.7: Finished board dimensions are the only user sizing inputs.
+  // v2.7.8: Finished board dimensions are the only user sizing inputs.
   // Rows and columns remain internal outputs, derived with the same proven
   // module-footprint math used by the stable v2.6.x renderer.
   state.sizingMode = 'dimensions';
@@ -193,13 +193,13 @@ function applySizingRules() {
 function migrateStateForCurrentVersion(inputState) {
   const migrated = inputState && typeof inputState === 'object' ? inputState : {};
   if (!Number.isFinite(Number(migrated.finishedThickness))) migrated.finishedThickness = 1.5;
-  // v2.7.7 retires user-entered finishing allowance and grid sizing.
+  // v2.7.8 retires user-entered finishing allowance and grid sizing.
   delete migrated.planingAllowance;
   migrated.sizingMode = 'dimensions';
   migrated.layout = 'grid';
   migrated.orientation = '0';
   migrated.trimAllowance = 0;
-  migrated.version = '2.7.7';
+  migrated.version = '2.7.8';
   return migrated;
 }
 
@@ -442,77 +442,94 @@ function addPatterns(svg, prefix) {
 }
 
 let moduleClipCounter = 0;
-function drawModule(svg, cx, cy, size, angle, prefix) {
-  const total = totalWidth(); if (!total) return;
-  const h = size/2;
-  const g = svgEl('g',{transform:`translate(${cx} ${cy}) rotate(${angle})`});
+function drawCrosscutCell(svg, cx, cy, cellW, cellH, slope, flip180, prefix) {
+  const strips = activeStrips();
+  const total = totalWidth();
+  if (!strips.length || !total) return;
+  const uid = `${prefix}-cell-${moduleClipCounter++}`;
+  const g = svgEl('g',{transform:`translate(${cx} ${cy}) rotate(${flip180 ? 180 : 0})`});
 
-  // Draw every strip as a full-height rectangle, then clip the entire strip field
-  // to the diamond. This preserves all original strip wood at a zero edge inset
-  // and prevents the small cleared gaps that appeared at the diamond tips.
-  const clipId = `${prefix}-diamond-clip-${moduleClipCounter++}`;
   const defs = svgEl('defs');
-  const clip = svgEl('clipPath',{id:clipId});
-  clip.append(svgEl('polygon',{points:pts([[0,-h],[h,0],[0,h],[-h,0]])}));
-  defs.append(clip);
-  svg.append(defs);
+  const clip = svgEl('clipPath',{id:uid});
+  clip.append(svgEl('rect',{x:-cellW/2,y:-cellH/2,width:cellW,height:cellH}));
+  defs.append(clip); svg.append(defs);
 
-  const stripField = svgEl('g',{'clip-path':`url(#${clipId})`});
-  let x = -h;
-  activeStrips().forEach(strip => {
-    const w = size * strip.width / total;
-    stripField.append(svgEl('rect',{
-      x, y:-h, width:w, height:size,
+  const field = svgEl('g',{'clip-path':`url(#${uid})`});
+  // The physical cross-section is a square/rectangle with the laminate schedule
+  // running diagonally through it. Neighboring original laminates mirror the
+  // diagonal direction; alternate crosscut rows are then rotated 180 degrees.
+  const diag = Math.hypot(cellW, cellH) * 1.55;
+  const stripeGroup = svgEl('g',{transform:`rotate(${slope})`});
+  let x = -diag/2;
+  strips.forEach(strip => {
+    const sw = diag * Number(strip.width || 0) / total;
+    stripeGroup.append(svgEl('rect',{
+      x, y:-diag/2, width:sw+0.25, height:diag,
       fill:`url(#${prefix}-${strip.wood})`,
-      stroke:state.showLines?'#241710':'none',
-      'stroke-width':state.showLines?'.55':'0'
+      stroke:state.showLines?'#241710':'none', 'stroke-width':state.showLines?'.45':'0'
     }));
-    x += w;
+    x += sw;
   });
-  g.append(stripField);
+  field.append(stripeGroup);
 
-  const insetValue = Math.max(0, Number(state.edgeInset ?? 0.5));
-  if (insetValue > 0 && activeEdgeWood()) {
-    // Preview edge geometry is intentionally bounded inside the diamond.
-    // Scale the visible replacement progressively across the full 0–1 inch
-    // control range so every preset is distinct without creating overlapping
-    // or saw-tooth polygons.
-    const normalizedInset = Math.min(1, insetValue / 1.0);
-    const insetRatio = normalizedInset * 0.46;
-    const inward = h * insetRatio;
-    const base = Math.min(h * 0.48, inward + size * 0.075);
+  // Replacement edge stock represents the two opposite corner insert areas of
+  // the machined blank. Mirror the insert pair with the laminate direction.
+  const inset = Math.max(0, Number(state.edgeInset || 0));
+  const edgeWood = activeEdgeWood();
+  if (inset > 0 && edgeWood) {
+    const frac = Math.min(.42, Math.max(.04, inset / Math.max(total, .001) * .55));
+    const dx = cellW * frac, dy = cellH * frac;
     const fill = `url(#${prefix}-${state.tipWood})`;
-    g.append(svgEl('polygon',{points:pts([[0,-h],[base,-h+inward],[-base,-h+inward]]),fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'}));
-    g.append(svgEl('polygon',{points:pts([[0,h],[-base,h-inward],[base,h-inward]]),fill,stroke:state.showLines?'#241710':'none','stroke-width':'.7'}));
+    const stroke = state.showLines ? '#241710' : 'none';
+    if (slope > 0) {
+      field.append(svgEl('polygon',{points:pts([[cellW/2,-cellH/2],[cellW/2-dx,-cellH/2],[cellW/2,-cellH/2+dy]]),fill,stroke,'stroke-width':'.55'}));
+      field.append(svgEl('polygon',{points:pts([[-cellW/2,cellH/2],[-cellW/2+dx,cellH/2],[-cellW/2,cellH/2-dy]]),fill,stroke,'stroke-width':'.55'}));
+    } else {
+      field.append(svgEl('polygon',{points:pts([[-cellW/2,-cellH/2],[-cellW/2+dx,-cellH/2],[-cellW/2,-cellH/2+dy]]),fill,stroke,'stroke-width':'.55'}));
+      field.append(svgEl('polygon',{points:pts([[cellW/2,cellH/2],[cellW/2-dx,cellH/2],[cellW/2,cellH/2-dy]]),fill,stroke,'stroke-width':'.55'}));
+    }
   }
-  if (state.showLines) g.append(svgEl('polygon',{points:pts([[0,-h],[h,0],[0,h],[-h,0]]),fill:'none',stroke:'#241710','stroke-width':'1.25'}));
+  g.append(field);
+  if (state.showLines) g.append(svgEl('rect',{x:-cellW/2,y:-cellH/2,width:cellW,height:cellH,fill:'none',stroke:'#241710','stroke-width':'.7'}));
   svg.append(g);
 }
-function angleAt(r,c) {
-  if (state.orientation === '45') return 45;
-  if (state.orientation === '90') return 90;
-  if (state.orientation === 'alternate') return (r+c)%2 ? -45 : 45;
-  if (state.orientation === 'checker') return (r+c)%2 ? 90 : 0;
-  if (state.orientation === 'crosscut180') return r%2 ? 180 : 0;
-  return 0;
-}
+
+function angleAt(r,c) { return 0; }
+
 function renderBoard() {
-  // v2.7.7: exact return to the proven v2.6.x diamond-field renderer.
-  // Finished dimensions only determine the internal module counts; they never
-  // stretch a module or alter the pattern geometry itself.
+  // v2.7.8: render the physical end-grain crosscut cells, not isolated diamonds.
+  // Across the board, neighboring laminated blanks mirror their diagonal faces.
+  // Down the board, every other physical crosscut is rotated 180 degrees.
   const svg = $('boardSvg'); svg.innerHTML = ''; addPatterns(svg,'board');
-  if (state.showFrame) svg.append(svgEl('rect',{x:55,y:55,width:1090,height:650,rx:12,fill:'#f5efe7',stroke:'#9c8a7b','stroke-width':'3'}));
-  const cols = Math.max(1,Number(state.columns));
-  const rows = Math.max(1,Number(state.rows));
-  const spacing = 0;
-  const size = Math.min(205, 1030/Math.max(cols*.71+.5,1), 600/Math.max(rows*.71+.5,1));
-  const xStep = size*.707 + spacing, yStep = size*.707 + spacing;
-  const tw = (cols-1)*xStep + size, th = (rows-1)*yStep + size;
-  const sx = 600 - tw/2 + size/2, sy = 380 - th/2 + size/2;
+  const frameX=55, frameY=55, frameW=1090, frameH=650;
+  svg.append(svgEl('rect',{x:frameX,y:frameY,width:frameW,height:frameH,rx:12,fill:'#f5efe7',stroke:state.showFrame?'#9c8a7b':'none','stroke-width':'3'}));
+
+  const cross = crosscutEngineering();
+  const rows = Math.max(2, Number(cross.recommendedEven || cross.lowerEven || 2));
+  const moduleW = Math.max(.0625, totalWidth());
+  const boardW = Math.max(moduleW, Number(state.boardWidth || moduleW));
+  const cols = Math.max(1, Math.round(boardW / moduleW));
+
+  // Preserve the physical board aspect ratio. Cells fill the board edge-to-edge;
+  // the frame clips any partial cells created by the requested finished size.
+  const boardAspect = Math.max(.15, Number(state.boardLength || 1) / Math.max(.001, Number(state.boardWidth || 1)));
+  let drawW = frameW, drawH = drawW / boardAspect;
+  if (drawH > frameH) { drawH = frameH; drawW = drawH * boardAspect; }
+  const bx = 600-drawW/2, by = 380-drawH/2;
+  const clipId='board-finished-clip';
+  const defs=svgEl('defs'); const clip=svgEl('clipPath',{id:clipId});
+  clip.append(svgEl('rect',{x:bx,y:by,width:drawW,height:drawH,rx:3})); defs.append(clip); svg.append(defs);
+  const field=svgEl('g',{'clip-path':`url(#${clipId})`});
+
+  const cellW = drawW / cols;
+  const cellH = drawH / rows;
   for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
-    const x = sx + c*xStep;
-    drawModule(svg,x,sy+r*yStep,size,0,'board');
+    const cx=bx+(c+.5)*cellW, cy=by+(r+.5)*cellH;
+    const slope = c%2===0 ? 45 : -45;
+    drawCrosscutCell(field,cx,cy,cellW+0.35,cellH+0.35,slope,r%2===1,'board');
   }
+  svg.append(field);
+  if (state.showFrame) svg.append(svgEl('rect',{x:bx,y:by,width:drawW,height:drawH,rx:3,fill:'none',stroke:'#6f5e50','stroke-width':'2'}));
 }
 function renderModule() { const svg=$('moduleSvg'); svg.innerHTML=''; addPatterns(svg,'module'); drawModule(svg,160,160,245,0,'module'); }
 function renderSchedule() {
@@ -533,7 +550,7 @@ function renderMetrics() {
   const rows = Math.max(1, Number(state.rows) || 1);
   const cols = Math.max(1, Number(state.columns) || 1);
   $('moduleWidthMetric').textContent = `${totalWidth().toFixed(3)} in`;
-  $('moduleCountMetric').textContent = String(cols * rows);
+  $('moduleCountMetric').textContent = `${engineeredCrosscuts} crosscuts`;
   $('boardSizeMetric').textContent = `${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`;
   if ($('thicknessMetric')) $('thicknessMetric').textContent = `${Number(state.finishedThickness).toFixed(3)} in`;
   $('edgeInsetLabel').textContent = `${Number(state.edgeInset ?? 0.5).toFixed(3)} in`;
@@ -541,7 +558,7 @@ function renderMetrics() {
   if (diagnostics) {
     const geometry = moduleSizingGeometry();
     diagnostics.textContent = [
-      `Version: v2.7.7`,
+      `Version: v2.7.8`,
       `Finished size target: ${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} × ${Number(state.finishedThickness).toFixed(3)} in`,
       `Module design width: ${totalWidth().toFixed(3)} in`,
       `Internal preview grid: ${cols} × ${rows}`,
