@@ -1,4 +1,4 @@
-console.info("Diamond End Grain Designer by Built By The Butts v2.7.6");
+console.info("Diamond End Grain Designer by Built By The Butts v2.7.7");
 const WOODS = {
   walnut: { name: 'Walnut', color: '#4b2d21' },
   purpleheart: { name: 'Purpleheart', color: '#694064' },
@@ -25,9 +25,9 @@ function recommendedRoughStrip(width) {
 }
 
 let state = {
-  version: '2.7.6', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
+  version: '2.7.7', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
   masterBlankLength: 24, bladeKerf: 0.125,
-  layout: 'grid', orientation: 'crosscut180', edgeInset: 0.500,
+  layout: 'grid', orientation: '0', edgeInset: 0.500,
   tipWood: 'walnut', showLines: true, showFrame: true,
   finishedThickness: 1.5, wastePercent: 20,
   moduleWidthMode: 'auto', targetModuleWidth: 1.5,
@@ -175,33 +175,31 @@ function countForFinishedDimension(dimension, footprint, pitch, trim, extra = 0)
   return Math.max(1, Math.floor((assembledTarget - footprint + 1e-9) / pitch) + 1);
 }
 function applySizingRules() {
-  // Finished dimensions are the DESIGN GOAL and must never be overwritten by
-  // renderer math. Rows/columns are internal outputs only.
+  // v2.7.7: Finished board dimensions are the only user sizing inputs.
+  // Rows and columns remain internal outputs, derived with the same proven
+  // module-footprint math used by the stable v2.6.x renderer.
   state.sizingMode = 'dimensions';
   state.layout = 'grid';
-  state.orientation = 'crosscut180';
+  state.orientation = '0';
   state.trimAllowance = 0;
 
   state.boardLength = Math.max(0.125, Number(state.boardLength) || 0.125);
   state.boardWidth = Math.max(0.125, Number(state.boardWidth) || 0.125);
 
-  const module = Math.max(0.0625, totalWidth());
-  const engineered = crosscutEngineering();
-  // Along the finished length, physical crosscuts determine the count.
-  state.columns = Math.max(2, engineered.recommendedEven || 2);
-  // Across the width, keep enough laminated modules to cover the target width.
-  state.rows = Math.max(1, Math.ceil(state.boardWidth / module));
+  const g = moduleSizingGeometry();
+  state.columns = countForFinishedDimension(state.boardLength, g.footprint, g.pitch, 0);
+  state.rows = countForFinishedDimension(state.boardWidth, g.footprint, g.pitch, 0);
 }
 function migrateStateForCurrentVersion(inputState) {
   const migrated = inputState && typeof inputState === 'object' ? inputState : {};
   if (!Number.isFinite(Number(migrated.finishedThickness))) migrated.finishedThickness = 1.5;
-  // v2.7.6 retires user-entered finishing allowance and grid sizing.
+  // v2.7.7 retires user-entered finishing allowance and grid sizing.
   delete migrated.planingAllowance;
   migrated.sizingMode = 'dimensions';
   migrated.layout = 'grid';
-  migrated.orientation = 'crosscut180';
+  migrated.orientation = '0';
   migrated.trimAllowance = 0;
-  migrated.version = '2.7.6';
+  migrated.version = '2.7.7';
   return migrated;
 }
 
@@ -343,7 +341,7 @@ function savedProjects() {
 function persistProjects(projects) { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects)); }
 function projectRecord(name, sourceState = state) {
   const projectState = structuredClone(sourceState);
-  projectState.version = '2.7.6';
+  projectState.version = '2.7.7';
   projectState.projectName = name;
   projectState.projectNotes = $('projectNotes')?.value ?? projectState.projectNotes ?? '';
   return { name, updatedAt: new Date().toISOString(), state: projectState };
@@ -499,63 +497,21 @@ function angleAt(r,c) {
   return 0;
 }
 function renderBoard() {
-  const svg = $('boardSvg');
-  svg.innerHTML = '';
-  addPatterns(svg,'board');
-
-  // v2.7.6: restore the proven v2.6.x diamond renderer. Finished dimensions
-  // determine the physical scale and crop window; they NEVER stretch one tile.
-  // Each module keeps a fixed physical size based on the strip-schedule total.
-  const targetLength = Math.max(0.125, Number(state.boardLength || 18));
-  const targetWidth = Math.max(0.125, Number(state.boardWidth || 12));
-  const moduleInches = Math.max(0.0625, totalWidth());
-  const maxW = 1090, maxH = 650;
-  const pxPerIn = Math.min(maxW / targetLength, maxH / targetWidth);
-  const boardW = targetLength * pxPerIn;
-  const boardH = targetWidth * pxPerIn;
-  const boardX = 600 - boardW / 2;
-  const boardY = 380 - boardH / 2;
-
-  if (state.showFrame) {
-    svg.append(svgEl('rect',{x:boardX,y:boardY,width:boardW,height:boardH,rx:8,fill:'#f5efe7',stroke:'#9c8a7b','stroke-width':'3'}));
-  }
-
-  const clipId = 'final-board-clip';
-  const defs = svgEl('defs');
-  const clip = svgEl('clipPath',{id:clipId});
-  clip.append(svgEl('rect',{x:boardX,y:boardY,width:boardW,height:boardH,rx:6}));
-  defs.append(clip);
-  svg.append(defs);
-  const field = svgEl('g',{'clip-path':`url(#${clipId})`});
-  svg.append(field);
-
-  // The known-good renderer spaces diamond centers by 0.707 × tile size.
-  // Choose tile size so that center-to-center pitch equals the physical module
-  // width in the shop. That keeps a 1.500 in module looking like 1.500 in,
-  // regardless of finished board size.
-  const pitch = moduleInches * pxPerIn;
-  const tileSize = pitch / 0.7071067811865476;
-  const xStep = pitch;
-  const yStep = pitch;
-
-  const engineered = crosscutEngineering();
-  const crosscuts = Math.max(2, engineered.recommendedEven || 2);
-  const widthModules = Math.max(1, Math.ceil(targetWidth / moduleInches));
-
-  // Draw a small safety margin outside the crop so no white holes appear at
-  // the perimeter. Alternating 180° by physical crosscut mirrors the strip
-  // order and creates the nested-diamond rhythm seen in the real glue-up.
-  for (let r = -1; r <= widthModules; r++) {
-    const y = boardY + (r + 0.5) * yStep;
-    for (let c = -1; c <= crosscuts; c++) {
-      const x = boardX + (c + 0.5) * xStep;
-      const angle = c % 2 ? 180 : 0;
-      drawModule(field,x,y,tileSize,angle,'board');
-    }
-  }
-
-  if (state.showFrame) {
-    svg.append(svgEl('rect',{x:boardX,y:boardY,width:boardW,height:boardH,rx:8,fill:'none',stroke:'#9c8a7b','stroke-width':'3'}));
+  // v2.7.7: exact return to the proven v2.6.x diamond-field renderer.
+  // Finished dimensions only determine the internal module counts; they never
+  // stretch a module or alter the pattern geometry itself.
+  const svg = $('boardSvg'); svg.innerHTML = ''; addPatterns(svg,'board');
+  if (state.showFrame) svg.append(svgEl('rect',{x:55,y:55,width:1090,height:650,rx:12,fill:'#f5efe7',stroke:'#9c8a7b','stroke-width':'3'}));
+  const cols = Math.max(1,Number(state.columns));
+  const rows = Math.max(1,Number(state.rows));
+  const spacing = 0;
+  const size = Math.min(205, 1030/Math.max(cols*.71+.5,1), 600/Math.max(rows*.71+.5,1));
+  const xStep = size*.707 + spacing, yStep = size*.707 + spacing;
+  const tw = (cols-1)*xStep + size, th = (rows-1)*yStep + size;
+  const sx = 600 - tw/2 + size/2, sy = 380 - th/2 + size/2;
+  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
+    const x = sx + c*xStep;
+    drawModule(svg,x,sy+r*yStep,size,0,'board');
   }
 }
 function renderModule() { const svg=$('moduleSvg'); svg.innerHTML=''; addPatterns(svg,'module'); drawModule(svg,160,160,245,0,'module'); }
@@ -573,10 +529,11 @@ function renderSchedule() {
   h.append(tip);
 }
 function renderMetrics() {
-  const engineeredCrosscuts = Math.max(2, crosscutEngineering().lowerEven || 2);
+  const engineeredCrosscuts = Math.max(2, crosscutEngineering().recommendedEven || 2);
   const rows = Math.max(1, Number(state.rows) || 1);
+  const cols = Math.max(1, Number(state.columns) || 1);
   $('moduleWidthMetric').textContent = `${totalWidth().toFixed(3)} in`;
-  $('moduleCountMetric').textContent = String(engineeredCrosscuts * rows);
+  $('moduleCountMetric').textContent = String(cols * rows);
   $('boardSizeMetric').textContent = `${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`;
   if ($('thicknessMetric')) $('thicknessMetric').textContent = `${Number(state.finishedThickness).toFixed(3)} in`;
   $('edgeInsetLabel').textContent = `${Number(state.edgeInset ?? 0.5).toFixed(3)} in`;
@@ -584,18 +541,18 @@ function renderMetrics() {
   if (diagnostics) {
     const geometry = moduleSizingGeometry();
     diagnostics.textContent = [
-      `Version: v2.7.6`,
+      `Version: v2.7.7`,
       `Finished size target: ${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} × ${Number(state.finishedThickness).toFixed(3)} in`,
       `Module design width: ${totalWidth().toFixed(3)} in`,
-      `Internal width rows: ${state.rows}`,
-      `Final-preview crosscuts: ${engineeredCrosscuts}`,
+      `Internal preview grid: ${cols} × ${rows}`,
+      `Balanced crosscut recommendation: ${engineeredCrosscuts}`,
       `Recommended rough crosscut: ${roughThickness().toFixed(3)} in`,
       `Module pitch: ${geometry.pitch.toFixed(3)} in`,
       `Edge inset: ${Number(state.edgeInset).toFixed(3)} in`,
       `Edge species: ${activeEdgeWood() ? WOODS[state.tipWood].name : 'None'}`,
       `Crosscut blank / kerf: ${Number(state.masterBlankLength).toFixed(3)} / ${Number(state.bladeKerf).toFixed(3)} in`,
       `Estimated cost: ${$('totalLumberCostMetric')?.textContent || '$0.00'}`
-    ].join('\\n');
+    ].join('\n');
   }
 }
 function renderCrosscutEngineering() {
@@ -870,7 +827,7 @@ if (state.strips.length === 5) {
 }
 if (!['auto','manual'].includes(state.moduleWidthMode)) state.moduleWidthMode = 'auto';
 if (!Number.isFinite(Number(state.targetModuleWidth))) state.targetModuleWidth = totalWidth() || 1.5;
-state.version = '2.7.6';
+state.version = '2.7.7';
 state.projectName = state.projectName || '';
 state.projectNotes = state.projectNotes || '';
 activeProjectName = state.projectName;

@@ -1,3 +1,7 @@
+# Diamond End Grain Designer by Built By The Butts v2.7.7
+
+This release restores the proven v2.6.x final-board renderer while keeping the simplified Finished Board Dimensions workflow and v2.7 Crosscut Engineering. Rows and columns are internal calculated values only.
+
 # Diamond End Grain Designer by Built By The Butts v2.7.6
 
 This release simplifies the Designer around how a woodworker actually plans a board: start with the **finished length, width, and thickness**, then let the Designer calculate the internal pattern and provide approximate rough-cut guidance.

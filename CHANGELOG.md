@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.7.7 — Renderer stability correction
+- Restored the exact proven v2.6.x diamond-field renderer instead of resizing or reinventing module geometry.
+- Finished length and width now calculate hidden internal rows/columns from the physical module width.
+- Removed 180-degree crosscut rotation from the main renderer until it can be modeled without corrupting the proven pattern.
+- Crosscut Engineering remains active as planning guidance and still enforces balanced even crosscut recommendations.
+- Finished Board Dimensions remain the only user-facing sizing controls.
+
 ## v2.7.6 — Proven renderer restoration + finished-size engineering
 - Restored the known-good v2.6.x diamond-module renderer instead of stretching a single module across the board.
 - Finished length, width, and thickness remain the design goal and are never overwritten by hidden grid math.
