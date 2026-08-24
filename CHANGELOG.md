@@ -1,3 +1,8 @@
+## v3.0.5 — Edge Rip continuity preflight
+- Change #15 only.
+- Added laminate-derived support beneath each rotated crosscut face so canvas cannot show through at cell-corner boundaries.
+- Edge Rip targeting and depth math are unchanged.
+
 # Changelog
 
 ## v3.0.4 — Edge Rip join continuity

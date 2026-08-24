@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.4';
+const VERSION = '3.0.5';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -146,11 +146,18 @@ function drawEndGrainCell(svg, x, y, size, slope, rotate180 = false) {
 
   const cutTriangles = edgeCutGeometry(x, y, size, slope);
 
-  // The laminate is always generated continuously from the strip schedule.
-  // Edge Rip never removes pixels from this base layer. The replacement wood
-  // is drawn directly over the exact 45-degree cut area below, which is the
-  // visual equivalent of cut-and-fill without creating mask seams or exposed
-  // canvas between neighboring crosscuts.
+  // PRE-FLIGHT GUARANTEE:
+  // Paint the complete crosscut face first with existing laminate edge stock.
+  // This prevents the canvas from showing at exact rotated-field boundaries.
+  // It is original laminate support, not Edge Rip replacement wood.
+  const baseWood = rotate180 ? strips[strips.length - 1].wood : strips[0].wood;
+  svg.append(svgEl('rect', {
+    x, y, width: size, height: size,
+    fill: `url(#wood-${baseWood})`
+  }));
+
+  // Paint the actual rotated laminate over that support. Edge Rip does not
+  // alter this geometry; replacement wood overlays only the approved cut area.
   const cx = x + size / 2;
   const cy = y + size / 2;
   const angle = slope >= 0 ? 45 : -45;
