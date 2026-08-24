@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.7';
+const VERSION = '3.0.8';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -59,6 +59,10 @@ function recommendedRoughRip(width) {
 
 function recommendedRoughCrosscut() {
   return round(number(state.finishedThickness) + ROUGH_CROSSCUT_EXTRA, 3);
+}
+
+function laminationRequirement() {
+  return DiamondManufacturing.requiredLaminationSize(state.finishedThickness);
 }
 
 function crosscutEngineering() {
@@ -284,7 +288,9 @@ function renderEngineering() {
 
 function renderMetrics() {
   const x = crosscutEngineering();
-  $('moduleWidthMetric').textContent = `${moduleWidth().toFixed(3)} in`;
+  const lamination = laminationRequirement();
+  $('moduleWidthMetric').textContent = `${lamination.recommended.toFixed(3)} in`;
+  $('laminationMinimumMetric').textContent = `Minimum ${lamination.minimum.toFixed(3)} in = ${lamination.target.toFixed(3)} × √2; rounded up to nearest 1/8 in.`;
   $('crosscutMetric').textContent = x.balancedCount ? String(x.balancedCount) : '—';
   $('boardSizeMetric').textContent = `${number(state.boardLength).toFixed(3)} × ${number(state.boardWidth).toFixed(3)} in`;
   $('thicknessMetric').textContent = `${number(state.finishedThickness).toFixed(3)} in`;

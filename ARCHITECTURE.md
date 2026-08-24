@@ -34,3 +34,11 @@ The strip field is immutable under Edge Rip. Edge Rip is modeled as a subtractiv
 
 ## v3.0.7 geometry invariant
 The renderer has no fallback/filler wood. `geometry.js` computes clipped polygons for every physical laminate strip and is shared by the browser renderer and regression tests. Edge Rip is a separate cut/replacement overlay.
+
+
+## v3.0.8 lamination-size invariant
+- Finished board thickness is the target module thickness used for the 45-degree machining calculation.
+- `manufacturing.js` is the single source of truth for the required pre-45-degree square lamination size.
+- Mathematical minimum = finished thickness × √2.
+- Shop recommendation rounds that minimum upward to the nearest 1/8 inch.
+- This calculation is manufacturing guidance only and cannot modify the frozen v3.0.7 renderer.

@@ -21,3 +21,7 @@ Clean-architecture foundation rebuild for Built By The Butts.
 - SVG export
 
 This release intentionally does not carry forward every v2 feature. Additional features should be added only after the core geometry is validated.
+
+
+## v3.0.8 manufacturing guidance
+The top engineering metric now calculates the required square lamination size before the two 45° cuts from finished thickness using `finished thickness × √2`, rounded upward to the nearest 1/8 inch for a practical starting dimension.

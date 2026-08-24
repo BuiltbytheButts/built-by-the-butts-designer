@@ -1,3 +1,10 @@
+## v3.0.8 — Required Lamination Size Before 45° Cuts
+- Change #16 only; v3.0.7 exact-geometry renderer remains frozen.
+- Replaced the misleading **Module design width** metric with **Required Lamination Size Before 45° Cuts**.
+- Minimum square lamination size = finished thickness × √2.
+- Shop recommendation rounds the mathematical minimum upward to the nearest 1/8 inch.
+- Example: 1.500 in × √2 = 2.121 in minimum → 2.125 in recommended.
+
 ## v3.0.7 — Exact laminate geometry
 - Change #15 only.
 - Removed the full-cell support/filler species entirely.
