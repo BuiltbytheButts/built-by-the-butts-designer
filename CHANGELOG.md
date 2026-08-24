@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.0.3 — Shallow Edge Rip laminate continuation
+- Kept the v3.0.2 intersection targeting unchanged.
+- Extended the physical outside laminate strips beneath the clipped crosscut face so shallow Edge Rip values no longer expose the board background.
+- Replacement wood still occupies only the material removed by the Edge Rip mask.
+- No changes to finished dimensions, strip schedule math, crosscut engineering, or board-layout logic.
+
+
 ## v3.0.2 — Edge Rip intersection correction
 - Changed only the Edge Rip corner pairing.
 - Replacement wood now targets the alternating board-intersection diamonds rather than the laminated/internal diamond.

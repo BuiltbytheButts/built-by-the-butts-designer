@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.2';
+const VERSION = '3.0.3';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -166,7 +166,24 @@ function drawEndGrainCell(svg, x, y, size, slope, rotate180 = false) {
   });
 
   const stripeSpan = size * Math.SQRT2;
-  let cursor = cx - stripeSpan / 2;
+  const stripeStart = cx - stripeSpan / 2;
+  const stripeEnd = cx + stripeSpan / 2;
+
+  // The physical laminated blank continues through the square crosscut face.
+  // Extend the two outside laminate strips beyond the mathematical diagonal
+  // span, then let the cell clip trim them. This prevents the board background
+  // from showing through at shallow Edge Rip depths and preserves the original
+  // laminate wood everywhere that has NOT actually been cut away.
+  const extension = size * 2;
+  laminate.append(svgEl('rect', {
+    x: stripeStart - extension,
+    y: y - size,
+    width: extension,
+    height: size * 3,
+    fill: `url(#wood-${strips[0].wood})`
+  }));
+
+  let cursor = stripeStart;
   strips.forEach(strip => {
     const width = stripeSpan * number(strip.width) / total;
     laminate.append(svgEl('rect', {
@@ -178,6 +195,14 @@ function drawEndGrainCell(svg, x, y, size, slope, rotate180 = false) {
     }));
     cursor += width;
   });
+
+  laminate.append(svgEl('rect', {
+    x: stripeEnd,
+    y: y - size,
+    width: extension,
+    height: size * 3,
+    fill: `url(#wood-${strips[strips.length - 1].wood})`
+  }));
   svg.append(laminate);
 
   // Replacement stock occupies only the material removed by the Edge Rip.
