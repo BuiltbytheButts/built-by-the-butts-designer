@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.8';
+const VERSION = '3.0.9';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -66,24 +66,18 @@ function laminationRequirement() {
 }
 
 function crosscutEngineering() {
-  const blank = Math.max(0, number(state.masterBlankLength));
-  const kerf = Math.max(0, number(state.bladeKerf));
-  const rough = Math.max(0.001, recommendedRoughCrosscut());
-  const rawCount = Math.max(0, Math.floor((blank + kerf + 1e-9) / (rough + kerf)));
-  const balancedCount = rawCount >= 2 ? rawCount - (rawCount % 2) : 0;
-  const nextEven = balancedCount ? balancedCount + 2 : 2;
-  const used = count => count > 0 ? count * rough + Math.max(0, count - 1) * kerf : 0;
-  const remaining = balancedCount ? Math.max(0, blank - used(balancedCount)) : blank;
-  const thicknessFor = count => count > 0 ? Math.max(0, (blank - Math.max(0, count - 1) * kerf) / count) : 0;
-  const nextThickness = thicknessFor(nextEven);
-  return { blank, kerf, rough, rawCount, balancedCount, remaining, nextEven, nextThickness };
+  return DiamondManufacturing.finishedDimensionCrosscutPlan({
+    targetLength: state.boardLength,
+    finishedThickness: state.finishedThickness,
+    roughCrosscut: recommendedRoughCrosscut(),
+    bladeKerf: state.bladeKerf,
+    masterBlankLength: state.masterBlankLength
+  });
 }
 
 function previewGrid() {
   const module = Math.max(0.125, moduleWidth());
-  const engineeredCrosscuts = crosscutEngineering().balancedCount;
-  const naturalCrosscuts = Math.max(2, Math.ceil(number(state.boardLength) / Math.max(0.125, number(state.finishedThickness))));
-  const lengthSliceCount = engineeredCrosscuts || (naturalCrosscuts % 2 === 0 ? naturalCrosscuts : naturalCrosscuts + 1);
+  const lengthSliceCount = crosscutEngineering().balancedCount;
   const widthModuleCount = Math.max(2, Math.ceil(number(state.boardWidth) / module));
   return { lengthSliceCount, widthModuleCount, module };
 }
@@ -278,12 +272,23 @@ function removeStripPair(location) {
 
 function renderEngineering() {
   const x = crosscutEngineering();
-  $('roughCrosscutMetric').textContent = `${x.rough.toFixed(3)} in`;
-  $('roughCrosscutHelp').textContent = `Finished target ${number(state.finishedThickness).toFixed(3)} in + approx. 1/8 in cleanup guidance.`;
-  $('balancedCountMetric').textContent = x.balancedCount ? `${x.balancedCount} crosscuts` : 'Not enough blank';
-  $('balancedCountHelp').textContent = x.balancedCount ? `${x.rawCount % 2 ? `Raw result ${x.rawCount}; reduced to the nearest even count. ` : ''}Approx. blank remaining: ${x.remaining.toFixed(3)} in.` : 'Increase blank length or reduce rough crosscut target.';
-  $('nextEvenMetric').textContent = `${x.nextEven} crosscuts`;
-  $('nextEvenHelp').textContent = `Maximum approx. thickness: ${x.nextThickness.toFixed(3)} in each.`;
+  $('roughCrosscutMetric').textContent = `${x.roughCrosscut.toFixed(3)} in`;
+  $('roughCrosscutHelp').textContent = `Finished target ${x.finishedThickness.toFixed(3)} in + approx. 1/8 in cleanup guidance.`;
+
+  $('balancedCountMetric').textContent = `${x.balancedCount} crosscuts`;
+  const dimensionDirection = Math.abs(x.dimensionDelta) < 0.0005
+    ? 'exact target'
+    : `${Math.abs(x.dimensionDelta).toFixed(3)} in ${x.dimensionDelta < 0 ? 'shorter' : 'longer'} than target`;
+  const blankStatus = x.blankIsSufficient
+    ? `${x.blankDelta.toFixed(3)} in rough blank remaining`
+    : `${Math.abs(x.blankDelta).toFixed(3)} in more rough blank needed`;
+  $('balancedCountHelp').textContent = `Target ${x.targetLength.toFixed(3)} in → approx. ${x.achievableLength.toFixed(3)} in finished (${dimensionDirection}). Requires approx. ${x.requiredBlankLength.toFixed(3)} in rough blank; ${blankStatus}.`;
+
+  $('nextEvenMetric').textContent = `${x.alternateCount} crosscuts`;
+  const alternateBlankStatus = x.alternateBlankDelta >= -0.0005
+    ? `${x.alternateBlankDelta.toFixed(3)} in blank remaining`
+    : `${Math.abs(x.alternateBlankDelta).toFixed(3)} in more blank needed`;
+  $('nextEvenHelp').textContent = `Approx. ${x.alternateFinishedLength.toFixed(3)} in finished; requires ${x.alternateRequiredBlankLength.toFixed(3)} in rough blank (${alternateBlankStatus}).`;
 }
 
 function renderMetrics() {

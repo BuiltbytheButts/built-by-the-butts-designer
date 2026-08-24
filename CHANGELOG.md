@@ -1,3 +1,10 @@
+## v3.0.9 — Finished-Dimension-Driven Crosscut Engineering
+- Change #17 only; v3.0.7 geometry and v3.0.8 lamination-size engineering remain frozen.
+- Finished board length now drives the nearest balanced even crosscut count.
+- Shows the resulting achievable finished length, dimensional difference from target, rough blank required, and blank remaining/shortfall.
+- Shows the neighboring even-count alternative with its projected finished length and rough blank requirement.
+- Master blank length is now a feasibility check; it no longer dictates the design count.
+
 ## v3.0.8 — Required Lamination Size Before 45° Cuts
 - Change #16 only; v3.0.7 exact-geometry renderer remains frozen.
 - Replaced the misleading **Module design width** metric with **Required Lamination Size Before 45° Cuts**.
