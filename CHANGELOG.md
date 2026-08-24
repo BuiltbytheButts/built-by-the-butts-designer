@@ -1,3 +1,10 @@
+## v3.0.7 — Exact laminate geometry
+- Change #15 only.
+- Removed the full-cell support/filler species entirely.
+- Replaced rotated strip rectangles with exact clipped laminate polygons, so every point in a crosscut face comes from the actual strip schedule.
+- Removed the arbitrary half-cell Edge Rip cap; presets through 1 inch now remain distinct whenever the physical module supports them.
+- Added a production-geometry regression test for complete cell coverage, species-independent geometry, and monotonic Edge Rip presets.
+
 ## v3.0.6 — Release integrity fix
 - No new woodworking geometry change.
 - Carries forward the v3.0.5 laminate-continuity renderer.

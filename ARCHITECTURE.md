@@ -31,3 +31,6 @@ v3 uses its own local-storage key and JSON schema so old v2 autosaves cannot sil
 
 ## Edge Rip invariant
 The strip field is immutable under Edge Rip. Edge Rip is modeled as a subtractive 45-degree corner cut, followed by replacement stock filling exactly the removed triangular area.
+
+## v3.0.7 geometry invariant
+The renderer has no fallback/filler wood. `geometry.js` computes clipped polygons for every physical laminate strip and is shared by the browser renderer and regression tests. Edge Rip is a separate cut/replacement overlay.

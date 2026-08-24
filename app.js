@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.6';
+const VERSION = '3.0.7';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -106,114 +106,43 @@ function addWoodPatterns(svg) {
   svg.append(defs);
 }
 
-let clipSequence = 0;
-
 function edgeCutGeometry(x, y, size, slope) {
-  const total = Math.max(0.001, moduleWidth());
-  const cutDepth = clamp(number(state.edgeInset), 0, 1);
-  const leg = clamp((cutDepth / total) * size, 0, size / 2);
-
-  // Edge Rip belongs to the opposite corner pair from the laminate's
-  // internal/default diamond.  Four neighboring cut triangles meet at the
-  // board intersections to form the replacement diamond.  Keeping this
-  // pairing opposite the laminate slope prevents the Edge Rip control from
-  // changing the laminated center diamond.
-  if (slope >= 0) {
-    return [
-      [[x + size, y], [x + size - leg, y], [x + size, y + leg]],
-      [[x, y + size], [x + leg, y + size], [x, y + size - leg]]
-    ];
-  }
-
-  return [
-    [[x, y], [x + leg, y], [x, y + leg]],
-    [[x + size, y + size], [x + size - leg, y + size], [x + size, y + size - leg]]
-  ];
+  return DiamondGeometry.edgeCutTriangles({
+    x, y, size, slope,
+    cutDepth: number(state.edgeInset),
+    moduleWidth: moduleWidth()
+  });
 }
 
 function drawEndGrainCell(svg, x, y, size, slope, rotate180 = false) {
   const strips = activeStrips();
-  const total = moduleWidth();
-  if (!strips.length || total <= 0) return;
+  if (!strips.length || moduleWidth() <= 0) return;
 
-  const cellClipId = `cell-clip-${clipSequence++}`;
-  const defs = svgEl('defs');
-
-  const cellClip = svgEl('clipPath', { id: cellClipId });
-  cellClip.append(svgEl('rect', { x, y, width: size, height: size }));
-  defs.append(cellClip);
-  svg.append(defs);
-
-  const cutTriangles = edgeCutGeometry(x, y, size, slope);
-
-  // PRE-FLIGHT GUARANTEE:
-  // Paint the complete crosscut face first with existing laminate edge stock.
-  // This prevents the canvas from showing at exact rotated-field boundaries.
-  // It is original laminate support, not Edge Rip replacement wood.
-  const baseWood = rotate180 ? strips[strips.length - 1].wood : strips[0].wood;
-  svg.append(svgEl('rect', {
-    x, y, width: size, height: size,
-    fill: `url(#wood-${baseWood})`
-  }));
-
-  // Paint the actual rotated laminate over that support. Edge Rip does not
-  // alter this geometry; replacement wood overlays only the approved cut area.
-  const cx = x + size / 2;
-  const cy = y + size / 2;
-  const angle = slope >= 0 ? 45 : -45;
-  const groupRotation = rotate180 ? angle + 180 : angle;
-  const laminate = svgEl('g', {
-    'clip-path': `url(#${cellClipId})`,
-    transform: `rotate(${groupRotation} ${cx} ${cy})`
-  });
-
-  const stripeSpan = size * Math.SQRT2;
-  const stripeStart = cx - stripeSpan / 2;
-  const stripeEnd = cx + stripeSpan / 2;
-
-  // The physical laminated blank continues through the square crosscut face.
-  // Extend the two outside laminate strips beyond the mathematical diagonal
-  // span, then let the cell clip trim them. This prevents the board background
-  // from showing through at shallow Edge Rip depths and preserves the original
-  // laminate wood everywhere that has NOT actually been cut away.
-  const extension = size * 2;
-  laminate.append(svgEl('rect', {
-    x: stripeStart - extension,
-    y: y - size,
-    width: extension,
-    height: size * 3,
-    fill: `url(#wood-${strips[0].wood})`
-  }));
-
-  let cursor = stripeStart;
-  strips.forEach(strip => {
-    const width = stripeSpan * number(strip.width) / total;
-    laminate.append(svgEl('rect', {
-      x: cursor,
-      y: y - size,
-      width,
-      height: size * 3,
-      fill: `url(#wood-${strip.wood})`
+  // Exact laminate geometry: each strip becomes a clipped polygon inside the
+  // square crosscut face. There is no fallback/background species, so changing
+  // an outside strip can affect only the physical band created by that strip.
+  const baseAngle = slope >= 0 ? 45 : -45;
+  const angleDeg = baseAngle + (rotate180 ? 180 : 0);
+  const bands = DiamondGeometry.laminateBands({ x, y, size, strips, angleDeg });
+  bands.forEach(band => {
+    svg.append(svgEl('polygon', {
+      points: points(band.polygon),
+      class: 'laminate-band',
+      'data-strip-index': String(band.index),
+      fill: `url(#wood-${band.wood})`,
+      stroke: 'none'
     }));
-    cursor += width;
   });
 
-  laminate.append(svgEl('rect', {
-    x: stripeEnd,
-    y: y - size,
-    width: extension,
-    height: size * 3,
-    fill: `url(#wood-${strips[strips.length - 1].wood})`
-  }));
-  svg.append(laminate);
-
-  // Replacement stock occupies only the material removed by the Edge Rip.
-  // At Zero there is no cut and therefore no replacement geometry.
-  if (number(state.edgeInset) > 0 && WOODS[state.edgeWood]) {
+  // Edge Rip is an overlay of replacement stock only over the physically cut
+  // corner triangles. The original laminate geometry never resizes or changes.
+  const cut = edgeCutGeometry(x, y, size, slope);
+  if (cut.triangles.length && WOODS[state.edgeWood]) {
     const fill = `url(#wood-${state.edgeWood})`;
-    cutTriangles.forEach(triangle => {
+    cut.triangles.forEach(triangle => {
       svg.append(svgEl('polygon', {
         points: points(triangle),
+        class: 'edge-replacement',
         fill,
         stroke: '#241710',
         'stroke-width': '.55'
@@ -234,7 +163,6 @@ function renderBoard() {
   const svg = $('boardSvg');
   svg.innerHTML = '';
   addWoodPatterns(svg);
-  clipSequence = 0;
 
   const boardX = 42;
   const boardY = 42;
