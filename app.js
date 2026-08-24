@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.1';
+const VERSION = '3.0.2';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -113,16 +113,21 @@ function edgeCutGeometry(x, y, size, slope) {
   const cutDepth = clamp(number(state.edgeInset), 0, 1);
   const leg = clamp((cutDepth / total) * size, 0, size / 2);
 
+  // Edge Rip belongs to the opposite corner pair from the laminate's
+  // internal/default diamond.  Four neighboring cut triangles meet at the
+  // board intersections to form the replacement diamond.  Keeping this
+  // pairing opposite the laminate slope prevents the Edge Rip control from
+  // changing the laminated center diamond.
   if (slope >= 0) {
     return [
-      [[x, y], [x + leg, y], [x, y + leg]],
-      [[x + size, y + size], [x + size - leg, y + size], [x + size, y + size - leg]]
+      [[x + size, y], [x + size - leg, y], [x + size, y + leg]],
+      [[x, y + size], [x + leg, y + size], [x, y + size - leg]]
     ];
   }
 
   return [
-    [[x + size, y], [x + size - leg, y], [x + size, y + leg]],
-    [[x, y + size], [x + leg, y + size], [x, y + size - leg]]
+    [[x, y], [x + leg, y], [x, y + leg]],
+    [[x + size, y + size], [x + size - leg, y + size], [x + size, y + size - leg]]
   ];
 }
 

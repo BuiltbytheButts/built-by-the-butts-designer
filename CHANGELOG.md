@@ -1,6 +1,11 @@
 # Changelog
 
-## v3.0.1 — Edge Rip geometry correction
+## v3.0.2 — Edge Rip intersection correction
+- Changed only the Edge Rip corner pairing.
+- Replacement wood now targets the alternating board-intersection diamonds rather than the laminated/internal diamond.
+- Strip geometry, finished dimensions, crosscut engineering, and the base pattern are unchanged.
+
+## v3.0.2 — Edge Rip geometry correction
 - Edge Rip now removes two 45° corner triangles from the unchanged laminated crosscut geometry.
 - Replacement wood fills only the removed cut area.
 - Changing Edge Rip no longer scales, stretches, or redefines the strip field.
