@@ -51,6 +51,12 @@
     const blankDelta = blank - requiredBlankLength;
     const blankIsSufficient = blankDelta >= -1e-9;
 
+    // Complete rough crosscuts physically available from the master blank.
+    // n cuts consume n * roughCrosscut plus (n - 1) blade kerfs.
+    const totalCrosscutsAvailable = blank > 0
+      ? Math.max(0, Math.floor(((blank + kerf) / (rough + kerf)) + 1e-12))
+      : 0;
+
     const alternateCount = balancedCount === lowerEven
       ? (upperEven > lowerEven ? upperEven : balancedCount + 2)
       : lowerEven;
@@ -73,6 +79,7 @@
       requiredBlankLength,
       blankDelta,
       blankIsSufficient,
+      totalCrosscutsAvailable,
       alternateCount,
       alternateFinishedLength,
       alternateRequiredBlankLength,

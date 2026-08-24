@@ -1,3 +1,10 @@
+## v3.0.10 — Crosscut Availability Wording
+
+- Replaced ambiguous raw-count wording with **Total crosscuts available**.
+- 24.000 in blank + 1.625 in rough crosscut + 0.125 in kerf reports **13 total crosscuts available**.
+- The balanced recommendation remains separately identified as **12 crosscuts** for this example.
+- No pattern, Edge Rip, strip, or renderer geometry changes.
+
 ## v3.0.9 — Finished-Dimension-Driven Crosscut Engineering
 - Change #17 only; v3.0.7 geometry and v3.0.8 lamination-size engineering remain frozen.
 - Finished board length now drives the nearest balanced even crosscut count.

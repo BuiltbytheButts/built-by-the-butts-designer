@@ -36,3 +36,15 @@ assertClose(plan.dimensionDelta,0);
 plan=M.finishedDimensionCrosscutPlan({targetLength:19.5,finishedThickness:1.5,roughCrosscut:1.625,bladeKerf:0.125,masterBlankLength:30});
 assertEq(plan.balancedCount,12); // Exact tie between 18 and 21: conserve material.
 console.log('FINISHED-DIMENSION CROSSCUT ENGINEERING PASS');
+
+(function testTotalCrosscutsAvailable() {
+  const availabilityPlan = M.finishedDimensionCrosscutPlan({
+    targetLength: 18.625,
+    finishedThickness: 1.5,
+    roughCrosscut: 1.625,
+    bladeKerf: 0.125,
+    masterBlankLength: 24
+  });
+  assertEq(availabilityPlan.totalCrosscutsAvailable, 13);
+  assertEq(availabilityPlan.balancedCount, 12);
+})();

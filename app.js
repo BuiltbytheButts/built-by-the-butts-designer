@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.9';
+const VERSION = '3.0.10';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -282,7 +282,10 @@ function renderEngineering() {
   const blankStatus = x.blankIsSufficient
     ? `${x.blankDelta.toFixed(3)} in rough blank remaining`
     : `${Math.abs(x.blankDelta).toFixed(3)} in more rough blank needed`;
-  $('balancedCountHelp').textContent = `Target ${x.targetLength.toFixed(3)} in → approx. ${x.achievableLength.toFixed(3)} in finished (${dimensionDirection}). Requires approx. ${x.requiredBlankLength.toFixed(3)} in rough blank; ${blankStatus}.`;
+  const availabilityNote = x.totalCrosscutsAvailable === x.balancedCount
+    ? `Total crosscuts available: ${x.totalCrosscutsAvailable}. This is already an even, balanced count.`
+    : `Total crosscuts available: ${x.totalCrosscutsAvailable}. Balanced build recommendation: ${x.balancedCount} crosscuts to maintain an even diamond pattern.`;
+  $('balancedCountHelp').textContent = `${availabilityNote} Target ${x.targetLength.toFixed(3)} in → approx. ${x.achievableLength.toFixed(3)} in finished (${dimensionDirection}). Requires approx. ${x.requiredBlankLength.toFixed(3)} in rough blank; ${blankStatus}.`;
 
   $('nextEvenMetric').textContent = `${x.alternateCount} crosscuts`;
   const alternateBlankStatus = x.alternateBlankDelta >= -0.0005
