@@ -1,3 +1,9 @@
+## v3.0.6 — Release integrity fix
+- No new woodworking geometry change.
+- Carries forward the v3.0.5 laminate-continuity renderer.
+- Corrected cache-busting references so the HTML badge, JavaScript, CSS, and requested asset versions all match.
+- Added release preflight checks for version consistency before packaging.
+
 ## v3.0.5 — Edge Rip continuity preflight
 - Change #15 only.
 - Added laminate-derived support beneath each rotated crosscut face so canvas cannot show through at cell-corner boundaries.
