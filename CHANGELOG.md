@@ -1,6 +1,12 @@
 # Changelog
 
-## v3.0.3 — Shallow Edge Rip laminate continuation
+## v3.0.4 — Edge Rip join continuity
+- Removed the subtractive SVG laminate mask that could expose canvas at alternating module intersections.
+- The original laminate now renders continuously in every cell.
+- Edge Rip replacement wood overlays only the exact 45° cut triangles, preserving the same cut depth and intersection targeting with no white/background gaps.
+- No board sizing, strip schedule, crosscut engineering, or Edge Rip sizing logic changed.
+
+## v3.0.4 — Shallow Edge Rip laminate continuation
 - Kept the v3.0.2 intersection targeting unchanged.
 - Extended the physical outside laminate strips beneath the clipped crosscut face so shallow Edge Rip values no longer expose the board background.
 - Replacement wood still occupies only the material removed by the Edge Rip mask.

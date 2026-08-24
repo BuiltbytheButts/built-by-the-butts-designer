@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.3';
+const VERSION = '3.0.4';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -137,31 +137,26 @@ function drawEndGrainCell(svg, x, y, size, slope, rotate180 = false) {
   if (!strips.length || total <= 0) return;
 
   const cellClipId = `cell-clip-${clipSequence++}`;
-  const laminateMaskId = `laminate-mask-${clipSequence++}`;
   const defs = svgEl('defs');
 
   const cellClip = svgEl('clipPath', { id: cellClipId });
   cellClip.append(svgEl('rect', { x, y, width: size, height: size }));
   defs.append(cellClip);
-
-  const cutTriangles = edgeCutGeometry(x, y, size, slope);
-  const laminateMask = svgEl('mask', { id: laminateMaskId, maskUnits: 'userSpaceOnUse', x, y, width: size, height: size });
-  laminateMask.append(svgEl('rect', { x, y, width: size, height: size, fill: '#fff' }));
-  if (number(state.edgeInset) > 0) {
-    cutTriangles.forEach(triangle => laminateMask.append(svgEl('polygon', { points: points(triangle), fill: '#000' })));
-  }
-  defs.append(laminateMask);
   svg.append(defs);
 
-  // The laminate is always generated from the strip schedule. Edge Rip never
-  // rescales or distorts it; the mask only removes the two 45-degree corners.
+  const cutTriangles = edgeCutGeometry(x, y, size, slope);
+
+  // The laminate is always generated continuously from the strip schedule.
+  // Edge Rip never removes pixels from this base layer. The replacement wood
+  // is drawn directly over the exact 45-degree cut area below, which is the
+  // visual equivalent of cut-and-fill without creating mask seams or exposed
+  // canvas between neighboring crosscuts.
   const cx = x + size / 2;
   const cy = y + size / 2;
   const angle = slope >= 0 ? 45 : -45;
   const groupRotation = rotate180 ? angle + 180 : angle;
   const laminate = svgEl('g', {
     'clip-path': `url(#${cellClipId})`,
-    mask: `url(#${laminateMaskId})`,
     transform: `rotate(${groupRotation} ${cx} ${cy})`
   });
 
