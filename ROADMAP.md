@@ -1,23 +1,8 @@
-# Product Roadmap
+# v3 Roadmap
 
-## Production Ready
-- Validate estimated dimensions, board feet, waste, and cost against a complete shop build.
-- Record actual strip widths, glue-up dimensions, kerf loss, planing loss, final dimensions, and species costs.
-- Calibrate waste and recommended rough-machining guidance from measured results.
-- Freeze Version 2 except for verified bug fixes.
-
-## Version 3
-- Project library and versioned save/open workflow.
-- Printable cut lists and shop packets.
-- Border designer.
-- Kerf-aware lumber optimizer.
-- Labor, overhead, profit, and customer-pricing tools.
-- Build mode with measurements, notes, photographs, and estimated-versus-actual reporting.
-- Built & Verified design records.
-
-## Future Ideas
-- Proven pattern library and premium design packs.
-- Lumber inventory integration.
-- Shared/importable designs.
-- Manufacturing-plan generation.
-- Commercial licensing and account-based hosted application.
+1. Validate the core diamond renderer against the completed prototype board.
+2. Calibrate how finished board dimensions crop/center the proven pattern.
+3. Add all-end-grain top/bottom border engineering.
+4. Add raw-material and species costing from actual purchase dimensions.
+5. Add printable cut list and workshop plan.
+6. Add project library only after geometry and engineering are stable.

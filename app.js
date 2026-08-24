@@ -1,1093 +1,442 @@
-console.info("Diamond End Grain Designer by Built By The Butts v2.7.8");
-const WOODS = {
+'use strict';
+
+const VERSION = '3.0.0';
+const ROUGH_RIP_EXTRA = 1 / 16;
+const ROUGH_CROSSCUT_EXTRA = 1 / 8;
+const STORAGE_KEY = 'diamond-end-grain-designer-v3';
+
+const WOODS = Object.freeze({
   walnut: { name: 'Walnut', color: '#4b2d21' },
-  purpleheart: { name: 'Purpleheart', color: '#694064' },
   cherry: { name: 'Cherry', color: '#a75b3d' },
   padauk: { name: 'Padauk', color: '#bc4a28' },
-  maple: { name: 'Hard Maple', color: '#e4ca96' }
-};
+  maple: { name: 'Hard Maple', color: '#e4ca96' },
+  purpleheart: { name: 'Purpleheart', color: '#694064' }
+});
 
-const DEFAULT_STRIPS = [
-  { width: 0.500, wood: 'cherry', enabled: true, locked: false },
-  { width: 0.125, wood: 'maple', enabled: true, locked: false },
-  { width: 0.125, wood: 'walnut', enabled: true, locked: false },
-  { width: 0.125, wood: 'walnut', enabled: true, locked: false },
-  { width: 0.125, wood: 'maple', enabled: true, locked: false },
-  { width: 0.500, wood: 'cherry', enabled: true, locked: false }
-];
+const DEFAULT_STRIPS = Object.freeze([
+  { width: 0.5000, wood: 'cherry' },
+  { width: 0.1250, wood: 'maple' },
+  { width: 0.1250, wood: 'walnut' },
+  { width: 0.1250, wood: 'walnut' },
+  { width: 0.1250, wood: 'maple' },
+  { width: 0.5000, wood: 'cherry' }
+]);
 
-const RECOMMENDED_STRIP_EXTRA = 0.0625;   // 1/16 in cleanup room per strip
-const RECOMMENDED_CROSSCUT_EXTRA = 0.125; // 1/8 in total rough-thickness guidance
+const defaultState = () => ({
+  version: VERSION,
+  boardLength: 18.625,
+  boardWidth: 11.625,
+  finishedThickness: 1.5,
+  masterBlankLength: 24,
+  bladeKerf: 0.125,
+  edgeInset: 0.5,
+  edgeWood: 'walnut',
+  strips: DEFAULT_STRIPS.map(strip => ({ ...strip }))
+});
 
-function recommendedRoughStrip(width) {
-  const design = Math.max(0, Number(width || 0));
-  return design > 0 ? design + RECOMMENDED_STRIP_EXTRA : 0;
-}
-
-let state = {
-  version: '2.7.8', boardLength: 20, boardWidth: 12.75, columns: 8, rows: 5, sizingMode: 'dimensions', trimAllowance: 0.0625,
-  masterBlankLength: 24, bladeKerf: 0.125,
-  layout: 'grid', orientation: '0', edgeInset: 0.500,
-  tipWood: 'walnut', showLines: true, showFrame: true,
-  finishedThickness: 1.5, wastePercent: 20,
-  moduleWidthMode: 'auto', targetModuleWidth: 1.5,
-  woodPrices: { walnut: 28, purpleheart: 18, cherry: 7, padauk: 15, maple: 7 },
-  strips: structuredClone(DEFAULT_STRIPS)
-};
+let state = defaultState();
 let history = [];
 let future = [];
-let isRestoring = false;
+let toastTimer = 0;
 
 const $ = id => document.getElementById(id);
-const controls = ['moduleWidthMode','targetModuleWidth','boardLength','boardWidth','edgeInset','showLines','showFrame','finishedThickness','wastePercent','masterBlankLength','bladeKerf'];
+const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+const round = (value, places = 4) => Number(number(value).toFixed(places));
+const deepClone = value => JSON.parse(JSON.stringify(value));
+
+function activeStrips() {
+  return state.strips.filter(strip => strip.width > 0);
+}
+
+function moduleWidth() {
+  return activeStrips().reduce((sum, strip) => sum + number(strip.width), 0);
+}
+
+function recommendedRoughRip(width) {
+  return round(number(width) + ROUGH_RIP_EXTRA, 4);
+}
+
+function recommendedRoughCrosscut() {
+  return round(number(state.finishedThickness) + ROUGH_CROSSCUT_EXTRA, 3);
+}
+
+function crosscutEngineering() {
+  const blank = Math.max(0, number(state.masterBlankLength));
+  const kerf = Math.max(0, number(state.bladeKerf));
+  const rough = Math.max(0.001, recommendedRoughCrosscut());
+  const rawCount = Math.max(0, Math.floor((blank + kerf + 1e-9) / (rough + kerf)));
+  const balancedCount = rawCount >= 2 ? rawCount - (rawCount % 2) : 0;
+  const nextEven = balancedCount ? balancedCount + 2 : 2;
+  const used = count => count > 0 ? count * rough + Math.max(0, count - 1) * kerf : 0;
+  const remaining = balancedCount ? Math.max(0, blank - used(balancedCount)) : blank;
+  const thicknessFor = count => count > 0 ? Math.max(0, (blank - Math.max(0, count - 1) * kerf) / count) : 0;
+  const nextThickness = thicknessFor(nextEven);
+  return { blank, kerf, rough, rawCount, balancedCount, remaining, nextEven, nextThickness };
+}
+
+function previewGrid() {
+  const module = Math.max(0.125, moduleWidth());
+  const engineeredCrosscuts = crosscutEngineering().balancedCount;
+  const naturalCrosscuts = Math.max(2, Math.ceil(number(state.boardLength) / Math.max(0.125, number(state.finishedThickness))));
+  const lengthSliceCount = engineeredCrosscuts || (naturalCrosscuts % 2 === 0 ? naturalCrosscuts : naturalCrosscuts + 1);
+  const widthModuleCount = Math.max(2, Math.ceil(number(state.boardWidth) / module));
+  return { lengthSliceCount, widthModuleCount, module };
+}
 
 function svgEl(name, attrs = {}) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
-  for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
+  Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
   return el;
 }
-function pts(a) { return a.map(([x,y]) => `${x},${y}`).join(' '); }
-function activeStrips() { return state.strips.filter(x => x.enabled !== false); }
-function totalWidth() { return activeStrips().reduce((s,x) => s + Number(x.width || 0), 0); }
-function syncModuleWidthControls() {
-  if (!['auto','manual'].includes(state.moduleWidthMode)) state.moduleWidthMode = 'auto';
-  const current = totalWidth();
-  if (state.moduleWidthMode === 'auto') state.targetModuleWidth = current;
-  const mode = $('moduleWidthMode');
-  const target = $('targetModuleWidth');
-  const normalize = $('normalizeScheduleBtn');
-  if (mode) mode.value = state.moduleWidthMode;
-  if (target) {
-    target.value = Number(state.targetModuleWidth || current || 1.5).toFixed(4);
-    target.readOnly = state.moduleWidthMode === 'auto';
-    target.classList.toggle('calculated-input', state.moduleWidthMode === 'auto');
+
+function points(list) {
+  return list.map(([x, y]) => `${x},${y}`).join(' ');
+}
+
+function addWoodPatterns(svg) {
+  const defs = svgEl('defs');
+  Object.entries(WOODS).forEach(([key, wood]) => {
+    const pattern = svgEl('pattern', { id: `wood-${key}`, width: 32, height: 32, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(2)' });
+    pattern.append(svgEl('rect', { width: 32, height: 32, fill: wood.color }));
+    pattern.append(svgEl('path', { d: 'M-5 8 C4 0 13 15 23 8 S35 3 42 12 M-5 25 C5 17 13 30 24 23 S35 18 42 28', fill: 'none', stroke: '#fff', 'stroke-opacity': '.10', 'stroke-width': '1' }));
+    pattern.append(svgEl('path', { d: 'M7 0 C12 10 5 22 11 32 M24 0 C30 12 21 23 28 32', fill: 'none', stroke: '#000', 'stroke-opacity': '.07', 'stroke-width': '1' }));
+    defs.append(pattern);
+  });
+  svg.append(defs);
+}
+
+let clipSequence = 0;
+
+function drawEndGrainCell(svg, x, y, size, slope, rotate180 = false) {
+  const strips = activeStrips();
+  const total = moduleWidth();
+  if (!strips.length || total <= 0) return;
+
+  const outerWood = strips[0].wood;
+  svg.append(svgEl('rect', { x, y, width: size, height: size, fill: `url(#wood-${outerWood})` }));
+
+  const clipId = `cell-clip-${clipSequence++}`;
+  const defs = svgEl('defs');
+  const clip = svgEl('clipPath', { id: clipId });
+  clip.append(svgEl('rect', { x, y, width: size, height: size }));
+  defs.append(clip);
+  svg.append(defs);
+
+  const cx = x + size / 2;
+  const cy = y + size / 2;
+  const angle = slope >= 0 ? 45 : -45;
+  const groupRotation = rotate180 ? angle + 180 : angle;
+  const field = svgEl('g', { 'clip-path': `url(#${clipId})`, transform: `rotate(${groupRotation} ${cx} ${cy})` });
+
+  const stripeSpan = size * Math.SQRT2;
+  let cursor = cx - stripeSpan / 2;
+  strips.forEach(strip => {
+    const width = stripeSpan * number(strip.width) / total;
+    field.append(svgEl('rect', {
+      x: cursor,
+      y: y - size,
+      width,
+      height: size * 3,
+      fill: `url(#wood-${strip.wood})`
+    }));
+    cursor += width;
+  });
+  svg.append(field);
+
+  const inset = clamp(number(state.edgeInset), 0, 1);
+  if (inset > 0 && WOODS[state.edgeWood]) {
+    const leg = clamp((inset / Math.max(total, 0.001)) * size, 0, size * 0.46);
+    const fill = `url(#wood-${state.edgeWood})`;
+    const stroke = '#241710';
+    if (slope >= 0) {
+      svg.append(svgEl('polygon', { points: points([[x, y], [x + leg, y], [x, y + leg]]), fill, stroke, 'stroke-width': '.55' }));
+      svg.append(svgEl('polygon', { points: points([[x + size, y + size], [x + size - leg, y + size], [x + size, y + size - leg]]), fill, stroke, 'stroke-width': '.55' }));
+    } else {
+      svg.append(svgEl('polygon', { points: points([[x + size, y], [x + size - leg, y], [x + size, y + leg]]), fill, stroke, 'stroke-width': '.55' }));
+      svg.append(svgEl('polygon', { points: points([[x, y + size], [x + leg, y + size], [x, y + size - leg]]), fill, stroke, 'stroke-width': '.55' }));
+    }
   }
-  if (normalize) normalize.disabled = state.moduleWidthMode === 'auto';
-  const help = $('moduleWidthHelp');
-  if (help) help.textContent = state.moduleWidthMode === 'auto'
-    ? `Auto mode: the active strip schedule currently totals ${current.toFixed(3)} in.`
-    : `Manual mode: normalize unlocked active strips to ${Number(state.targetModuleWidth || 0).toFixed(3)} in. Locked widths stay unchanged.`;
-}
-function normalizeScheduleToTarget(target = state.targetModuleWidth, showMessage = true) {
-  target = Number(target);
-  if (!Number.isFinite(target) || target <= 0) { if (showMessage) toast('Enter a valid target module width'); return false; }
-  const active = activeStrips();
-  const locked = active.filter(s => s.locked === true);
-  const unlocked = active.filter(s => s.locked !== true);
-  const lockedTotal = locked.reduce((sum,s)=>sum+Number(s.width||0),0);
-  const remaining = target - lockedTotal;
-  const minWidth = 0.0625;
-  if (!unlocked.length) { if (showMessage) toast('Unlock at least one active strip to scale'); return false; }
-  if (remaining < unlocked.length * minWidth - 1e-9) { if (showMessage) toast('Target is too small for the locked strips'); return false; }
-  const unlockedTotal = unlocked.reduce((sum,s)=>sum+Number(s.width||0),0);
-  if (unlockedTotal <= 0) { if (showMessage) toast('Unlocked strips need a positive width'); return false; }
-  const scale = remaining / unlockedTotal;
-  unlocked.forEach(s => { s.width = Math.max(minWidth, Number(s.width||0) * scale); });
-  // Correct floating-point drift on the final unlocked strip.
-  const drift = target - totalWidth();
-  unlocked[unlocked.length-1].width += drift;
-  state.targetModuleWidth = target;
-  buildStripEditor();
-  render();
-  if (showMessage) toast(`Module normalized to ${target.toFixed(3)} in`);
-  return true;
-}
-// Recommended rough crosscut thickness. This is intentionally guidance only:
- // finished thickness plus a conservative 1/8 in starting margin validated by RB-001.
-function roughThickness() {
-  return Math.max(0, Number(state.finishedThickness || 0)) + RECOMMENDED_CROSSCUT_EXTRA;
-}
-function crosscutEngineering() {
-  const finishedLength = Math.max(0.125, Number(state.boardLength || 0));
-  const finishedThickness = Math.max(0.125, Number(state.finishedThickness || 0));
-  const blank = Math.max(0, Number(state.masterBlankLength || 0));
-  const kerf = Math.max(0, Number(state.bladeKerf || 0));
-  const target = Math.max(0.001, roughThickness());
 
-  // Finished board LENGTH is created by placing finished crosscuts side-by-side.
-  // Therefore the desired crosscut count comes from finished length / finished
-  // thickness. The pattern must use an EVEN count to stay balanced.
-  const desiredCount = finishedLength / finishedThickness;
-  const lowerEven = Math.max(2, Math.floor(desiredCount / 2) * 2);
-  const upperEven = Math.max(lowerEven + 2, Math.ceil(desiredCount / 2) * 2);
-  const lowerFinishedLength = lowerEven * finishedThickness;
-  const upperFinishedLength = upperEven * finishedThickness;
-  const lowerDelta = Math.abs(finishedLength - lowerFinishedLength);
-  const upperDelta = Math.abs(upperFinishedLength - finishedLength);
-  // On an exact tie, prefer the lower count so we never silently oversize.
-  const recommendedEven = lowerDelta <= upperDelta ? lowerEven : upperEven;
-  const recommendedFinishedLength = recommendedEven * finishedThickness;
-  const targetIsExact = Math.abs(desiredCount - Math.round(desiredCount)) < 1e-6;
-  const targetWouldBeOdd = targetIsExact && Math.round(desiredCount) % 2 !== 0;
-
-  const requiredBlankForCount = count => count > 0
-    ? count * target + Math.max(0, count - 1) * kerf
-    : 0;
-  const maxAtTarget = Math.max(0, Math.floor((blank + kerf + 1e-9) / (target + kerf)));
-  const requiredBlank = requiredBlankForCount(recommendedEven);
-  const blankRemaining = blank - requiredBlank;
-  const fitsAvailableBlank = blank + 1e-9 >= requiredBlank;
-
-  const alternateEven = recommendedEven === lowerEven ? upperEven : lowerEven;
-  const alternateFinishedLength = alternateEven * finishedThickness;
-  const alternateRequiredBlank = requiredBlankForCount(alternateEven);
-  const alternateFitsBlank = blank + 1e-9 >= alternateRequiredBlank;
-
-  return {
-    blank, kerf, target, desiredCount, maxAtTarget,
-    lowerEven, upperEven, recommendedEven, recommendedFinishedLength,
-    lowerFinishedLength, upperFinishedLength, targetWouldBeOdd,
-    requiredBlank, blankRemaining, fitsAvailableBlank,
-    alternateEven, alternateFinishedLength, alternateRequiredBlank, alternateFitsBlank
-  };
-}
-function roundDimension(value) { return Math.round(Math.max(0, value) * 1000) / 1000; }
-function moduleSizingGeometry() {
-  const module = Math.max(0.0625, totalWidth());
-  const gap = 0;
-
-  // A finished module occupies its full physical width in the board grid.
-  // Rotating the strip pattern changes the artwork inside the module, not the
-  // finished length or width of the square module itself.
-  const footprint = module;
-  const pitch = module + gap;
-  return { module, gap, pitch, footprint };
-}
-function gridFinishedDimensions(columns = state.columns, rows = state.rows) {
-  const g = moduleSizingGeometry();
-  const cols = Math.max(1, Math.round(Number(columns) || 1));
-  const actualRows = state.layout === 'single' ? 1 : Math.max(1, Math.round(Number(rows) || 1));
-  const stagger = state.layout === 'stagger' && actualRows > 1 ? g.pitch / 2 : 0;
-  const trim = Math.max(0, Number(state.trimAllowance || 0));
-  const assembledLength = g.footprint + (cols - 1) * g.pitch + stagger;
-  const assembledWidth = g.footprint + (actualRows - 1) * g.pitch;
-  return {
-    length: Math.max(0.125, assembledLength - 2 * trim),
-    width: Math.max(0.125, assembledWidth - 2 * trim),
-    assembledLength,
-    assembledWidth,
-    rows: actualRows
-  };
-}
-function countForFinishedDimension(dimension, footprint, pitch, trim, extra = 0) {
-  const assembledTarget = Math.max(0, Number(dimension || 0)) + 2 * trim - extra;
-  if (assembledTarget <= footprint) return 1;
-  return Math.max(1, Math.floor((assembledTarget - footprint + 1e-9) / pitch) + 1);
-}
-function applySizingRules() {
-  // v2.7.8: Finished board dimensions are the only user sizing inputs.
-  // Rows and columns remain internal outputs, derived with the same proven
-  // module-footprint math used by the stable v2.6.x renderer.
-  state.sizingMode = 'dimensions';
-  state.layout = 'grid';
-  state.orientation = '0';
-  state.trimAllowance = 0;
-
-  state.boardLength = Math.max(0.125, Number(state.boardLength) || 0.125);
-  state.boardWidth = Math.max(0.125, Number(state.boardWidth) || 0.125);
-
-  const g = moduleSizingGeometry();
-  state.columns = countForFinishedDimension(state.boardLength, g.footprint, g.pitch, 0);
-  state.rows = countForFinishedDimension(state.boardWidth, g.footprint, g.pitch, 0);
-}
-function migrateStateForCurrentVersion(inputState) {
-  const migrated = inputState && typeof inputState === 'object' ? inputState : {};
-  if (!Number.isFinite(Number(migrated.finishedThickness))) migrated.finishedThickness = 1.5;
-  // v2.7.8 retires user-entered finishing allowance and grid sizing.
-  delete migrated.planingAllowance;
-  migrated.sizingMode = 'dimensions';
-  migrated.layout = 'grid';
-  migrated.orientation = '0';
-  migrated.trimAllowance = 0;
-  migrated.version = '2.7.8';
-  return migrated;
+  svg.append(svgEl('rect', { x, y, width: size, height: size, fill: 'none', stroke: '#4d382d', 'stroke-opacity': '.45', 'stroke-width': '.7' }));
 }
 
-function snapshot() { return JSON.stringify(state); }
-function commit() {
-  if (isRestoring) return;
-  const current = snapshot();
-  if (history.at(-1) !== current) history.push(current);
-  if (history.length > 80) history.shift();
-  future = [];
-  updateUndoRedo();
-  localStorage.setItem('bbtb-designer-autosave', current);
-}
-function restore(serialized) {
-  isRestoring = true;
-  state = migrateStateForCurrentVersion(JSON.parse(serialized));
-  syncControls();
-  buildStripEditor();
-  buildWoodPriceEditor();
-  render();
-  isRestoring = false;
-  localStorage.setItem('bbtb-designer-autosave', serialized);
-}
-function updateUndoRedo() {
-  $('undoBtn').disabled = history.length <= 1;
-  $('redoBtn').disabled = future.length === 0;
-}
-function toast(message) {
-  const el = $('toast'); el.textContent = message; el.classList.add('show');
-  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 1800);
+function renderBoard() {
+  const svg = $('boardSvg');
+  svg.innerHTML = '';
+  addWoodPatterns(svg);
+  clipSequence = 0;
+
+  const boardX = 42;
+  const boardY = 42;
+  const boardW = 1116;
+  const boardH = 676;
+  const boardAspect = Math.max(0.15, number(state.boardLength) / Math.max(0.15, number(state.boardWidth)));
+  let fieldW = boardW;
+  let fieldH = fieldW / boardAspect;
+  if (fieldH > boardH) {
+    fieldH = boardH;
+    fieldW = fieldH * boardAspect;
+  }
+  const fieldX = 600 - fieldW / 2;
+  const fieldY = 380 - fieldH / 2;
+
+  svg.append(svgEl('rect', { x: fieldX - 3, y: fieldY - 3, width: fieldW + 6, height: fieldH + 6, rx: 8, fill: '#f6f0e9', stroke: '#917e70', 'stroke-width': '3' }));
+
+  const grid = previewGrid();
+  const cellW = fieldW / grid.lengthSliceCount;
+  const cellH = fieldH / grid.widthModuleCount;
+  const cell = Math.max(cellW, cellH);
+  const renderCols = Math.ceil(fieldW / cell) + 2;
+  const renderRows = Math.ceil(fieldH / cell) + 2;
+  const startX = fieldX - cell;
+  const startY = fieldY - cell;
+
+  const clipId = 'board-field-clip';
+  const defs = svgEl('defs');
+  const clip = svgEl('clipPath', { id: clipId });
+  clip.append(svgEl('rect', { x: fieldX, y: fieldY, width: fieldW, height: fieldH, rx: 5 }));
+  defs.append(clip);
+  svg.append(defs);
+  const field = svgEl('g', { 'clip-path': `url(#${clipId})` });
+
+  for (let row = 0; row < renderRows; row += 1) {
+    for (let col = 0; col < renderCols; col += 1) {
+      const x = startX + col * cell;
+      const y = startY + row * cell;
+      const rotate180 = col % 2 === 1;
+      const slope = (row + col) % 2 === 0 ? 1 : -1;
+      drawEndGrainCell(field, x, y, cell, slope, rotate180);
+    }
+  }
+  svg.append(field);
 }
 
-function woodOptions(selected, includeNone = false) {
-  const none = includeNone ? `<option value="" ${!selected?'selected':''}>None — no edge strip</option>` : '';
-  return none + Object.entries(WOODS).map(([k,w]) => `<option value="${k}" ${k===selected?'selected':''}>${w.name}</option>`).join('');
-}
-function activeEdgeWoodKey() {
-  return Number(state.edgeInset || 0) > 0 && WOODS[state.tipWood] ? state.tipWood : '';
-}
-function activeEdgeWood() {
-  const key = activeEdgeWoodKey();
-  return key ? WOODS[key] : null;
-}
-function stripPairLabel(index) {
-  const center = Math.floor(state.strips.length / 2);
-  if (index === center && state.strips.length % 2 === 1) return 'C';
-  const distance = Math.abs(index - center);
-  return `P${distance || 1}`;
+function woodOptions(selected) {
+  return Object.entries(WOODS).map(([key, wood]) => `<option value="${key}" ${key === selected ? 'selected' : ''}>${wood.name}</option>`).join('');
 }
 
 function buildStripEditor() {
   const holder = $('stripEditor');
   holder.innerHTML = '';
-
-  state.strips.forEach((strip, i) => {
-    if (strip.enabled === undefined) strip.enabled = true;
+  state.strips.forEach((strip, index) => {
     const row = document.createElement('div');
-    row.className = 'strip-row' + (strip.enabled ? '' : ' disabled');
-    row.dataset.index = i;
+    row.className = 'strip-row';
     row.innerHTML = `
-      <span class="swatch" style="background:${WOODS[strip.wood].color}" title="${WOODS[strip.wood].name}"></span>
-      <label class="strip-field width-field">
-        <span class="strip-field-heading"><span>Strip ${i+1}</span><span class="strip-toggles"><label title="Lock this width while scaling"><input data-locked="${i}" type="checkbox" ${strip.locked ? 'checked' : ''} ${strip.enabled ? '' : 'disabled'} aria-label="Lock strip ${i+1} width"> Lock</label><input data-enabled="${i}" type="checkbox" ${strip.enabled ? 'checked' : ''} aria-label="Use strip ${i+1}"></span></span>
-        <input data-width="${i}" type="number" min="0.0625" max="3" step="0.0625" value="${Number(strip.width).toFixed(4)}">
-        <small class="rough-recommendation" title="Approximate only. Cut slightly oversized, then mill to the exact design width.">Recommended rough rip: ~${recommendedRoughStrip(strip.width).toFixed(4)} in <button type="button" class="why-link" data-rough-why="${i}">Why?</button></small>
-      </label>
-      <label class="strip-field wood-field">Wood
-        <select data-wood="${i}" aria-label="Wood for strip ${i+1}">${woodOptions(strip.wood)}</select>
-      </label>`;
-    holder.appendChild(row);
+      <span class="swatch" style="background:${WOODS[strip.wood]?.color || '#999'}"></span>
+      <label>Strip ${index + 1}<input data-strip-width="${index}" type="number" min="0.03125" max="3" step="0.03125" value="${number(strip.width).toFixed(4)}"></label>
+      <label>Wood<select data-strip-wood="${index}">${woodOptions(strip.wood)}</select></label>
+      <div class="strip-meta">Recommended rough rip: ~${recommendedRoughRip(strip.width).toFixed(4)} in</div>`;
+    holder.append(row);
   });
 
-  holder.querySelectorAll('[data-enabled]').forEach(el => el.addEventListener('change', e => {
-    const idx = Number(e.target.dataset.enabled);
-    state.strips[idx].enabled = e.target.checked;
-    if (!activeStrips().length) state.strips[idx].enabled = true;
-    buildStripEditor(); render(); commit();
-  }));
-
-  holder.querySelectorAll('[data-locked]').forEach(el => el.addEventListener('change', e => {
-    const idx = Number(e.target.dataset.locked);
-    state.strips[idx].locked = e.target.checked;
-    buildStripEditor(); syncModuleWidthControls(); commit();
-  }));
-
-  holder.querySelectorAll('[data-width]').forEach(el => el.addEventListener('change', e => {
-    const idx = Number(e.target.dataset.width);
-    const value = Number(e.target.value);
-    if (value > 0) state.strips[idx].width = value;
-    if (state.moduleWidthMode === 'auto') state.targetModuleWidth = totalWidth();
-    buildStripEditor(); render(); commit();
-  }));
-
-  holder.querySelectorAll('[data-wood]').forEach(el => el.addEventListener('change', e => {
-    state.strips[Number(e.target.dataset.wood)].wood = e.target.value;
-    buildStripEditor(); render(); commit();
-  }));
-}
-
-function addStripPair(position='outer') {
-  const pair = [
-    { width: 0.125, wood: 'maple', enabled: true, locked: false },
-    { width: 0.125, wood: 'maple', enabled: true, locked: false }
-  ];
-  if (position === 'outer') {
-    state.strips.unshift(pair[0]);
-    state.strips.push(pair[1]);
-  } else {
-    const center = Math.floor(state.strips.length / 2);
-    state.strips.splice(center, 0, pair[0]);
-    state.strips.splice(center + 2, 0, pair[1]);
-  }
-  buildStripEditor(); render(); commit(); toast(`${position === 'outer' ? 'Outer' : 'Inner'} strip pair added`);
-}
-
-function removeStripPair(position='outer') {
-  if (state.strips.length <= 3) { toast('Keep at least 3 strips'); return; }
-  if (position === 'outer') {
-    state.strips.shift();
-    state.strips.pop();
-  } else {
-    const center = Math.floor(state.strips.length / 2);
-    if (center - 1 < 0 || center + 1 >= state.strips.length) { toast('No inner pair is available'); return; }
-    state.strips.splice(center + 1, 1);
-    state.strips.splice(center - 1, 1);
-  }
-  buildStripEditor(); render(); commit(); toast(`${position === 'outer' ? 'Outer' : 'Inner'} strip pair removed`);
-}
-
-const PROJECTS_STORAGE_KEY = 'diamond-end-grain-projects';
-let activeProjectName = '';
-
-function savedProjects() {
-  try {
-    const data = JSON.parse(localStorage.getItem(PROJECTS_STORAGE_KEY) || '{}');
-    return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
-  } catch { return {}; }
-}
-function persistProjects(projects) { localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects)); }
-function projectRecord(name, sourceState = state) {
-  const projectState = structuredClone(sourceState);
-  projectState.version = '2.7.7';
-  projectState.projectName = name;
-  projectState.projectNotes = $('projectNotes')?.value ?? projectState.projectNotes ?? '';
-  return { name, updatedAt: new Date().toISOString(), state: projectState };
-}
-function escapeHtml(value) {
-  return String(value).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-function refreshSavedProjectSelect(selected = activeProjectName) {
-  const select = $('savedProjectSelect'); if (!select) return;
-  const names = Object.keys(savedProjects()).sort((a,b)=>a.localeCompare(b));
-  select.innerHTML = '<option value="">Open Project…</option>' + names.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
-  if (selected && names.includes(selected)) select.value = selected;
-}
-function applyProjectRecord(record, name) {
-  const projectState = record?.state || record;
-  if (!projectState || !Array.isArray(projectState.strips)) return false;
-  restore(JSON.stringify(projectState));
-  activeProjectName = name || projectState.projectName || '';
-  state.projectName = activeProjectName;
-  state.projectNotes = projectState.projectNotes || '';
-  if ($('projectNotes')) $('projectNotes').value = state.projectNotes;
-  history = [snapshot()]; future = [];
-  refreshSavedProjectSelect(activeProjectName);
-  commit();
-  return true;
-}
-function loadLocalProject(name = $('savedProjectSelect')?.value) {
-  if (!name) return;
-  const record = savedProjects()[name];
-  if (!record) { toast('Saved project was not found'); return; }
-  toast(applyProjectRecord(record, name) ? `Opened “${name}”` : 'That project could not be opened');
-}
-function saveProjectAs() {
-  const suggested = activeProjectName ? `${activeProjectName} Copy` : 'Reference Build #001';
-  const name = prompt('Name this project:', suggested)?.trim();
-  if (!name) return;
-  const projects = savedProjects();
-  if (projects[name] && !confirm(`Replace the existing project “${name}”?`)) return;
-  activeProjectName = name; state.projectName = name;
-  projects[name] = projectRecord(name); persistProjects(projects);
-  refreshSavedProjectSelect(name); commit(); toast(`Saved “${name}”`);
-}
-function updateCurrentProject() {
-  if (!activeProjectName) { saveProjectAs(); return; }
-  const projects = savedProjects();
-  state.projectName = activeProjectName;
-  projects[activeProjectName] = projectRecord(activeProjectName); persistProjects(projects);
-  refreshSavedProjectSelect(activeProjectName); commit(); toast(`Saved “${activeProjectName}”`);
-}
-function duplicateCurrentProject() {
-  const sourceName = $('savedProjectSelect')?.value || activeProjectName;
-  if (!sourceName) { toast('Open a project to duplicate'); return; }
-  const projects = savedProjects(), source = projects[sourceName]; if (!source) return;
-  const name = prompt('Name the duplicate:', `${sourceName} Copy`)?.trim(); if (!name) return;
-  if (projects[name] && !confirm(`Replace the existing project “${name}”?`)) return;
-  const copy = structuredClone(source.state || source); copy.projectName = name;
-  projects[name] = projectRecord(name, copy); persistProjects(projects);
-  applyProjectRecord(projects[name], name); toast(`Duplicated as “${name}”`);
-}
-function renameCurrentProject() {
-  const oldName = $('savedProjectSelect')?.value || activeProjectName;
-  if (!oldName) { toast('Open a project to rename'); return; }
-  const name = prompt('Rename project:', oldName)?.trim(); if (!name || name === oldName) return;
-  const projects = savedProjects(); if (projects[name] && !confirm(`Replace “${name}”?`)) return;
-  const record = projects[oldName]; if (!record) return; delete projects[oldName];
-  const renamed = structuredClone(record.state || record); renamed.projectName = name;
-  projects[name] = projectRecord(name, renamed); persistProjects(projects);
-  activeProjectName = name; state.projectName = name; refreshSavedProjectSelect(name); commit(); toast(`Renamed to “${name}”`);
-}
-function deleteCurrentProject() {
-  const name = $('savedProjectSelect')?.value || activeProjectName;
-  if (!name) { toast('Choose a project to delete'); return; }
-  if (!confirm(`Delete “${name}”? This cannot be undone.`)) return;
-  const projects = savedProjects(); delete projects[name]; persistProjects(projects);
-  if (activeProjectName === name) { activeProjectName=''; state.projectName=''; }
-  refreshSavedProjectSelect(); toast(`Deleted “${name}”`);
-}
-function migrateLegacySchedules() {
-  let legacy={}; try { legacy=JSON.parse(localStorage.getItem('bbtb-strip-schedules') || '{}'); } catch {}
-  const projects=savedProjects(); let changed=false;
-  for (const [name,strips] of Object.entries(legacy || {})) if (!projects[name] && Array.isArray(strips)) {
-    const migrated=structuredClone(state); migrated.strips=structuredClone(strips); migrated.projectName=name; migrated.projectNotes='Migrated from a saved strip schedule.';
-    projects[name]=projectRecord(name,migrated); changed=true;
-  }
-  if (changed) persistProjects(projects);
-}
-
-function addPatterns(svg, prefix) {
-  const defs = svgEl('defs');
-  for (const [key,wood] of Object.entries(WOODS)) {
-    const p = svgEl('pattern', { id:`${prefix}-${key}`, width:36, height:36, patternUnits:'userSpaceOnUse', patternTransform:'rotate(3)' });
-    p.append(svgEl('rect',{width:36,height:36,fill:wood.color}));
-    p.append(svgEl('path',{d:'M-5 9 C4 1 12 15 22 8 S34 4 42 12 M-6 27 C5 17 13 31 24 23 S36 19 43 29',fill:'none',stroke:'#fff','stroke-opacity':'.12','stroke-width':'1'}));
-    p.append(svgEl('path',{d:'M5 0 C11 10 4 23 10 36 M24 0 C30 12 21 25 29 36',fill:'none',stroke:'#000','stroke-opacity':'.08','stroke-width':'1'}));
-    defs.append(p);
-  }
-  svg.append(defs);
-}
-
-let moduleClipCounter = 0;
-function drawCrosscutCell(svg, cx, cy, cellW, cellH, slope, flip180, prefix) {
-  const strips = activeStrips();
-  const total = totalWidth();
-  if (!strips.length || !total) return;
-  const uid = `${prefix}-cell-${moduleClipCounter++}`;
-  const g = svgEl('g',{transform:`translate(${cx} ${cy}) rotate(${flip180 ? 180 : 0})`});
-
-  const defs = svgEl('defs');
-  const clip = svgEl('clipPath',{id:uid});
-  clip.append(svgEl('rect',{x:-cellW/2,y:-cellH/2,width:cellW,height:cellH}));
-  defs.append(clip); svg.append(defs);
-
-  const field = svgEl('g',{'clip-path':`url(#${uid})`});
-  // The physical cross-section is a square/rectangle with the laminate schedule
-  // running diagonally through it. Neighboring original laminates mirror the
-  // diagonal direction; alternate crosscut rows are then rotated 180 degrees.
-  const diag = Math.hypot(cellW, cellH) * 1.55;
-  const stripeGroup = svgEl('g',{transform:`rotate(${slope})`});
-  let x = -diag/2;
-  strips.forEach(strip => {
-    const sw = diag * Number(strip.width || 0) / total;
-    stripeGroup.append(svgEl('rect',{
-      x, y:-diag/2, width:sw+0.25, height:diag,
-      fill:`url(#${prefix}-${strip.wood})`,
-      stroke:state.showLines?'#241710':'none', 'stroke-width':state.showLines?'.45':'0'
-    }));
-    x += sw;
-  });
-  field.append(stripeGroup);
-
-  // Replacement edge stock represents the two opposite corner insert areas of
-  // the machined blank. Mirror the insert pair with the laminate direction.
-  const inset = Math.max(0, Number(state.edgeInset || 0));
-  const edgeWood = activeEdgeWood();
-  if (inset > 0 && edgeWood) {
-    const frac = Math.min(.42, Math.max(.04, inset / Math.max(total, .001) * .55));
-    const dx = cellW * frac, dy = cellH * frac;
-    const fill = `url(#${prefix}-${state.tipWood})`;
-    const stroke = state.showLines ? '#241710' : 'none';
-    if (slope > 0) {
-      field.append(svgEl('polygon',{points:pts([[cellW/2,-cellH/2],[cellW/2-dx,-cellH/2],[cellW/2,-cellH/2+dy]]),fill,stroke,'stroke-width':'.55'}));
-      field.append(svgEl('polygon',{points:pts([[-cellW/2,cellH/2],[-cellW/2+dx,cellH/2],[-cellW/2,cellH/2-dy]]),fill,stroke,'stroke-width':'.55'}));
-    } else {
-      field.append(svgEl('polygon',{points:pts([[-cellW/2,-cellH/2],[-cellW/2+dx,-cellH/2],[-cellW/2,-cellH/2+dy]]),fill,stroke,'stroke-width':'.55'}));
-      field.append(svgEl('polygon',{points:pts([[cellW/2,cellH/2],[cellW/2-dx,cellH/2],[cellW/2,cellH/2-dy]]),fill,stroke,'stroke-width':'.55'}));
-    }
-  }
-  g.append(field);
-  if (state.showLines) g.append(svgEl('rect',{x:-cellW/2,y:-cellH/2,width:cellW,height:cellH,fill:'none',stroke:'#241710','stroke-width':'.7'}));
-  svg.append(g);
-}
-
-function angleAt(r,c) { return 0; }
-
-function renderBoard() {
-  // v2.7.8: render the physical end-grain crosscut cells, not isolated diamonds.
-  // Across the board, neighboring laminated blanks mirror their diagonal faces.
-  // Down the board, every other physical crosscut is rotated 180 degrees.
-  const svg = $('boardSvg'); svg.innerHTML = ''; addPatterns(svg,'board');
-  const frameX=55, frameY=55, frameW=1090, frameH=650;
-  svg.append(svgEl('rect',{x:frameX,y:frameY,width:frameW,height:frameH,rx:12,fill:'#f5efe7',stroke:state.showFrame?'#9c8a7b':'none','stroke-width':'3'}));
-
-  const cross = crosscutEngineering();
-  const rows = Math.max(2, Number(cross.recommendedEven || cross.lowerEven || 2));
-  const moduleW = Math.max(.0625, totalWidth());
-  const boardW = Math.max(moduleW, Number(state.boardWidth || moduleW));
-  const cols = Math.max(1, Math.round(boardW / moduleW));
-
-  // Preserve the physical board aspect ratio. Cells fill the board edge-to-edge;
-  // the frame clips any partial cells created by the requested finished size.
-  const boardAspect = Math.max(.15, Number(state.boardLength || 1) / Math.max(.001, Number(state.boardWidth || 1)));
-  let drawW = frameW, drawH = drawW / boardAspect;
-  if (drawH > frameH) { drawH = frameH; drawW = drawH * boardAspect; }
-  const bx = 600-drawW/2, by = 380-drawH/2;
-  const clipId='board-finished-clip';
-  const defs=svgEl('defs'); const clip=svgEl('clipPath',{id:clipId});
-  clip.append(svgEl('rect',{x:bx,y:by,width:drawW,height:drawH,rx:3})); defs.append(clip); svg.append(defs);
-  const field=svgEl('g',{'clip-path':`url(#${clipId})`});
-
-  const cellW = drawW / cols;
-  const cellH = drawH / rows;
-  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
-    const cx=bx+(c+.5)*cellW, cy=by+(r+.5)*cellH;
-    const slope = c%2===0 ? 45 : -45;
-    drawCrosscutCell(field,cx,cy,cellW+0.35,cellH+0.35,slope,r%2===1,'board');
-  }
-  svg.append(field);
-  if (state.showFrame) svg.append(svgEl('rect',{x:bx,y:by,width:drawW,height:drawH,rx:3,fill:'none',stroke:'#6f5e50','stroke-width':'2'}));
-}
-function renderModule() { const svg=$('moduleSvg'); svg.innerHTML=''; addPatterns(svg,'module'); drawModule(svg,160,160,245,0,'module'); }
-function renderSchedule() {
-  const h=$('schedule'); h.innerHTML='';
-  activeStrips().forEach((s,i)=>{
-    const row=document.createElement('div'); row.className='schedule-row';
-    row.innerHTML=`<div class="schedule-left"><span class="swatch" style="width:24px;height:24px;background:${WOODS[s.wood].color}"></span><div><strong>Strip ${i+1}</strong><br><small>${WOODS[s.wood].name}</small></div></div><span class="badge">${Number(s.width).toFixed(3)} in</span>`;
-    h.append(row);
-  });
-  const tip=document.createElement('div'); tip.className='schedule-row';
-  const edgeWood = activeEdgeWood();
-  if (edgeWood) tip.innerHTML=`<strong>Two outside tip fills</strong><span class="badge">${edgeWood.name}</span>`;
-  else tip.innerHTML='<strong>Edge replacement</strong><span class="badge">None — zero edge</span>';
-  h.append(tip);
-}
-function renderMetrics() {
-  const engineeredCrosscuts = Math.max(2, crosscutEngineering().recommendedEven || 2);
-  const rows = Math.max(1, Number(state.rows) || 1);
-  const cols = Math.max(1, Number(state.columns) || 1);
-  $('moduleWidthMetric').textContent = `${totalWidth().toFixed(3)} in`;
-  $('moduleCountMetric').textContent = `${engineeredCrosscuts} crosscuts`;
-  $('boardSizeMetric').textContent = `${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} in`;
-  if ($('thicknessMetric')) $('thicknessMetric').textContent = `${Number(state.finishedThickness).toFixed(3)} in`;
-  $('edgeInsetLabel').textContent = `${Number(state.edgeInset ?? 0.5).toFixed(3)} in`;
-  const diagnostics = $('diagnosticsOutput');
-  if (diagnostics) {
-    const geometry = moduleSizingGeometry();
-    diagnostics.textContent = [
-      `Version: v2.7.8`,
-      `Finished size target: ${Number(state.boardLength).toFixed(3)} × ${Number(state.boardWidth).toFixed(3)} × ${Number(state.finishedThickness).toFixed(3)} in`,
-      `Module design width: ${totalWidth().toFixed(3)} in`,
-      `Internal preview grid: ${cols} × ${rows}`,
-      `Balanced crosscut recommendation: ${engineeredCrosscuts}`,
-      `Recommended rough crosscut: ${roughThickness().toFixed(3)} in`,
-      `Module pitch: ${geometry.pitch.toFixed(3)} in`,
-      `Edge inset: ${Number(state.edgeInset).toFixed(3)} in`,
-      `Edge species: ${activeEdgeWood() ? WOODS[state.tipWood].name : 'None'}`,
-      `Crosscut blank / kerf: ${Number(state.masterBlankLength).toFixed(3)} / ${Number(state.bladeKerf).toFixed(3)} in`,
-      `Estimated cost: ${$('totalLumberCostMetric')?.textContent || '$0.00'}`
-    ].join('\n');
-  }
-}
-function renderCrosscutEngineering() {
-  const panel = $('crosscutRecommendation');
-  if (!panel) return;
-  const x = crosscutEngineering();
-  const count = x.recommendedEven;
-  $('crosscutCountMetric').textContent = `${count} crosscuts`;
-
-  const targetNote = x.targetWouldBeOdd
-    ? `Your exact finished-length target would require an odd count. Balanced recommendation: ${count} crosscuts = ${x.recommendedFinishedLength.toFixed(3)} in finished length.`
-    : `Balanced count for approximately ${Number(state.boardLength).toFixed(3)} in finished length: ${count} crosscuts = ${x.recommendedFinishedLength.toFixed(3)} in.`;
-  const blankNote = x.fitsAvailableBlank
-    ? ` Required rough blank: ~${x.requiredBlank.toFixed(3)} in; approx. ${Math.max(0,x.blankRemaining).toFixed(3)} in remaining from the entered blank.`
-    : ` Requires ~${x.requiredBlank.toFixed(3)} in of rough blank, which is ${Math.abs(x.blankRemaining).toFixed(3)} in longer than the entered blank.`;
-  $('crosscutCountDetail').textContent = targetNote + blankNote;
-
-  $('crosscutPrimaryThickness').textContent = `~${x.target.toFixed(3)} in`;
-  $('crosscutPrimaryWaste').textContent = `Recommended rough starting cut for ${Number(state.finishedThickness).toFixed(3)} in finished thickness`;
-
-  $('crosscutAltCount').textContent = `${x.alternateEven} crosscuts`;
-  $('crosscutAltThickness').textContent = `${x.alternateFinishedLength.toFixed(3)} in finished length`;
-  $('crosscutAltStatus').textContent = x.alternateFitsBlank
-    ? `Also fits the entered blank; rough blank required ~${x.alternateRequiredBlank.toFixed(3)} in.`
-    : `Would require ~${x.alternateRequiredBlank.toFixed(3)} in rough blank.`;
-
-  panel.classList.toggle('warning', x.targetWouldBeOdd || !x.fitsAvailableBlank);
-}
-function render() { syncModuleWidthControls(); applySizingRules(); renderBoard(); renderModule(); renderSchedule(); renderEngineering(); renderCrosscutEngineering(); renderMetrics(); updateUndoRedo(); }
-
-function syncControls() {
-  controls.forEach(id => { const el=$(id); if (el.type==='checkbox') el.checked=Boolean(state[id]); else el.value=state[id]; });
-  $('tipWood').innerHTML = woodOptions(state.tipWood, true);
-}
-function pullControl(id) {
-  const el=$(id); let v = el.type==='checkbox' ? el.checked : el.value;
-  if (['targetModuleWidth','boardLength','boardWidth','edgeInset','finishedThickness','wastePercent','masterBlankLength','bladeKerf'].includes(id)) v=Number(v);
-  state[id]=v;
-  if (id === 'moduleWidthMode') {
-    if (v === 'manual') state.targetModuleWidth = totalWidth();
-    else state.targetModuleWidth = totalWidth();
-  }
-  render(); commit();
-}
-
-controls.forEach(id => $(id).addEventListener('change',()=>pullControl(id)));
-
-// In manual mode, changing the target module width immediately rescales the
-// unlocked active strips. This keeps the preview, grid geometry, board size
-// (when Grid Determines Size is selected), board feet, and material cost in sync.
-$('targetModuleWidth')?.addEventListener('input',()=>{
-  const target = Number($('targetModuleWidth').value);
-  state.targetModuleWidth = target;
-  if (state.moduleWidthMode === 'manual' && Number.isFinite(target) && target > 0) {
-    normalizeScheduleToTarget(target, false);
-  } else {
-    render();
-  }
-});
-
-$('tipWood').addEventListener('change',()=>{
-  state.tipWood = $('tipWood').value;
-  if (!state.tipWood) {
-    state.edgeInset = 0;
-    $('edgeInset').value = 0;
-  } else if (Number(state.edgeInset || 0) <= 0) {
-    state.edgeInset = 0.125;
-    $('edgeInset').value = 0.125;
-  }
-  render(); commit();
-});
-// Keep the linked sizing fields live while the user types or uses the number-field arrows.
-// Finished dimensions are the only sizing inputs. Internal grid values recalculate automatically.
-['boardLength','boardWidth','finishedThickness','wastePercent','masterBlankLength','bladeKerf']
-  .forEach(id => $(id).addEventListener('input',()=>pullControl(id)));
-$('edgeInset').addEventListener('input',()=>{
-  state.edgeInset=Number($('edgeInset').value);
-  if (state.edgeInset <= 0) state.tipWood = '';
-  else if (!WOODS[state.tipWood]) state.tipWood = 'walnut';
-  $('tipWood').innerHTML = woodOptions(state.tipWood, true);
-  render();
-});
-$('edgeInset').addEventListener('change',commit);
-$('resetStripsBtn')?.addEventListener('click',()=>{ state.strips=structuredClone(DEFAULT_STRIPS); buildStripEditor(); render(); commit(); toast('Strip schedule reset'); });
-$('normalizeScheduleBtn')?.addEventListener('click',()=>{ if (normalizeScheduleToTarget(state.targetModuleWidth)) commit(); });
-$('restoreModuleWidthBtn')?.addEventListener('click',()=>{
-  state.moduleWidthMode = 'manual';
-  state.targetModuleWidth = 1.5;
-  if (normalizeScheduleToTarget(1.5, false)) { commit(); toast('Module returned to 1.500 in'); }
-});
-$('addOuterPairBtn')?.addEventListener('click',()=>addStripPair('outer'));
-$('addInnerPairBtn')?.addEventListener('click',()=>addStripPair('inner'));
-$('removeOuterPairBtn')?.addEventListener('click',()=>removeStripPair('outer'));
-$('removeInnerPairBtn')?.addEventListener('click',()=>removeStripPair('inner'));
-$('savedProjectSelect')?.addEventListener('change',e=>{ if(e.target.value) loadLocalProject(e.target.value); });
-$('saveLocalProjectBtn')?.addEventListener('click',saveProjectAs);
-$('updateLocalProjectBtn')?.addEventListener('click',updateCurrentProject);
-$('duplicateProjectBtn')?.addEventListener('click',duplicateCurrentProject);
-$('renameProjectBtn')?.addEventListener('click',renameCurrentProject);
-$('deleteLocalProjectBtn')?.addEventListener('click',deleteCurrentProject);
-$('projectNotes')?.addEventListener('input',e=>{ state.projectNotes=e.target.value; commit(); });
-$('undoBtn').addEventListener('click',()=>{ if(history.length<=1)return; future.push(history.pop()); restore(history.at(-1)); updateUndoRedo(); });
-$('redoBtn').addEventListener('click',()=>{ if(!future.length)return; const next=future.pop(); history.push(next); restore(next); updateUndoRedo(); });
-
-function download(name,type,text) {
-  const blob=new Blob([text],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a');
-  a.href=url; a.download=name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
-$('saveProjectBtn').addEventListener('click',()=>download('diamond-end-grain-design.json','application/json',JSON.stringify(state,null,2)));
-$('openProjectInput').addEventListener('change',async e=>{
-  const file=e.target.files[0]; if(!file)return;
-  try { const loaded=JSON.parse(await file.text()); restore(JSON.stringify(loaded)); history=[snapshot()]; future=[]; toast('Project opened'); }
-  catch { alert('That project file could not be opened.'); }
-  e.target.value='';
-});
-$('exportSvgBtn').addEventListener('click',()=>{
-  const clone=$('boardSvg').cloneNode(true); clone.setAttribute('width','1200'); clone.setAttribute('height','760');
-  clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
-  const source='<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(clone);
-  download('diamond-end-grain-board.svg','image/svg+xml;charset=utf-8',source); toast('SVG exported');
-});
-
-
-function engineeringForInset(inset) {
-  const total = totalWidth() || 1;
-  const i = Math.max(0, Math.min(total/2 - 0.001, Number(inset)));
-  const centerRemaining = Math.max(0, total - 2*i);
-  const centerPercent = centerRemaining / total * 100;
-  // Two 45-degree triangular additions: total cross-sectional area ~= inset².
-  const addedBoardFeet = (i * i * Number(state.boardLength || 0)) / 144;
-  const edgeKey = activeEdgeWoodKey();
-  const addedCost = edgeKey ? addedBoardFeet * Number(state.woodPrices?.[edgeKey] || 0) : 0;
-  const originalWalnut = activeStrips().filter(s=>s.wood==='walnut').reduce((sum,s)=>sum+Number(s.width||0),0) / total;
-  const addedFaceShare = Math.min(.95, 2*i/total);
-  const walnutShare = Math.min(1, originalWalnut*(1-addedFaceShare) + addedFaceShare) * 100;
-  return { inset:i, centerRemaining, centerPercent, addedBoardFeet, addedCost, offcutBoardFeet:addedBoardFeet, walnutShare };
-}
-
-function buildWoodPriceEditor() {
-  const holder = $('woodPriceEditor');
-  if (!holder) return;
-  holder.innerHTML = '';
-  for (const [key, wood] of Object.entries(WOODS)) {
-    const label = document.createElement('label');
-    label.innerHTML = `<span><i class="price-swatch" style="background:${wood.color}"></i>${wood.name} ($/bd ft)</span><input data-wood-price="${key}" type="number" min="0" max="250" step="0.50" value="${Number(state.woodPrices[key] || 0).toFixed(2)}">`;
-    holder.append(label);
-  }
-  holder.querySelectorAll('[data-wood-price]').forEach(input => {
-    input.addEventListener('input', e => {
-      state.woodPrices[e.target.dataset.woodPrice] = Number(e.target.value || 0);
-      render();
+  holder.querySelectorAll('[data-strip-width]').forEach(input => {
+    input.addEventListener('input', event => {
+      const index = Number(event.target.dataset.stripWidth);
+      state.strips[index].width = Math.max(0.03125, number(event.target.value));
+      const meta = event.target.closest('.strip-row')?.querySelector('.strip-meta');
+      if (meta) meta.textContent = `Recommended rough rip: ~${recommendedRoughRip(state.strips[index].width).toFixed(4)} in`;
+      renderBoard();
+      renderMetrics();
     });
     input.addEventListener('change', commit);
   });
+  holder.querySelectorAll('[data-strip-wood]').forEach(select => {
+    select.addEventListener('change', event => {
+      const index = Number(event.target.dataset.stripWood);
+      state.strips[index].wood = event.target.value;
+      const swatch = event.target.closest('.strip-row')?.querySelector('.swatch');
+      if (swatch) swatch.style.background = WOODS[state.strips[index].wood].color;
+      renderBoard();
+      commit();
+    });
+  });
 }
 
-function wholeBoardCost() {
-  const total = totalWidth() || 1;
-  const finishedBoardFeet = Math.max(0, Number(state.boardLength || 0) * Number(state.boardWidth || 0) * Number(state.finishedThickness || 0) / 144);
-  const roughBoardFeet = Math.max(0, Number(state.boardLength || 0) * Number(state.boardWidth || 0) * roughThickness() / 144);
-  const planingBoardFeet = Math.max(0, roughBoardFeet - finishedBoardFeet);
-  const boardVolume = roughBoardFeet;
-  const wasteFactor = 1 + Math.max(0, Number(state.wastePercent || 0)) / 100;
-  const edge = engineeringForInset(state.edgeInset);
-  const edgeKey = activeEdgeWoodKey();
-  const replacementVolume = edgeKey ? edge.addedBoardFeet : 0;
-  const species = {};
-  for (const key of Object.keys(WOODS)) species[key] = { baseBf: 0, replacementBf: 0, purchaseBf: 0, cost: 0 };
-  for (const strip of activeStrips()) {
-    species[strip.wood].baseBf += boardVolume * Number(strip.width || 0) / total;
+function addStripPair(location) {
+  const pair = [{ width: 0.125, wood: 'maple' }, { width: 0.125, wood: 'maple' }];
+  if (location === 'outer') {
+    state.strips = [pair[0], ...state.strips, pair[1]];
+  } else {
+    const middle = Math.floor(state.strips.length / 2);
+    state.strips.splice(middle, 0, ...pair);
   }
-  if (edgeKey) species[edgeKey].replacementBf += replacementVolume;
-  let totalBf = 0, totalCost = 0;
-  for (const key of Object.keys(WOODS)) {
-    species[key].purchaseBf = (species[key].baseBf + species[key].replacementBf) * wasteFactor;
-    species[key].cost = species[key].purchaseBf * Number(state.woodPrices[key] || 0);
-    totalBf += species[key].purchaseBf;
-    totalCost += species[key].cost;
+  buildStripEditor(); render(); commit();
+}
+
+function removeStripPair(location) {
+  if (state.strips.length <= 2) return toast('Keep at least two strips');
+  if (location === 'outer') {
+    state.strips = state.strips.slice(1, -1);
+  } else {
+    const left = Math.floor((state.strips.length - 2) / 2);
+    state.strips.splice(left, 2);
   }
-  return { boardVolume, finishedBoardFeet, roughBoardFeet, planingBoardFeet, replacementVolume, wasteFactor, species, totalBf, totalCost, offcutBf: edge.offcutBoardFeet };
+  buildStripEditor(); render(); commit();
 }
-
-function renderMaterialCostBreakdown() {
-  const holder = $('materialCostBreakdown');
-  if (!holder) return;
-  const c = wholeBoardCost();
-  holder.innerHTML = '';
-  for (const [key, wood] of Object.entries(WOODS)) {
-    const item = c.species[key];
-    if (item.purchaseBf <= 0.00001) continue;
-    const row = document.createElement('article');
-    row.innerHTML = `<div class="material-name"><span class="swatch" style="background:${wood.color}"></span><div><strong>${wood.name}</strong><small>${item.baseBf.toFixed(3)} rough blank + ${item.replacementBf.toFixed(3)} edge bd ft</small></div></div><div class="material-cost"><strong>$${item.cost.toFixed(2)}</strong><small>${item.purchaseBf.toFixed(3)} bd ft @ $${Number(state.woodPrices[key] || 0).toFixed(2)}</small></div>`;
-    holder.append(row);
-  }
-}
-
-function snapInset(value) {
-  const min=0,max=.750,step=.0625;
-  return Math.max(min,Math.min(max,Math.round(value/step)*step));
-}
-
 
 function renderEngineering() {
-  if(!$('centerDiamondMetric')) return;
-  const e=engineeringForInset(state.edgeInset);
-  $('centerDiamondMetric').textContent=`${e.centerPercent.toFixed(1)}%`;
-  $('centerDiamondDimension').textContent=`${e.centerRemaining.toFixed(3)} in remaining`;
-  const edgeWood = activeEdgeWood();
-  $('addedWalnutMetric').textContent=`${(edgeWood ? e.addedBoardFeet : 0).toFixed(3)} bd ft`;
-  $('addedWalnutCostMetric').textContent=edgeWood ? `${edgeWood.name} · $${e.addedCost.toFixed(2)} estimated` : 'No edge strip selected · $0.00';
-  $('offcutMetric').textContent=`${e.offcutBoardFeet.toFixed(3)} bd ft`;
-  const whole = wholeBoardCost();
-  $('totalLumberCostMetric').textContent=`$${whole.totalCost.toFixed(2)}`;
-  $('totalBoardFeetMetric').textContent=`${whole.totalBf.toFixed(3)} bd ft including waste`;
-  if ($('roughThicknessMetric')) $('roughThicknessMetric').textContent = `~${roughThickness().toFixed(3)} in`;
-  if ($('planingLossMetric')) $('planingLossMetric').textContent = `Approximate shop recommendation · ${whole.planingBoardFeet.toFixed(3)} bd ft estimated cleanup material`;
-  document.querySelectorAll('[data-inset]').forEach(b=>b.classList.toggle('active',Math.abs(Number(b.dataset.inset)-state.edgeInset)<.001));
-  renderMaterialCostBreakdown();
+  const x = crosscutEngineering();
+  $('roughCrosscutMetric').textContent = `${x.rough.toFixed(3)} in`;
+  $('roughCrosscutHelp').textContent = `Finished target ${number(state.finishedThickness).toFixed(3)} in + approx. 1/8 in cleanup guidance.`;
+  $('balancedCountMetric').textContent = x.balancedCount ? `${x.balancedCount} crosscuts` : 'Not enough blank';
+  $('balancedCountHelp').textContent = x.balancedCount ? `${x.rawCount % 2 ? `Raw result ${x.rawCount}; reduced to the nearest even count. ` : ''}Approx. blank remaining: ${x.remaining.toFixed(3)} in.` : 'Increase blank length or reduce rough crosscut target.';
+  $('nextEvenMetric').textContent = `${x.nextEven} crosscuts`;
+  $('nextEvenHelp').textContent = `Maximum approx. thickness: ${x.nextThickness.toFixed(3)} in each.`;
 }
 
-document.addEventListener('click', e => {
-  const why = e.target.closest('[data-rough-why]');
-  if (why) {
-    alert('Recommended rough rip is approximate. The Designer adds about 1/16 in so you can remove saw marks and mill to the exact design width. A cleaner blade, drum sander, planer setup, or your own shop process may need more or less.');
-    return;
-  }
-  const b = e.target.closest('[data-inset]');
-  if (!b) return;
-  state.edgeInset = Number(b.dataset.inset);
-  if (state.edgeInset <= 0) state.tipWood = '';
-  else if (!WOODS[state.tipWood]) state.tipWood = 'walnut';
+function renderMetrics() {
+  const x = crosscutEngineering();
+  $('moduleWidthMetric').textContent = `${moduleWidth().toFixed(3)} in`;
+  $('crosscutMetric').textContent = x.balancedCount ? String(x.balancedCount) : '—';
+  $('boardSizeMetric').textContent = `${number(state.boardLength).toFixed(3)} × ${number(state.boardWidth).toFixed(3)} in`;
+  $('thicknessMetric').textContent = `${number(state.finishedThickness).toFixed(3)} in`;
+  $('edgeInsetLabel').textContent = `${number(state.edgeInset).toFixed(3)} in`;
+  document.querySelectorAll('[data-inset]').forEach(button => button.classList.toggle('active', Math.abs(number(button.dataset.inset) - number(state.edgeInset)) < 1e-9));
+}
+
+function render() {
+  renderBoard();
+  renderEngineering();
+  renderMetrics();
+  buildStripEditor();
+  syncInputs();
+  updateHistoryButtons();
+}
+
+function syncInputs() {
+  $('boardLength').value = state.boardLength;
+  $('boardWidth').value = state.boardWidth;
+  $('finishedThickness').value = state.finishedThickness;
+  $('masterBlankLength').value = state.masterBlankLength;
+  $('bladeKerf').value = state.bladeKerf;
   $('edgeInset').value = state.edgeInset;
-  $('tipWood').innerHTML = woodOptions(state.tipWood, true);
-  render(); commit(); toast(`Inset changed to ${state.edgeInset.toFixed(3)} in`);
-});
-
-const saved=localStorage.getItem('bbtb-designer-autosave');
-if(saved) { try { state=migrateStateForCurrentVersion(JSON.parse(saved)); } catch {} }
-else { state=migrateStateForCurrentVersion(state); }
-delete state.spacing; // Module spacing was retired in v2.6.3.
-if (!Number.isFinite(Number(state.edgeInset))) state.edgeInset = 0.500;
-if (Number(state.edgeInset) <= 0) state.tipWood = '';
-else if (!WOODS[state.tipWood]) state.tipWood = 'walnut';
-delete state.cutDepth;
-state.woodPrices = {...{ walnut:28, purpleheart:18, cherry:7, padauk:15, maple:7 }, ...(state.woodPrices || {})};
-if (Number.isFinite(Number(state.walnutPrice))) state.woodPrices.walnut = Number(state.walnutPrice);
-delete state.walnutPrice;
-if (!Number.isFinite(Number(state.finishedThickness))) state.finishedThickness = 1.5;
-if (!Number.isFinite(Number(state.wastePercent))) state.wastePercent = 20;
-if (!Number.isFinite(Number(state.masterBlankLength))) state.masterBlankLength = 24;
-if (!Number.isFinite(Number(state.bladeKerf))) state.bladeKerf = 0.125;
-state.masterBlankLength = Math.max(1, Number(state.masterBlankLength));
-state.bladeKerf = Math.max(0, Math.min(0.250, Number(state.bladeKerf)));
-state.sizingMode = 'dimensions';
-state.layout = 'grid';
-state.orientation = 'crosscut180';
-state.trimAllowance = 0;
-delete state.insetGoal;
-delete state.targetCenterPercent;
-state.strips = (state.strips || structuredClone(DEFAULT_STRIPS)).map(s => ({...s, enabled: s.enabled !== false, locked: s.locked === true}));
-// v2.5.4 migration: older saves started with five strips. Split the center
-// strip into two equal, matching strips so six rows appear without changing
-// the pattern, total glue-up width, wood volume, or material cost.
-if (state.strips.length === 5) {
-  const centerIndex = 2;
-  const centerStrip = state.strips[centerIndex];
-  const halfWidth = Number(centerStrip.width || 0) / 2;
-  state.strips.splice(centerIndex, 1,
-    {...centerStrip, width: halfWidth},
-    {...centerStrip, width: halfWidth}
-  );
-}
-if (!['auto','manual'].includes(state.moduleWidthMode)) state.moduleWidthMode = 'auto';
-if (!Number.isFinite(Number(state.targetModuleWidth))) state.targetModuleWidth = totalWidth() || 1.5;
-state.version = '2.7.7';
-state.projectName = state.projectName || '';
-state.projectNotes = state.projectNotes || '';
-activeProjectName = state.projectName;
-syncControls(); buildStripEditor(); buildWoodPriceEditor(); migrateLegacySchedules(); refreshSavedProjectSelect(activeProjectName); if ($('projectNotes')) $('projectNotes').value = state.projectNotes; render(); history=[snapshot()]; updateUndoRedo();
-
-// ---------- Step-by-step machining timeline ----------
-// ---------- Step-by-step machining timeline ----------
-const TIMELINE_STEPS = [
-  {
-    title: 'Square laminated blank',
-    short: 'Glue and square the full-length strip stack',
-    description: 'Start with one straight, full-length square blank using the current strip schedule.',
-    notes: '<strong>Shop check:</strong> Joint the mating faces, keep the stack square, and flatten the blank before shaping the outside faces.'
-  },
-  {
-    title: 'Cut the blank to 45°',
-    short: 'Form the long diamond-shaped blank',
-    description: 'Cut the outside faces at 45° so the full-length square glue-up becomes a consistent diamond-shaped core.',
-    notes: '<strong>Setup:</strong> Use safe workholding and make matching cuts so the original glue-up remains centered and symmetrical.'
-  },
-  {
-    title: 'Mark the edge rips',
-    short: 'Measure inward from both walnut tips',
-    description: 'Measure the selected edge-rip inset inward from each tip where the center walnut reaches the outside edge.',
-    notes: '<strong>Current inset:</strong> The dimension follows the Edge rip inset control. The default is 0.500 in from each outside tip.'
-  },
-  {
-    title: 'Rip off both edges',
-    short: 'Remove and save the two outside sections',
-    description: 'Rip both marked edges from the long diamond blank, leaving a smaller center core with two parallel 45° glue faces.',
-    notes: '<strong>Save the offcuts:</strong> These continuous laminated strips can be reused in coasters, accent boards, handles, or future pattern experiments.'
-  },
-  {
-    title: 'Mill the walnut additions',
-    short: 'Prepare two continuous 45° walnut pieces',
-    description: 'Mill two full-length walnut pieces with mating 45° faces sized to rebuild the removed edges.',
-    notes: '<strong>Continuous construction:</strong> Prepare the walnut additions as long strips, not individual module pieces.'
-  },
-  {
-    title: 'Glue on the walnut edges',
-    short: 'Attach, cure, and flatten both additions',
-    description: 'Glue one walnut piece to each prepared face. After curing, flatten and true the reconstructed long blank.',
-    notes: '<strong>Pattern result:</strong> The new walnut becomes the outside material while the original laminated glue-up reads as an inner square or diamond.'
-  },
-  {
-    title: 'Crosscut the modules',
-    short: 'Slice, rotate, and assemble the end grain',
-    description: 'Crosscut the completed long blank into repeated sections, rotate them to end grain, and arrange the board pattern.',
-    notes: '<strong>Final planning:</strong> The app calculates rough slice thickness as finished thickness plus the selected planing allowance on both faces. Include blade kerf separately when calculating blank length and slice count.'
-  }
-];
-
-let timelineStep = 0;
-let timelineTimer = null;
-
-function timelinePatterns(svg) {
-  const defs = svgEl('defs');
-  for (const [key, wood] of Object.entries(WOODS)) {
-    const pattern = svgEl('pattern', { id:`timeline-${key}`, width:42, height:42, patternUnits:'userSpaceOnUse' });
-    pattern.append(svgEl('rect', { width:42, height:42, fill:wood.color }));
-    pattern.append(svgEl('path', { d:'M-8 11 C5 1 16 20 30 9 S45 7 51 16 M-7 31 C7 20 18 40 32 28 S45 26 52 35', fill:'none', stroke:'#fff', 'stroke-opacity':'.12', 'stroke-width':'1.2' }));
-    defs.append(pattern);
-  }
-  const arrow = svgEl('marker', { id:'timeline-arrow', markerWidth:10, markerHeight:10, refX:8, refY:3, orient:'auto', markerUnits:'strokeWidth' });
-  arrow.append(svgEl('path', { d:'M0,0 L0,6 L9,3 z', fill:'#6f3f24' }));
-  defs.append(arrow);
-  svg.append(defs);
+  $('edgeWood').innerHTML = woodOptions(state.edgeWood);
 }
 
-function labelSvg(svg,text,x,y,opts={}) {
-  const t=svgEl('text',{x,y,fill:opts.fill||'#5a4635','font-size':opts.size||16,'font-weight':opts.weight||700,'text-anchor':opts.anchor||'start'});
-  t.textContent=text; svg.append(t); return t;
+function snapshot() {
+  return JSON.stringify(state);
 }
 
-function stripBands(totalHeight, topY) {
-  const total=totalWidth() || 1;
-  let cursor=topY;
-  return state.strips.map(strip=>{
-    const height=totalHeight*Number(strip.width)/total;
-    const band={...strip,y:cursor,h:height}; cursor+=height; return band;
+function commit() {
+  state.version = VERSION;
+  const snap = snapshot();
+  if (history.at(-1) !== snap) history.push(snap);
+  if (history.length > 100) history.shift();
+  future = [];
+  localStorage.setItem(STORAGE_KEY, snap);
+  updateHistoryButtons();
+}
+
+function restore(serialized) {
+  const parsed = JSON.parse(serialized);
+  state = { ...defaultState(), ...parsed, version: VERSION };
+  state.strips = Array.isArray(parsed.strips) && parsed.strips.length ? parsed.strips.map(strip => ({ width: Math.max(0.03125, number(strip.width)), wood: WOODS[strip.wood] ? strip.wood : 'maple' })) : defaultState().strips;
+  if (!WOODS[state.edgeWood]) state.edgeWood = 'walnut';
+  render();
+}
+
+function updateHistoryButtons() {
+  $('undoBtn').disabled = history.length <= 1;
+  $('redoBtn').disabled = future.length === 0;
+}
+
+function toast(message) {
+  const el = $('toast');
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+function download(name, type, text) {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = name;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function bindNumberInput(id, key) {
+  const input = $(id);
+  input.addEventListener('input', () => { state[key] = number(input.value); renderBoard(); renderEngineering(); renderMetrics(); });
+  input.addEventListener('change', commit);
+}
+
+function bindEvents() {
+  bindNumberInput('boardLength', 'boardLength');
+  bindNumberInput('boardWidth', 'boardWidth');
+  bindNumberInput('finishedThickness', 'finishedThickness');
+  bindNumberInput('masterBlankLength', 'masterBlankLength');
+  bindNumberInput('bladeKerf', 'bladeKerf');
+
+  $('edgeInset').addEventListener('input', event => { state.edgeInset = number(event.target.value); renderBoard(); renderMetrics(); });
+  $('edgeInset').addEventListener('change', commit);
+  $('edgeWood').addEventListener('change', event => { state.edgeWood = event.target.value; renderBoard(); commit(); });
+
+  document.addEventListener('click', event => {
+    const button = event.target.closest('[data-inset]');
+    if (!button) return;
+    state.edgeInset = number(button.dataset.inset);
+    $('edgeInset').value = state.edgeInset;
+    renderBoard(); renderMetrics(); commit();
   });
-}
 
-function drawSquareBlank(svg) {
-  const x=150,y=140,w=800,h=220;
-  for(const band of stripBands(h,y)) svg.append(svgEl('rect',{x,y:band.y,width:w,height:band.h,fill:`url(#timeline-${band.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':'1'}));
-  svg.append(svgEl('rect',{x,y,width:w,height:h,fill:'none',stroke:'#241710','stroke-width':'3'}));
-  labelSvg(svg,'Full-length square laminated blank',550,405,{anchor:'middle',size:18});
-}
+  $('resetStripsBtn').addEventListener('click', () => { state.strips = defaultState().strips; render(); commit(); });
+  $('addOuterPairBtn').addEventListener('click', () => addStripPair('outer'));
+  $('addInnerPairBtn').addEventListener('click', () => addStripPair('inner'));
+  $('removeOuterPairBtn').addEventListener('click', () => removeStripPair('outer'));
+  $('removeInnerPairBtn').addEventListener('click', () => removeStripPair('inner'));
 
-function diamondGeometry() {
-  const cx=550, cy=250, halfW=400, halfH=150;
-  return {cx,cy,halfW,halfH,left:cx-halfW,right:cx+halfW,top:cy-halfH,bottom:cy+halfH};
-}
+  $('undoBtn').addEventListener('click', () => {
+    if (history.length <= 1) return;
+    future.push(history.pop());
+    restore(history.at(-1));
+    updateHistoryButtons();
+  });
+  $('redoBtn').addEventListener('click', () => {
+    if (!future.length) return;
+    const snap = future.pop();
+    history.push(snap);
+    restore(snap);
+    updateHistoryButtons();
+  });
 
-function drawDiamondCore(svg, options={}) {
-  const g=diamondGeometry();
-  const total=totalWidth()||1;
-  const clipId=`diamond-clip-${timelineStep}`;
-  const defs=svg.querySelector('defs');
-  const clip=svgEl('clipPath',{id:clipId});
-  clip.append(svgEl('polygon',{points:pts([[g.left,g.cy],[g.cx,g.top],[g.right,g.cy],[g.cx,g.bottom]])}));
-  defs.append(clip);
-
-  const group=svgEl('g',{'clip-path':`url(#${clipId})`});
-  let y=g.top;
-  for(const strip of activeStrips()){
-    const sh=(g.bottom-g.top)*Number(strip.width)/total;
-    group.append(svgEl('rect',{x:g.left,y,width:g.right-g.left,height:sh,fill:`url(#timeline-${strip.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':'1'}));
-    y+=sh;
-  }
-  svg.append(group);
-  svg.append(svgEl('polygon',{points:pts([[g.left,g.cy],[g.cx,g.top],[g.right,g.cy],[g.cx,g.bottom]]),fill:'none',stroke:'#241710','stroke-width':'3'}));
-
-  const insetValue=Math.max(0,Number(state.edgeInset ?? .5));
-  const inset=insetValue===0 ? 0 : Math.max(35,Math.min(150,(insetValue/(total||1))*300));
-  const leftCutX=g.left+inset;
-  const rightCutX=g.right-inset;
-  const yOffset=g.halfH*(inset/g.halfW);
-  const leftTop=g.cy-yOffset,leftBottom=g.cy+yOffset,rightTop=leftTop,rightBottom=leftBottom;
-
-  if(insetValue > 0 && (options.marks || options.cut || options.filled)){
-    for(const [x,top,bottom] of [[leftCutX,leftTop,leftBottom],[rightCutX,rightTop,rightBottom]]){
-      svg.append(svgEl('line',{x1:x,y1:top,x2:x,y2:bottom,stroke:'#c0392b','stroke-width':'5','stroke-dasharray':options.cut||options.filled?'0':'12 7'}));
+  $('saveProjectBtn').addEventListener('click', () => download('diamond-end-grain-design-v3.json', 'application/json', JSON.stringify(state, null, 2)));
+  $('openProjectInput').addEventListener('change', async event => {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+      restore(await file.text());
+      history = [snapshot()];
+      future = [];
+      commit();
+      toast('Project opened');
+    } catch {
+      alert('That project file could not be opened.');
     }
-    svg.append(svgEl('line',{x1:g.left,y1:g.bottom+38,x2:leftCutX,y2:g.bottom+38,stroke:'#6f3f24','stroke-width':'3','marker-start':'url(#timeline-arrow)','marker-end':'url(#timeline-arrow)'}));
-    labelSvg(svg,`${Number(state.edgeInset ?? .5).toFixed(3)} in`,(g.left+leftCutX)/2,g.bottom+66,{anchor:'middle',size:15});
-  }
-
-  if(insetValue > 0 && options.cut){
-    const leftOff=[[g.left,g.cy],[g.cx,g.top],[leftCutX,leftTop],[leftCutX,leftBottom],[g.cx,g.bottom]];
-    const rightOff=[[g.right,g.cy],[g.cx,g.top],[rightCutX,rightTop],[rightCutX,rightBottom],[g.cx,g.bottom]];
-    svg.append(svgEl('polygon',{points:pts(leftOff),fill:'#fff','fill-opacity':'.75',stroke:'#c0392b','stroke-width':'2'}));
-    svg.append(svgEl('polygon',{points:pts(rightOff),fill:'#fff','fill-opacity':'.75',stroke:'#c0392b','stroke-width':'2'}));
-    labelSvg(svg,'SAVE OFFCUT',245,250,{anchor:'middle',fill:'#9b2d20',size:15});
-    labelSvg(svg,'SAVE OFFCUT',855,250,{anchor:'middle',fill:'#9b2d20',size:15});
-  }
-
-  if(insetValue > 0 && options.separated){
-    // overlay a clean reduced core and show reusable offcuts below
-    svg.append(svgEl('rect',{x:0,y:0,width:1100,height:500,fill:'#f8f4ee'}));
-    const corePts=[[leftCutX,leftTop],[g.cx,g.top],[rightCutX,rightTop],[rightCutX,rightBottom],[g.cx,g.bottom],[leftCutX,leftBottom]];
-    const coreClip=svgEl('clipPath',{id:`core-clip-${timelineStep}`}); coreClip.append(svgEl('polygon',{points:pts(corePts)})); defs.append(coreClip);
-    const coreGroup=svgEl('g',{'clip-path':`url(#core-clip-${timelineStep})`});
-    y=g.top;
-    for(const strip of activeStrips()){ const sh=(g.bottom-g.top)*Number(strip.width)/total; coreGroup.append(svgEl('rect',{x:g.left,y,width:g.right-g.left,height:sh,fill:`url(#timeline-${strip.wood})`,stroke:state.showLines?'#241710':'none','stroke-width':'1'})); y+=sh; }
-    svg.append(coreGroup); svg.append(svgEl('polygon',{points:pts(corePts),fill:'none',stroke:'#241710','stroke-width':'3'}));
-    svg.append(svgEl('polygon',{points:pts([[115,350],[230,307],[260,319],[145,362]]),fill:'url(#timeline-cherry)',stroke:'#241710','stroke-width':'2'}));
-    svg.append(svgEl('polygon',{points:pts([[985,350],[870,307],[840,319],[955,362]]),fill:'url(#timeline-cherry)',stroke:'#241710','stroke-width':'2'}));
-    labelSvg(svg,'Reusable laminated offcuts',550,440,{anchor:'middle',size:18});
-  }
-
-  if(insetValue > 0 && activeEdgeWood() && options.walnutPieces){
-    const fill=`url(#timeline-${state.tipWood})`;
-    svg.append(svgEl('polygon',{points:pts([[90,250],[leftCutX-28,leftTop-10],[leftCutX-28,leftBottom+10]]),fill,stroke:'#241710','stroke-width':'2'}));
-    svg.append(svgEl('polygon',{points:pts([[1010,250],[rightCutX+28,rightTop-10],[rightCutX+28,rightBottom+10]]),fill,stroke:'#241710','stroke-width':'2'}));
-    svg.append(svgEl('path',{d:`M285 250 L${leftCutX-8} 250`,stroke:'#6f3f24','stroke-width':'4','marker-end':'url(#timeline-arrow)'}));
-    svg.append(svgEl('path',{d:`M815 250 L${rightCutX+8} 250`,stroke:'#6f3f24','stroke-width':'4','marker-end':'url(#timeline-arrow)'}));
-    labelSvg(svg,`${activeEdgeWood().name} additions`,550,445,{anchor:'middle',size:18});
-  }
-
-  if(insetValue > 0 && activeEdgeWood() && options.filled){
-    const fill=`url(#timeline-${state.tipWood})`;
-    svg.append(svgEl('polygon',{points:pts([[g.left,g.cy],[leftCutX,leftTop],[leftCutX,leftBottom]]),fill,stroke:'#241710','stroke-width':'2'}));
-    svg.append(svgEl('polygon',{points:pts([[g.right,g.cy],[rightCutX,rightTop],[rightCutX,rightBottom]]),fill,stroke:'#241710','stroke-width':'2'}));
-  }
-  return {g,leftCutX,rightCutX,leftTop,leftBottom,rightTop,rightBottom};
-}
-
-function drawTimelineModule(svg,cx,cy,size) {
-  const total=totalWidth() || 1, h=size/2;
-  const g=svgEl('g',{transform:`translate(${cx} ${cy}) rotate(45)`});
-  let x=-h;
-  activeStrips().forEach(strip=>{
-    const sw=size*Number(strip.width)/total;
-    g.append(svgEl('rect',{x,y:-h,width:sw,height:size,fill:`url(#timeline-${strip.wood})`,stroke:'#241710','stroke-width':'1'}));
-    x+=sw;
+    event.target.value = '';
   });
-  const insetValue=Math.max(0,Number(state.edgeInset ?? .5));
-  if (insetValue > 0 && activeEdgeWood()) {
-    const insetRatio=Math.min(.42,insetValue/total);
-    const d=h*insetRatio, fill=`url(#timeline-${state.tipWood})`;
-    g.append(svgEl('polygon',{points:pts([[0,-h],[d,-h+d],[-d,-h+d]]),fill,stroke:'#241710','stroke-width':'2'}));
-    g.append(svgEl('polygon',{points:pts([[0,h],[-d,h-d],[d,h-d]]),fill,stroke:'#241710','stroke-width':'2'}));
-  }
-  g.append(svgEl('rect',{x:-h,y:-h,width:size,height:size,fill:'none',stroke:'#241710','stroke-width':'3'}));
-  svg.append(g);
-}
-
-function renderTimeline() {
-  const svg=$('timelineSvg'); if(!svg) return;
-  svg.innerHTML=''; timelinePatterns(svg);
-  svg.append(svgEl('rect',{x:0,y:0,width:1100,height:500,fill:'#f8f4ee'}));
-  if(timelineStep===0) drawSquareBlank(svg);
-  if(timelineStep===1) { drawDiamondCore(svg); labelSvg(svg,'Matching 45° outside faces',550,445,{anchor:'middle',size:18}); }
-  if(timelineStep===2) drawDiamondCore(svg,{marks:true});
-  if(timelineStep===3) drawDiamondCore(svg,{separated:true});
-  if(timelineStep===4) drawDiamondCore(svg,{separated:true,walnutPieces:true});
-  if(timelineStep===5) drawDiamondCore(svg,{filled:true});
-  if(timelineStep===6) {
-    drawDiamondCore(svg,{filled:true});
-    for(let i=0;i<5;i++) svg.append(svgEl('line',{x1:330+i*110,y1:100,x2:330+i*110,y2:400,stroke:'#6f3f24','stroke-width':'3','stroke-dasharray':'10 7'}));
-    svg.append(svgEl('path',{d:'M550 405 L550 435',stroke:'#6f3f24','stroke-width':'4','marker-end':'url(#timeline-arrow)'}));
-    drawTimelineModule(svg,550,470,82);
-  }
-
-  const step=TIMELINE_STEPS[timelineStep];
-  $('timelineDescription').textContent=step.description;
-  $('timelineStepTitle').textContent=`Step ${timelineStep+1}: ${step.title}`;
-  $('timelineShopNotes').innerHTML=step.notes;
-  $('previousStepBtn').disabled=timelineStep===0;
-  $('nextStepBtn').disabled=timelineStep===TIMELINE_STEPS.length-1;
-  document.querySelectorAll('.timeline-step').forEach((button,i)=>{
-    button.classList.toggle('active',i===timelineStep);
-    button.classList.toggle('complete',i<timelineStep);
-    button.setAttribute('aria-current',i===timelineStep?'step':'false');
+  $('exportSvgBtn').addEventListener('click', () => {
+    const clone = $('boardSvg').cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    download('diamond-end-grain-board-v3.svg', 'image/svg+xml;charset=utf-8', `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(clone)}`);
   });
 }
 
-function buildTimelineButtons() {
-  const holder=$('timelineSteps'); if(!holder) return;
-  holder.innerHTML='';
-  TIMELINE_STEPS.forEach((step,i)=>{
-    const b=document.createElement('button'); b.type='button'; b.className='timeline-step';
-    b.innerHTML=`<span>Step ${i+1}</span><strong>${step.title}</strong>`;
-    b.addEventListener('click',()=>{ stopTimeline(); timelineStep=i; renderTimeline(); });
-    holder.append(b);
-  });
-}
-function stopTimeline(){ if(timelineTimer){ clearInterval(timelineTimer); timelineTimer=null; } if($('playTimelineBtn')) $('playTimelineBtn').textContent='Play'; }
-function playTimeline(){
-  if(timelineTimer){ stopTimeline(); return; }
-  $('playTimelineBtn').textContent='Pause';
-  timelineTimer=setInterval(()=>{ if(timelineStep>=TIMELINE_STEPS.length-1){ stopTimeline(); return; } timelineStep++; renderTimeline(); },1500);
+function initialize() {
+  console.info(`Diamond End Grain Designer v${VERSION}`);
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try { restore(saved); } catch { state = defaultState(); }
+  }
+  bindEvents();
+  history = [snapshot()];
+  render();
 }
 
-buildTimelineButtons();
-$('previousStepBtn').addEventListener('click',()=>{ stopTimeline(); timelineStep=Math.max(0,timelineStep-1); renderTimeline(); });
-$('nextStepBtn').addEventListener('click',()=>{ stopTimeline(); timelineStep=Math.min(TIMELINE_STEPS.length-1,timelineStep+1); renderTimeline(); });
-$('playTimelineBtn').addEventListener('click',playTimeline);
-renderTimeline();
-
-const originalRender = render;
-render = function(){ originalRender(); renderTimeline(); };
-
-renderEngineering();
+initialize();
