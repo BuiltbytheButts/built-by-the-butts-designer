@@ -28,7 +28,6 @@
     const finished = Math.max(0.001, Number(finishedThickness) || 0.001);
     const rough = Math.max(finished, Number(roughCrosscut) || finished);
     const kerf = Math.max(0, Number(bladeKerf) || 0);
-    const blank = Math.max(0, Number(masterBlankLength) || 0);
 
     const idealCount = target / finished;
     const lowerEven = Math.max(2, Math.floor(idealCount / 2) * 2);
@@ -48,28 +47,21 @@
       ? count * rough + Math.max(0, count - 1) * kerf
       : 0;
     const requiredBlankLength = requiredBlankFor(balancedCount);
-    const blankDelta = blank - requiredBlankLength;
-    const blankIsSufficient = blankDelta >= -1e-9;
-
-    // Complete rough crosscuts physically available from the master blank.
-    // n cuts consume n * roughCrosscut plus (n - 1) blade kerfs.
-    const totalCrosscutsAvailable = blank > 0
-      ? Math.max(0, Math.floor(((blank + kerf) / (rough + kerf)) + 1e-12))
-      : 0;
+    const recommendedMasterBlankLength = Math.ceil((requiredBlankLength - 1e-12) / SHOP_INCREMENT) * SHOP_INCREMENT;
 
     const alternateCount = balancedCount === lowerEven
       ? (upperEven > lowerEven ? upperEven : balancedCount + 2)
       : lowerEven;
     const alternateFinishedLength = alternateCount * finished;
     const alternateRequiredBlankLength = requiredBlankFor(alternateCount);
-    const alternateBlankDelta = blank - alternateRequiredBlankLength;
 
     return {
       targetLength: target,
       finishedThickness: finished,
       roughCrosscut: rough,
       bladeKerf: kerf,
-      masterBlankLength: blank,
+      masterBlankLength: requiredBlankLength,
+      recommendedMasterBlankLength,
       idealCount,
       lowerEven,
       upperEven,
@@ -77,13 +69,9 @@
       achievableLength,
       dimensionDelta,
       requiredBlankLength,
-      blankDelta,
-      blankIsSufficient,
-      totalCrosscutsAvailable,
       alternateCount,
       alternateFinishedLength,
-      alternateRequiredBlankLength,
-      alternateBlankDelta
+      alternateRequiredBlankLength
     };
   }
 

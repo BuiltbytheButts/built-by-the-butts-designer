@@ -1,3 +1,12 @@
+## v3.0.11 — Derived Master Blank Length + Crosscut Wording
+
+- Master blank length is now calculated from the finished-board-driven balanced crosscut recommendation.
+- Blade kerf remains editable and directly affects required blank length.
+- Balanced and alternate cards now use matching wording.
+- Removed “Target …” and “exact target” wording.
+- Renamed the first card to **Balanced recommendation**.
+- No pattern, Edge Rip, strip, or renderer geometry changes.
+
 ## v3.0.10 — Crosscut Availability Wording
 
 - Replaced ambiguous raw-count wording with **Total crosscuts available**.

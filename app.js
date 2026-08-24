@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.10';
+const VERSION = '3.0.11';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -27,7 +27,6 @@ const defaultState = () => ({
   boardLength: 18.625,
   boardWidth: 11.625,
   finishedThickness: 1.5,
-  masterBlankLength: 24,
   bladeKerf: 0.125,
   edgeInset: 0.5,
   edgeWood: 'walnut',
@@ -70,8 +69,7 @@ function crosscutEngineering() {
     targetLength: state.boardLength,
     finishedThickness: state.finishedThickness,
     roughCrosscut: recommendedRoughCrosscut(),
-    bladeKerf: state.bladeKerf,
-    masterBlankLength: state.masterBlankLength
+    bladeKerf: state.bladeKerf
   });
 }
 
@@ -275,23 +273,17 @@ function renderEngineering() {
   $('roughCrosscutMetric').textContent = `${x.roughCrosscut.toFixed(3)} in`;
   $('roughCrosscutHelp').textContent = `Finished target ${x.finishedThickness.toFixed(3)} in + approx. 1/8 in cleanup guidance.`;
 
+  $('masterBlankMetric').textContent = `${x.requiredBlankLength.toFixed(3)} in`;
+  const shopBlank = x.recommendedMasterBlankLength;
+  $('masterBlankHelp').textContent = shopBlank > x.requiredBlankLength + 0.0005
+    ? `Recommended starting blank: ${shopBlank.toFixed(3)} in (rounded up to nearest 1/8 in).`
+    : `Recommended starting blank: ${shopBlank.toFixed(3)} in.`;
+
   $('balancedCountMetric').textContent = `${x.balancedCount} crosscuts`;
-  const dimensionDirection = Math.abs(x.dimensionDelta) < 0.0005
-    ? 'exact target'
-    : `${Math.abs(x.dimensionDelta).toFixed(3)} in ${x.dimensionDelta < 0 ? 'shorter' : 'longer'} than target`;
-  const blankStatus = x.blankIsSufficient
-    ? `${x.blankDelta.toFixed(3)} in rough blank remaining`
-    : `${Math.abs(x.blankDelta).toFixed(3)} in more rough blank needed`;
-  const availabilityNote = x.totalCrosscutsAvailable === x.balancedCount
-    ? `Total crosscuts available: ${x.totalCrosscutsAvailable}. This is already an even, balanced count.`
-    : `Total crosscuts available: ${x.totalCrosscutsAvailable}. Balanced build recommendation: ${x.balancedCount} crosscuts to maintain an even diamond pattern.`;
-  $('balancedCountHelp').textContent = `${availabilityNote} Target ${x.targetLength.toFixed(3)} in → approx. ${x.achievableLength.toFixed(3)} in finished (${dimensionDirection}). Requires approx. ${x.requiredBlankLength.toFixed(3)} in rough blank; ${blankStatus}.`;
+  $('balancedCountHelp').textContent = `Approx. ${x.achievableLength.toFixed(3)} in finished; requires approx. ${x.requiredBlankLength.toFixed(3)} in rough blank.`;
 
   $('nextEvenMetric').textContent = `${x.alternateCount} crosscuts`;
-  const alternateBlankStatus = x.alternateBlankDelta >= -0.0005
-    ? `${x.alternateBlankDelta.toFixed(3)} in blank remaining`
-    : `${Math.abs(x.alternateBlankDelta).toFixed(3)} in more blank needed`;
-  $('nextEvenHelp').textContent = `Approx. ${x.alternateFinishedLength.toFixed(3)} in finished; requires ${x.alternateRequiredBlankLength.toFixed(3)} in rough blank (${alternateBlankStatus}).`;
+  $('nextEvenHelp').textContent = `Approx. ${x.alternateFinishedLength.toFixed(3)} in finished; requires approx. ${x.alternateRequiredBlankLength.toFixed(3)} in rough blank.`;
 }
 
 function renderMetrics() {
@@ -319,7 +311,6 @@ function syncInputs() {
   $('boardLength').value = state.boardLength;
   $('boardWidth').value = state.boardWidth;
   $('finishedThickness').value = state.finishedThickness;
-  $('masterBlankLength').value = state.masterBlankLength;
   $('bladeKerf').value = state.bladeKerf;
   $('edgeInset').value = state.edgeInset;
   $('edgeWood').innerHTML = woodOptions(state.edgeWood);
@@ -382,7 +373,6 @@ function bindEvents() {
   bindNumberInput('boardLength', 'boardLength');
   bindNumberInput('boardWidth', 'boardWidth');
   bindNumberInput('finishedThickness', 'finishedThickness');
-  bindNumberInput('masterBlankLength', 'masterBlankLength');
   bindNumberInput('bladeKerf', 'bladeKerf');
 
   $('edgeInset').addEventListener('input', event => { state.edgeInset = number(event.target.value); renderBoard(); renderMetrics(); });
