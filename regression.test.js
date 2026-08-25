@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.18/g) || []).length === 4, 'All asset cache keys must be v3.0.18');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.19/g) || []).length === 4, 'All asset cache keys must be v3.0.19');
   assert(html.indexOf('Top &amp; Bottom Borders') < html.indexOf('Strip Schedule'), 'Border section is not above Strip Schedule');
 
   const browser = await chromium.launch({
@@ -51,7 +51,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.18', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.19', 'Wrong visible version');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
 
   await page.locator('#boardLength').fill('18');
@@ -110,6 +110,7 @@ function functionSource(source, name) {
   assert(await page.locator('.bordered-diamond-field').getAttribute('data-laminated-rows') === '7', '1.25 in border should render seven complete rows');
   assert(await page.locator('.bordered-diamond-cell').count() === 105, 'Seven rows by fifteen crosscuts should render 105 complete cells');
   assert(await page.locator('[data-row="0"]').count() === 15 && await page.locator('[data-row="6"]').count() === 15, 'First or last complete row is missing');
+  assert(/^translate\([^)]*\) scale\([^ ,)]+\)$/.test(await page.locator('.bordered-diamond-cell').first().getAttribute('transform')), '1.25 in bordered cells are not uniformly scaled squares');
   let alignment = await page.evaluate(() => {
     const borders = [...document.querySelectorAll('.end-grain-border')];
     const field = document.querySelector('.bordered-diamond-field');
@@ -126,6 +127,7 @@ function functionSource(source, name) {
   assert(await page.locator('.bordered-diamond-field').getAttribute('data-laminated-rows') === '4', '3.5 in border should render four complete rows');
   assert(await page.locator('.bordered-diamond-cell').count() === 60, 'Four rows by fifteen crosscuts should render 60 complete cells');
   assert(await page.locator('[data-row="0"]').count() === 15 && await page.locator('[data-row="3"]').count() === 15, '3.5 in case has a partial boundary row');
+  assert(/^translate\([^)]*\) scale\([^ ,)]+\)$/.test(await page.locator('.bordered-diamond-cell').first().getAttribute('transform')), '3.5 in bordered cells are not uniformly scaled squares');
   alignment = await page.evaluate(() => {
     const borders = [...document.querySelectorAll('.end-grain-border')];
     const field = document.querySelector('.bordered-diamond-field');

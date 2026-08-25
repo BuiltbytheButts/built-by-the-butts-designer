@@ -1,3 +1,11 @@
+## v3.0.19 — Square-Proportion Bordered Preview
+- Bordered diamond cells now use one uniform scale instead of independent horizontal and vertical scaling.
+- Square modules and diamond proportions remain identical when borders are enabled.
+- Complete laminated rows still meet both borders exactly.
+- Horizontal pattern overage is centered and clipped only at the finished board ends.
+- Verified both 1.250 in/seven-row and 3.500 in/four-row border cases retain square cells.
+- Frozen geometry, Edge Rip, crosscut calculations, and unbordered renderer remain unchanged.
+
 ## v3.0.18 — Complete-Row Bordered Preview
 - Replaced border masking over the full-board pattern with a dedicated bordered-board compositor.
 - Borders render at the outside edges and the diamond field is rebuilt between them.

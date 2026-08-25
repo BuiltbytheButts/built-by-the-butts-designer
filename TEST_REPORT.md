@@ -115,3 +115,13 @@ This report tests Change #15 only.
 - No full-board pattern remains masked underneath the borders in bordered mode.
 - Frozen `geometry.js`, `edgeCutGeometry`, `drawEndGrainCell`, and `renderBoard` remain unchanged.
 - All crosscut, manufacturing, migration, cache, and prior browser regressions pass.
+# v3.0.19 Square-Proportion Border Test Report
+
+## Result: PASS
+
+- Every bordered cell uses a single uniform SVG scale; independent X/Y stretching is absent.
+- 1.250 in borders retain seven complete square rows and exact border alignment.
+- 3.500 in borders retain four complete square rows and exact border alignment.
+- Horizontal overage is centered and clipped at the finished board ends.
+- Frozen geometry, Edge Rip, crosscut calculations, and unbordered renderer remain unchanged.
+- All syntax, manufacturing, migration, cache, and browser regressions pass.

@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.18';
+const VERSION = '3.0.19';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -292,8 +292,12 @@ function renderBorderedBoard() {
   if (rows > 0 && cols > 0) {
     const diamondH = fieldH * border.diamondFieldWidth / Math.max(0.125, number(state.boardWidth));
     const diamondY = fieldY + (fieldH - diamondH) / 2;
-    const cellW = fieldW / cols;
-    const cellH = diamondH / rows;
+    // A laminated face is always rendered square. The complete row stack sets
+    // the one uniform scale; any length overage is centered and clipped only at
+    // the finished board ends instead of stretching diamonds into rectangles.
+    const cell = diamondH / rows;
+    const gridW = cols * cell;
+    const gridX = fieldX + (fieldW - gridW) / 2;
     const clipId = 'bordered-diamond-field-clip';
     const defs = svgEl('defs');
     const clip = svgEl('clipPath', { id: clipId });
@@ -313,7 +317,8 @@ function renderBorderedBoard() {
           class: 'bordered-diamond-cell',
           'data-row': String(row),
           'data-column': String(col),
-          transform: `translate(${fieldX + col * cellW} ${diamondY + row * cellH}) scale(${cellW / 100} ${cellH / 100})`
+          'data-cell-size': String(cell),
+          transform: `translate(${gridX + col * cell} ${diamondY + row * cell}) scale(${cell / 100})`
         });
         const rotate180 = col % 2 === 1;
         const slope = (row + col) % 2 === 0 ? 1 : -1;
