@@ -1,3 +1,8 @@
+## v3.0.34 — Compact Top Metrics
+- Removed the minimum/rounding explanation beneath the required lamination size in the top metric card.
+- Retained the required lamination size itself, allowing the preview to move upward.
+- Photo Reference and Step 7 illustrations remain unchanged from v3.0.33.
+
 ## v3.0.33 — Dynamic Edge Title and Cleaner Square
 - Verified and regression-tested that the Edge Rip glue-up title follows the selected replacement species.
 - Finished square keeps a straight Walnut center with one light replacement piece on each end.

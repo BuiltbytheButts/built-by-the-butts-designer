@@ -254,3 +254,12 @@ PASS — syntax; material quantities; geometry; manufacturing; actual crosscut b
 - Edge Rip glue-up title verified against a live species change to Hard Maple.
 - Finished square retains a straight target-wood center and two opposing replacement ends.
 - Step 1 wording contains only milling and planing/sanding allowance guidance.
+
+
+# v3.0.34 Compact Top Metrics Test Report
+
+PASS — syntax; material quantities; geometry; manufacturing; actual crosscut behavior; version/cache; frozen geometry/renderer; browser, border, and print regression.
+
+- Required lamination value remains visible.
+- Minimum/rounding explanation and its layout element are absent from the top metric card.
+- Photo Reference and Step 7 guide content are unchanged.
