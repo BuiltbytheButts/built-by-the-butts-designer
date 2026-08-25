@@ -38,10 +38,15 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.34/g) || []).length === 5, 'All asset cache keys must be v3.0.34');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.35/g) || []).length === 5, 'All asset cache keys must be v3.0.35');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   assert(html.indexOf('Top &amp; Bottom Borders') < html.indexOf('Strip Schedule'), 'Border section is not above Strip Schedule');
+  const sampleHtml = fs.readFileSync(path.join(root, 'sample-build.html'), 'utf8');
+  assert(sampleHtml.includes('Independent Sample Build'), 'Independent Sample Build page is missing');
+  assert((sampleHtml.match(/class=.step /g) || []).length === 10, 'Sample Build must contain ten ordered steps');
+  assert((sampleHtml.match(/<img /g) || []).length === 4, 'Sample Build must contain the four available original workshop photos');
+  for (const asset of ['edge-rip-cut-face.png','maple-walnut-glue-up.png','bordered-master-blank.png','master-blank-top-view.png']) assert(fs.existsSync(path.join(root,'assets','sample-build',asset)), 'Sample photo missing: ' + asset);
 
   const browser = await chromium.launch({
     headless: true,
@@ -52,7 +57,9 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.34', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.35', 'Wrong visible version');
+  assert(await page.locator('#sampleBuildLink').isVisible(), 'Sample Build link is missing');
+  assert(await page.locator('#sampleBuildLink').getAttribute('target') === '_blank', 'Sample Build is not independent of the active designer view');
   assert(await page.locator('#laminationMinimumMetric').count() === 0, 'Minimum/rounding explanation still occupies the top metric card');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
   assert(await page.locator('#printPlanBtn').isVisible(), 'Print Workshop Plan action is missing');

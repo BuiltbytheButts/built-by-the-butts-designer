@@ -263,3 +263,13 @@ PASS — syntax; material quantities; geometry; manufacturing; actual crosscut b
 - Required lamination value remains visible.
 - Minimum/rounding explanation and its layout element are absent from the top metric card.
 - Photo Reference and Step 7 guide content are unchanged.
+
+
+# v3.0.35 Independent Sample Build Phase 1
+
+PASS — syntax; material quantities; geometry; manufacturing; actual crosscut behavior; version/cache; frozen geometry/renderer; browser, border, print, and sample-page regression.
+
+- Independent Sample Build opens in a separate page and does not mutate active project state.
+- Ten ordered steps and independent print action verified.
+- Four original workshop photo assets verified and included.
+- Six missing-photo positions are clearly labeled for later replacement.

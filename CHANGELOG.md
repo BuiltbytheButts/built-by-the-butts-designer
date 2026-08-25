@@ -1,3 +1,9 @@
+## v3.0.35 — Independent Sample Build (Phase 1)
+- Added a standalone Sample Build page that opens separately from the active Designer.
+- Included four original workshop photos: Edge Rip cut face, maple/walnut glue-up, bordered master blank, and top-view master blank.
+- Added ten ordered manufacturing steps with clear placeholders for six additional original photos.
+- Added independent printing and a direct return to the Designer.
+
 ## v3.0.34 — Compact Top Metrics
 - Removed the minimum/rounding explanation beneath the required lamination size in the top metric card.
 - Retained the required lamination size itself, allowing the preview to move upward.

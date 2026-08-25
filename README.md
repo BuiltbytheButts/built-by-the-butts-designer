@@ -38,3 +38,5 @@ This release intentionally does not carry forward every v2 feature. Additional f
 
 ## v3.0.8 manufacturing guidance
 The top engineering metric now calculates the required square lamination size before the two 45° cuts from finished thickness using `finished thickness × √2`, rounded upward to the nearest 1/8 inch for a practical starting dimension.
+
+- Independent Sample Build opens as a separate, printable real-photo reference without changing the active project.
