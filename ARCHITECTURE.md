@@ -56,3 +56,10 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 - v3.0.17 uses `floor(available diamond width / module width)` so partial laminated rows are never treated as buildable rows.
 - v3.0.18 adds a border-specific compositor that lays out exactly `laminated rows × crosscuts` inside the calculated inner field while continuing to call the frozen `drawEndGrainCell` geometry.
 - v3.0.19 applies one uniform cell scale in bordered mode. The row stack determines square cell size; length overage is centered and clipped at the finished ends.
+
+## v3.0.20 material-quantity invariant
+- `material.js` is the pure calculation source for species quantities.
+- Net board feet = finished cubic inches ÷ 144.
+- Finished composition includes diamond laminate after Edge Rip replacement, replacement wood, and every physical border band.
+- Purchase board feet retains the original laminate consumed before Edge Rip, adds rough-crosscut and blade-kerf consumption, then applies editable waste.
+- Species shared across components are combined into one purchasing row.

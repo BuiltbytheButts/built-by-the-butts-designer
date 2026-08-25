@@ -1,3 +1,12 @@
+## v3.0.20 — Material Quantity by Species
+- Added finished cubic inches, net board feet, and estimated purchase board feet by species.
+- Added an editable waste allowance, defaulting to 15 percent.
+- Diamond laminate, Edge Rip replacement, and border material are calculated separately and combined by species.
+- Diamond-laminate purchase quantity includes recommended rough-crosscut and blade-kerf consumption before waste.
+- Finished volume reconciles against the target board volume; unmatched border schedules show an unfilled-volume warning.
+- Added a standalone tested `material.js` calculation module.
+- Frozen v3.0.19 geometry and renderer remain unchanged.
+
 ## v3.0.19 — Square-Proportion Bordered Preview
 - Bordered diamond cells now use one uniform scale instead of independent horizontal and vertical scaling.
 - Square modules and diamond proportions remain identical when borders are enabled.

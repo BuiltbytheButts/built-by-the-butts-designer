@@ -1,4 +1,4 @@
-# Diamond End Grain Designer v3.0.19
+# Diamond End Grain Designer v3.0.20
 
 Clean-architecture foundation rebuild for Built By The Butts.
 
@@ -17,6 +17,7 @@ Clean-architecture foundation rebuild for Built By The Butts.
 - Border calculations retain only complete laminated rows and report the additional border needed to replace the next row fully.
 - Bordered previews rebuild the diamond field between the borders so no partial outside laminate rows remain visible.
 - Bordered diamond cells retain square proportions; length overage is centered and clipped rather than stretching the pattern.
+- Material Quantity reports finished cubic inches, net board feet, and waste-adjusted purchase board feet by species.
 - Border engineering shows the exact replacement width required per edge and flags underage or overage.
 - Renderer is built from physical square end-grain faces and contains no legacy v2 grid code.
 

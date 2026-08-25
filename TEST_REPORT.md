@@ -125,3 +125,16 @@ This report tests Change #15 only.
 - Horizontal overage is centered and clipped at the finished board ends.
 - Frozen geometry, Edge Rip, crosscut calculations, and unbordered renderer remain unchanged.
 - All syntax, manufacturing, migration, cache, and browser regressions pass.
+# v3.0.20 Material Quantity Test Report
+
+## Result: PASS
+
+- Finished cubic inches reconcile to target volume for complete designs.
+- Net board feet use 144 cubic inches per board foot.
+- Strip-schedule shares allocate diamond laminate by species.
+- Edge Rip subtracts replaced finished laminate and adds replacement species while retaining removed laminate in purchase needs.
+- Border bands are counted twice, once for each long edge, and combined by species.
+- Rough-crosscut and blade-kerf factors increase diamond-laminate purchase quantity.
+- Editable waste changes purchase board feet without changing net finished quantity.
+- Unmatched border schedules show an unfilled-volume warning; matched schedules clear it.
+- All frozen geometry, crosscut, manufacturing, border, cache, and browser regressions pass.

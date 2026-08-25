@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.19';
+const VERSION = '3.0.20';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -29,6 +29,7 @@ const defaultState = () => ({
   finishedThickness: 1.5,
   includeBorders: false,
   borderBands: [{ width: 0.5, wood: 'maple' }],
+  wastePercent: 15,
   bladeKerf: 0.125,
   edgeInset: 0.5,
   edgeWood: 'walnut',
@@ -109,6 +110,21 @@ function borderEngineering() {
   const rowsFit = diamondFieldWidth <= number(state.boardWidth) + 0.0005;
   const scheduleMatches = Math.abs(difference) <= 0.0005;
   return { bands, automaticRows, availableDiamondWidth, idealRows, selectedRows, requestedWidth, requiredWidth, difference, effectiveWidth, maximumWidth, diamondFieldWidth, borderVolume, rowsFit, scheduleMatches, valid: !state.includeBorders || (rowsFit && scheduleMatches) };
+}
+
+function materialQuantity() {
+  const border = borderEngineering();
+  const crosscuts = crosscutEngineering();
+  return DiamondMaterial.materialQuantityPlan({
+    boardLength: state.boardLength, boardWidth: state.boardWidth,
+    finishedThickness: state.finishedThickness,
+    diamondFieldWidth: state.includeBorders ? border.diamondFieldWidth : state.boardWidth,
+    moduleWidth: moduleWidth(), strips: activeStrips(),
+    includeBorders: state.includeBorders, borderBands: border.bands,
+    edgeInset: state.edgeInset, edgeWood: state.edgeWood,
+    crosscutCount: crosscuts.crosscutCount, roughCrosscut: crosscuts.roughCrosscut,
+    bladeKerf: state.bladeKerf, wastePercent: state.wastePercent
+  });
 }
 
 function svgEl(name, attrs = {}) {
@@ -358,7 +374,7 @@ function buildBorderEditor() {
   holder.querySelectorAll('[data-border-width]').forEach(input => {
     input.addEventListener('input', event => {
       state.borderBands[Number(event.target.dataset.borderWidth)].width = Math.max(0.0625, number(event.target.value));
-      renderPreview(); renderMetrics();
+      renderPreview(); renderMetrics(); renderMaterial();
     });
     input.addEventListener('change', commit);
   });
@@ -366,7 +382,7 @@ function buildBorderEditor() {
     select.addEventListener('change', event => {
       const index = Number(event.target.dataset.borderWood);
       state.borderBands[index].wood = event.target.value;
-      buildBorderEditor(); renderPreview(); commit();
+      buildBorderEditor(); renderPreview(); renderMaterial(); commit();
     });
   });
   holder.querySelectorAll('[data-remove-border]').forEach(button => {
@@ -401,6 +417,7 @@ function buildStripEditor() {
       if (meta) meta.textContent = `Recommended rough rip: ~${recommendedRoughRip(state.strips[index].width).toFixed(4)} in`;
       renderPreview();
       renderMetrics();
+      renderMaterial();
     });
     input.addEventListener('change', commit);
   });
@@ -411,6 +428,7 @@ function buildStripEditor() {
       const swatch = event.target.closest('.strip-row')?.querySelector('.swatch');
       if (swatch) swatch.style.background = WOODS[state.strips[index].wood].color;
       renderPreview();
+      renderMaterial();
       commit();
     });
   });
@@ -481,10 +499,27 @@ function renderMetrics() {
     : `Adjust the border bands to total ${border.requiredWidth.toFixed(4)} in per edge.`;
 }
 
+function renderMaterial() {
+  const plan = materialQuantity();
+  $('materialTableBody').innerHTML = plan.rows.map(row => {
+    const parts = [];
+    if (row.components.diamondLaminate) parts.push('Diamond laminate');
+    if (row.components.edgeRip) parts.push('Edge Rip');
+    if (row.components.borders) parts.push('Borders');
+    return `<tr><td><strong>${WOODS[row.species]?.name || row.species}</strong><small>${parts.join(' + ')}</small></td><td>${row.finishedCubicInches.toFixed(2)}</td><td>${row.netBoardFeet.toFixed(3)}</td><td>${row.purchaseBoardFeet.toFixed(3)}</td></tr>`;
+  }).join('');
+  $('materialNetMetric').textContent = `${plan.totalNetBoardFeet.toFixed(3)} bd ft`;
+  $('materialPurchaseMetric').textContent = `${plan.totalPurchaseBoardFeet.toFixed(3)} bd ft`;
+  $('materialVolumeHelp').textContent = `${plan.designedVolume.toFixed(2)} cu in designed of ${plan.targetVolume.toFixed(2)} cu in target.`;
+  $('materialGapWarning').hidden = plan.unfilledVolume <= 0.01;
+  $('materialGapWarning').textContent = `${plan.unfilledVolume.toFixed(2)} cu in remains unfilled. Match the border schedule before using purchase totals.`;
+}
+
 function render() {
   renderPreview();
   renderEngineering();
   renderMetrics();
+  renderMaterial();
   buildStripEditor();
   buildBorderEditor();
   syncInputs();
@@ -496,6 +531,7 @@ function syncInputs() {
   $('boardWidth').value = state.boardWidth;
   $('finishedThickness').value = state.finishedThickness;
   $('includeBorders').checked = state.includeBorders;
+  $('wastePercent').value = state.wastePercent;
   $('bladeKerf').value = state.bladeKerf;
   $('edgeInset').value = state.edgeInset;
   $('edgeWood').innerHTML = woodOptions(state.edgeWood);
@@ -557,7 +593,7 @@ function download(name, type, text) {
 
 function bindNumberInput(id, key) {
   const input = $(id);
-  input.addEventListener('input', () => { state[key] = number(input.value); renderPreview(); renderEngineering(); renderMetrics(); });
+  input.addEventListener('input', () => { state[key] = number(input.value); renderPreview(); renderEngineering(); renderMetrics(); renderMaterial(); });
   input.addEventListener('change', commit);
 }
 
@@ -566,6 +602,7 @@ function bindEvents() {
   bindNumberInput('boardWidth', 'boardWidth');
   bindNumberInput('finishedThickness', 'finishedThickness');
   bindNumberInput('bladeKerf', 'bladeKerf');
+  bindNumberInput('wastePercent', 'wastePercent');
 
   $('includeBorders').addEventListener('change', event => { state.includeBorders = event.target.checked; render(); commit(); });
   $('addBorderBandBtn').addEventListener('click', () => {
@@ -574,16 +611,16 @@ function bindEvents() {
     render(); commit();
   });
 
-  $('edgeInset').addEventListener('input', event => { state.edgeInset = number(event.target.value); renderPreview(); renderMetrics(); });
+  $('edgeInset').addEventListener('input', event => { state.edgeInset = number(event.target.value); renderPreview(); renderMetrics(); renderMaterial(); });
   $('edgeInset').addEventListener('change', commit);
-  $('edgeWood').addEventListener('change', event => { state.edgeWood = event.target.value; renderPreview(); commit(); });
+  $('edgeWood').addEventListener('change', event => { state.edgeWood = event.target.value; renderPreview(); renderMaterial(); commit(); });
 
   document.addEventListener('click', event => {
     const button = event.target.closest('[data-inset]');
     if (!button) return;
     state.edgeInset = number(button.dataset.inset);
     $('edgeInset').value = state.edgeInset;
-    renderPreview(); renderMetrics(); commit();
+    renderPreview(); renderMetrics(); renderMaterial(); commit();
   });
 
   $('resetStripsBtn').addEventListener('click', () => { state.strips = defaultState().strips; render(); commit(); });
