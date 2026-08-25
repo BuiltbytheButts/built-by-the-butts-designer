@@ -82,3 +82,14 @@ This report tests Change #15 only.
 - Underage and overage schedules show the remaining/excess width and warning.
 - Turning borders off restores automatic laminated-row calculation and the full-diamond view.
 - All multi-border, crosscut, geometry, manufacturing, cache, and frozen-renderer regressions pass.
+# v3.0.16 Dynamic Border-Driven Row Test Report
+
+## Result: PASS
+
+- Removed manual laminated-row control; no stale control remains in the page.
+- A 13.000 in board with 2.9375 in Padauk plus 1.3750 in Walnut per edge calculates three complete laminated rows.
+- Three 1.500 in rows create a 4.500 in diamond field and require 4.2500 in of border per edge.
+- The 4.3125 in schedule reports exactly 0.0625 in too wide per edge.
+- Reducing the schedule to 4.2500 in produces a matched result and removes the warning.
+- Four same-species border entries remain four physical bands and render as eight mirrored strips.
+- All previous geometry, crosscut, manufacturing, migration, cache, and frozen-renderer regressions pass.

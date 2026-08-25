@@ -6,7 +6,7 @@ The application has one small state object containing only user-owned design inp
 - blade kerf
 - edge inset and replacement species
 - optional top/bottom border selection and an unbounded array of width/species bands
-- selected whole laminated-row count when borders replace outside rows
+- calculated whole laminated-row count derived from available width after borders
 - strip schedule
 
 No rows, columns, sizing mode, layout mode, orientation mode, trim allowance, or finishing allowance are stored.
@@ -52,3 +52,4 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 - Borders are drawn as a separate overlay around the source-identical frozen renderer.
 - v3.0.14 extends that overlay to an outside-to-inside band schedule mirrored on both long edges; total border width is the sum of all bands.
 - v3.0.15 treats borders as replacements for complete laminated rows. Required width per edge is `(finished width - selected rows × module width) / 2`.
+- v3.0.16 makes the border schedule the input: available diamond width is `finished width - 2 × scheduled border width`, and the nearest complete laminated-row count is derived from that space.

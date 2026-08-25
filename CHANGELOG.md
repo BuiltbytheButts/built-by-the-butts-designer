@@ -1,3 +1,12 @@
+## v3.0.16 — Border-Driven Laminated Rows
+- Removed the manual laminated-row input.
+- Entered border-band widths are now the source of truth for the remaining diamond field.
+- Laminated rows recalculate dynamically as border widths are edited.
+- Each Add Border entry remains a distinct physical band, even when several bands use the same species.
+- Whole-row fit reports the exact border adjustment needed instead of comparing against a stale manual count.
+- Screenshot acceptance case: 13.000 in board, 4.3125 in scheduled per edge → 3 rows, 4.2500 in required, 0.0625 in excess.
+- Frozen diamond, laminate, Edge Rip, and crosscut geometry remains unchanged.
+
 ## v3.0.15 — Laminated Row & Border Replacement Engineering
 - Added a Laminated Rows result alongside Calculated Crosscuts.
 - No-border designs calculate laminated rows automatically from finished width and module width.

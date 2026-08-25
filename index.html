@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
   <title>Diamond End Grain Designer</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.15" />
+  <link rel="stylesheet" href="styles.css?v=3.0.16" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.15</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.16</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -37,9 +37,8 @@
       <section>
         <div class="section-heading-row"><h2>Top &amp; Bottom Borders</h2><button id="addBorderBandBtn" class="text-button" type="button">+ Add Border</button></div>
         <label class="toggle-row"><input id="includeBorders" type="checkbox" /> Include all-end-grain borders</label>
-        <p class="help">Add as many border bands as needed. The schedule runs from the outside edge toward the diamond field and is mirrored on the top and bottom. Borders remain inside the finished dimensions.</p>
+        <p class="help">Add one entry for every physical border band, even when adjacent bands use the same wood. Entered border widths determine how many complete laminated rows remain.</p>
         <div id="borderFields">
-          <label>Laminated rows to keep<input id="laminatedRows" type="number" min="1" step="1" /></label>
           <div id="borderEditor"></div>
         </div>
         <div class="engineering-card"><span>Diamond field size</span><strong id="diamondFieldMetric"></strong></div>
@@ -107,8 +106,8 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="geometry.js?v=3.0.15"></script>
-  <script src="manufacturing.js?v=3.0.15"></script>
-  <script src="app.js?v=3.0.15"></script>
+  <script src="geometry.js?v=3.0.16"></script>
+  <script src="manufacturing.js?v=3.0.16"></script>
+  <script src="app.js?v=3.0.16"></script>
 </body>
 </html>

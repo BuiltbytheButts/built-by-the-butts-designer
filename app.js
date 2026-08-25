@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.15';
+const VERSION = '3.0.16';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -28,7 +28,6 @@ const defaultState = () => ({
   boardWidth: 11.625,
   finishedThickness: 1.5,
   includeBorders: false,
-  laminatedRows: null,
   borderBands: [{ width: 0.5, wood: 'maple' }],
   bladeKerf: 0.125,
   edgeInset: 0.5,
@@ -94,8 +93,10 @@ function borderEngineering() {
   }));
   const requestedWidth = bands.reduce((sum, band) => sum + band.width, 0);
   const automaticRows = automaticLaminatedRows();
+  const availableDiamondWidth = Math.max(0, number(state.boardWidth) - 2 * requestedWidth);
+  const idealRows = availableDiamondWidth / Math.max(0.125, moduleWidth());
   const selectedRows = state.includeBorders
-    ? Math.max(1, Math.floor(number(state.laminatedRows) || Math.max(1, automaticRows - 2)))
+    ? (availableDiamondWidth > 0 ? Math.max(1, Math.round(idealRows)) : 0)
     : automaticRows;
   const diamondFieldWidth = selectedRows * Math.max(0.125, moduleWidth());
   const requiredWidth = state.includeBorders ? Math.max(0, (number(state.boardWidth) - diamondFieldWidth) / 2) : 0;
@@ -107,7 +108,7 @@ function borderEngineering() {
     : 0;
   const rowsFit = diamondFieldWidth <= number(state.boardWidth) + 0.0005;
   const scheduleMatches = Math.abs(difference) <= 0.0005;
-  return { bands, automaticRows, selectedRows, requestedWidth, requiredWidth, difference, effectiveWidth, maximumWidth, diamondFieldWidth, borderVolume, rowsFit, scheduleMatches, valid: !state.includeBorders || (rowsFit && scheduleMatches) };
+  return { bands, automaticRows, availableDiamondWidth, idealRows, selectedRows, requestedWidth, requiredWidth, difference, effectiveWidth, maximumWidth, diamondFieldWidth, borderVolume, rowsFit, scheduleMatches, valid: !state.includeBorders || (rowsFit && scheduleMatches) };
 }
 
 function svgEl(name, attrs = {}) {
@@ -430,7 +431,6 @@ function syncInputs() {
   $('boardWidth').value = state.boardWidth;
   $('finishedThickness').value = state.finishedThickness;
   $('includeBorders').checked = state.includeBorders;
-  $('laminatedRows').value = borderEngineering().selectedRows;
   $('bladeKerf').value = state.bladeKerf;
   $('edgeInset').value = state.edgeInset;
   $('edgeWood').innerHTML = woodOptions(state.edgeWood);
@@ -458,7 +458,7 @@ function restore(serialized) {
   state.borderBands = Array.isArray(parsed.borderBands) && parsed.borderBands.length
     ? parsed.borderBands.map(band => ({ width: Math.max(0.0625, number(band.width)), wood: WOODS[band.wood] ? band.wood : 'maple' }))
     : (legacyBand || defaultState().borderBands);
-  state.laminatedRows = parsed.laminatedRows == null ? null : Math.max(1, Math.floor(number(parsed.laminatedRows)));
+  delete state.laminatedRows;
   delete state.borderWidth;
   delete state.borderWood;
   if (!WOODS[state.edgeWood]) state.edgeWood = 'walnut';
@@ -500,14 +500,9 @@ function bindEvents() {
   bindNumberInput('boardLength', 'boardLength');
   bindNumberInput('boardWidth', 'boardWidth');
   bindNumberInput('finishedThickness', 'finishedThickness');
-  bindNumberInput('laminatedRows', 'laminatedRows');
   bindNumberInput('bladeKerf', 'bladeKerf');
 
-  $('includeBorders').addEventListener('change', event => {
-    state.includeBorders = event.target.checked;
-    if (state.includeBorders && state.laminatedRows == null) state.laminatedRows = Math.max(1, automaticLaminatedRows() - 2);
-    render(); commit();
-  });
+  $('includeBorders').addEventListener('change', event => { state.includeBorders = event.target.checked; render(); commit(); });
   $('addBorderBandBtn').addEventListener('click', () => {
     state.borderBands.push({ width: 0.125, wood: 'maple' });
     state.includeBorders = true;

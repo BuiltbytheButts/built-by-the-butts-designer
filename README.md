@@ -1,4 +1,4 @@
-# Diamond End Grain Designer v3.0.15
+# Diamond End Grain Designer v3.0.16
 
 Clean-architecture foundation rebuild for Built By The Butts.
 
@@ -12,7 +12,8 @@ Clean-architecture foundation rebuild for Built By The Butts.
 - Optional all-end-grain borders run along the two long edges inside the finished dimensions.
 - Add or remove any number of border bands; every band has its own width and species.
 - Border bands mirror across the two long edges; turning borders off restores the full-diamond field.
-- Laminated rows are calculated automatically without borders and user-selectable with borders.
+- Laminated rows are calculated automatically from the finished width and entered border-band widths.
+- Every Add Border entry represents one physical band, including adjacent bands of the same species.
 - Border engineering shows the exact replacement width required per edge and flags underage or overage.
 - Renderer is built from physical square end-grain faces and contains no legacy v2 grid code.
 
