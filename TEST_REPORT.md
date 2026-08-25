@@ -209,3 +209,13 @@ PASS — syntax; material quantities; geometry; manufacturing; actual crosscut b
 - Board reference follows current wood, border, dimension, and pattern state without changing the live renderer.
 - Nonzero Edge Rip adds a separate illustrated step after the four 45-degree cuts and before dry fit.
 - Zero Edge Rip removes the separate step and all Edge Rip print content.
+
+
+# v3.0.29 Printable Colors and Edge Rip Detail Test Report
+
+PASS — syntax; material quantities; geometry; manufacturing; actual crosscut behavior; version/cache; frozen geometry/renderer; browser, border, and print regression.
+
+- Finished-board reference contains direct solid wood fills instead of print-fragile pattern references.
+- Nonzero Edge Rip generates two separate images after the first four 45-degree cuts: cut face, then replacement glue-up.
+- Zero Edge Rip removes both steps.
+- Assigned crosscuts render as a single diamond row.

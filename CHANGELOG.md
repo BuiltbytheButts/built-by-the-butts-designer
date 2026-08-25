@@ -1,3 +1,9 @@
+## v3.0.29 — Printable Wood Colors and Two-Stage Edge Rip
+- Finished-board reference now uses direct printable wood fills so its colors survive print/PDF output.
+- Edge Rip now has one octagonal cut-face image followed by a separate 45-degree replacement glue-up image.
+- Replacement image shows the selected wood applied to the freshly cut Walnut edges.
+- Assigned crosscuts are displayed as one diamond row instead of plain squares.
+
 ## v3.0.28 — Board Reference and Separate Edge Rip
 - Added the exact generated finished-board image at the beginning of every printed guide.
 - Edge Rip is now its own conditional illustrated step after all four initial 45-degree cuts.
