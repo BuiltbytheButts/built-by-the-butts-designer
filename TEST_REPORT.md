@@ -228,3 +228,20 @@ PASS — syntax; material quantities; geometry; manufacturing; actual crosscut b
 - Replacement glue-up diagram contains a solid standalone replacement piece.
 - Completed view combines the selected replacement wood with the cut target wood.
 - Labels remain dynamic for the project-selected replacement species.
+
+
+# v3.0.31 Two-End Replacement and Print Reference Repair
+
+PASS — syntax; material quantities; geometry; manufacturing; actual crosscut behavior; version/cache; frozen geometry/renderer; browser, border, and print regression.
+
+- Step 7 shows two standalone replacement wedges followed by both wedges attached to the octagonal cut face.
+- Completed Edge Rip view preserves the target wood band and selected replacement color.
+- Print-board IDs and clip paths are uniquely namespaced to prevent missing triangular fills.
+
+
+# v3.0.32 Square Edge Rip Completion Test Report
+
+PASS — syntax; material quantities; geometry; manufacturing; actual crosscut behavior; version/cache; frozen geometry/renderer; browser, border, and print regression.
+
+- Completed Step 7 view is a square.
+- Both replacement wedges attach to the opposing ends of the target wood band.

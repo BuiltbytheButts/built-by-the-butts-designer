@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.30/g) || []).length === 5, 'All asset cache keys must be v3.0.30');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.32/g) || []).length === 5, 'All asset cache keys must be v3.0.32');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   assert(html.indexOf('Top &amp; Bottom Borders') < html.indexOf('Strip Schedule'), 'Border section is not above Strip Schedule');
 
@@ -52,7 +52,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.30', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.32', 'Wrong visible version');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
   assert(await page.locator('#printPlanBtn').isVisible(), 'Print Workshop Plan action is missing');
   const planText = await page.locator('#printPlan').textContent();
@@ -68,8 +68,8 @@ function functionSource(source, name) {
   const edgeRipGlueIndex = guideTitles.findIndex(title => title.startsWith('Glue the new 45°'));
   assert(guideTitles.indexOf('Make the four 45° cuts') < edgeRipCutIndex, 'Edge Rip is not after the first 45-degree cuts');
   assert(edgeRipCutIndex < edgeRipGlueIndex, 'Edge Rip cut is not before replacement glue-up');
-  assert((await page.locator('#printPlan').textContent()).includes('Solid Walnut piece'), 'Solid replacement piece is not shown before glue-up');
-  assert((await page.locator('#printPlan').textContent()).includes('Walnut glued to Walnut'), 'Combined replacement-and-target view is missing');
+  assert((await page.locator('#printPlan').textContent()).includes('Two solid Walnut pieces'), 'Two solid replacement pieces are not shown before glue-up');
+  assert((await page.locator('#printPlan').textContent()).includes('Finished square'), 'Finished square replacement view is missing');
   assert(edgeRipGlueIndex < guideTitles.indexOf('Dry-fit the 45° cut pieces'), 'Replacement glue-up is not a separate step before dry fit');
   assert(await page.locator('#printPlan .guide-step').count() === 12, 'Edge Rip build must contain twelve illustrated steps');
   assert(await page.locator('#printPlan .guide-svg').count() === 12, 'Every illustrated step must contain a diagram');

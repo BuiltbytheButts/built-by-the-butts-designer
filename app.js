@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.30';
+const VERSION = '3.0.32';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -591,7 +591,7 @@ function buildGuideVisuals(crosscuts, border, lamination) {
   }, {
     title: `Glue the new 45° ${edgeRipSpecies} to the cut edges`,
     text: `Prepare matching 45° ${edgeRipSpecies} replacement pieces. Glue them directly to the freshly cut ${ripTargetSpecies} edges, keeping both mirrored assemblies aligned.`,
-    svg: guideSvg(`<text x="102" y="22" text-anchor="middle">Solid ${edgeRipSpecies} piece</text><path d="M30 145 L102 62 L174 145" fill="none" stroke="#6e5a4b" stroke-width="32"/><path d="M30 145 L102 62 L174 145" fill="none" stroke="${guideWood(state.edgeWood)}" stroke-width="27"/><path d="M190 102 H226" class="guide-arrow" marker-end="url(#guide-arrowhead)"/><text x="310" y="22" text-anchor="middle">${edgeRipSpecies} glued to ${ripTargetSpecies}</text><path d="M238 145 L310 62 L382 145" fill="none" stroke="${guideWood(state.edgeWood)}" stroke-width="28"/><path d="M251 145 L310 78 L369 145" fill="none" stroke="${guideWood(ripTargetWood)}" stroke-width="18"/><line x1="310" y1="45" x2="310" y2="78" class="guide-arrow" marker-end="url(#guide-arrowhead)"/><text x="208" y="181" text-anchor="middle">Before glue-up → completed 45° replacement</text>`, `Solid ${edgeRipSpecies} replacement piece followed by the piece glued to the ${ripTargetSpecies} edge`)
+    svg: guideSvg(`<text x="95" y="22" text-anchor="middle">Two solid ${edgeRipSpecies} pieces</text><polygon points="28,62 82,95 28,128" fill="${guideWood(state.edgeWood)}" stroke="#6e5a4b" stroke-width="3"/><polygon points="162,62 108,95 162,128" fill="${guideWood(state.edgeWood)}" stroke="#6e5a4b" stroke-width="3"/><path d="M175 95 H205" class="guide-arrow" marker-end="url(#guide-arrowhead)"/><text x="303" y="22" text-anchor="middle">Finished square</text><defs><clipPath id="guide-edge-complete"><rect x="225" y="30" width="150" height="130"/></clipPath></defs><g clip-path="url(#guide-edge-complete)"><rect x="225" y="30" width="150" height="130" fill="${guideWood(strips[0]?.wood)}"/><rect x="225" y="62" width="150" height="25" fill="${guideWood(strips[1]?.wood)}"/><rect x="225" y="87" width="150" height="32" fill="${guideWood(ripTargetWood)}"/><rect x="225" y="119" width="150" height="22" fill="${guideWood(strips.at(-2)?.wood)}"/><polygon points="225,65 265,103 225,125" fill="${guideWood(state.edgeWood)}"/><polygon points="375,65 335,103 375,125" fill="${guideWood(state.edgeWood)}"/></g><rect x="225" y="30" width="150" height="130" fill="none" stroke="#33261e" stroke-width="3"/><text x="300" y="181" text-anchor="middle">${edgeRipSpecies} on both ${ripTargetSpecies} ends</text>`, `Two solid ${edgeRipSpecies} pieces followed by a finished square with both pieces glued onto the cut ends of the ${ripTargetSpecies} section`)
   }] : [];
   const borderTop = state.includeBorders ? border.bands.reduce((html, band, index) => html + `<rect x="45" y="${30 + index * 8}" width="330" height="8" fill="${guideWood(band.wood)}"/>`, '') : '';
   const borderBottom = state.includeBorders ? border.bands.reduce((html, band, index) => html + `<rect x="45" y="${152 - index * 8}" width="330" height="8" fill="${guideWood(band.wood)}"/>`, '') : '';
@@ -649,10 +649,22 @@ function materialsText() {
 function finishedBoardReferenceSvg() {
   const clone = $('boardSvg').cloneNode(true);
   clone.removeAttribute('id');
+  const idMap = new Map();
+  clone.querySelectorAll('[id]').forEach((element, index) => {
+    const original = element.id;
+    const replacement = `print-board-${index}-${original}`;
+    idMap.set(original, replacement);
+    element.id = replacement;
+  });
   clone.querySelectorAll('*').forEach(element => {
     const fill = element.getAttribute('fill');
     const woodMatch = fill?.match(/^url\(#wood-([^)]+)\)$/);
     if (woodMatch && WOODS[woodMatch[1]]) element.setAttribute('fill', WOODS[woodMatch[1]].color);
+    [...element.attributes].forEach(attribute => {
+      let value = attribute.value;
+      idMap.forEach((replacement, original) => { value = value.replaceAll(`url(#${original})`, `url(#${replacement})`).replaceAll(`#${original}`, `#${replacement}`); });
+      if (value !== attribute.value) element.setAttribute(attribute.name, value);
+    });
     element.removeAttribute('class');
     [...element.attributes].filter(attribute => attribute.name.startsWith('data-')).forEach(attribute => element.removeAttribute(attribute.name));
   });

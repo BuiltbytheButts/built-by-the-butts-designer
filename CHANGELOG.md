@@ -1,3 +1,7 @@
+## v3.0.32 — Square Edge Rip Completion
+- Corrected the completed Step 7 replacement view from an octagon to a square.
+- The square shows the light replacement pieces attached to both ends of the target wood band.
+
 ## v3.0.30 — Edge Rip Before-and-After View
 - Replacement glue-up diagram now shows the solid light replacement piece by itself first.
 - A second view shows that same piece combined with the Walnut edge after gluing.
