@@ -58,3 +58,15 @@ This report tests Change #15 only.
 - Visible version and all asset cache keys are 3.0.13.
 - `geometry.js`, `edgeCutGeometry`, `drawEndGrainCell`, and `renderBoard` remain unchanged from the validated baseline.
 - All v3.0.12 crosscut, manufacturing, and browser regressions continue to pass.
+# v3.0.14 Multi-Band Border Test Report
+
+## Result: PASS
+
+- Border controls appear above Strip Schedule.
+- Four independently sized and colored bands render as four mirrored bands on each long edge.
+- A fifth band can be added; there is no fixed four-band limit.
+- Bands can be removed independently.
+- Four 0.250 in bands total 1.000 in per edge and reduce a 7.375 in board to a 5.375 in diamond field.
+- v3.0.13 single-border saved data migrates to the new one-band schedule.
+- Visible version and all cache keys are 3.0.14.
+- All syntax, geometry, manufacturing, crosscut, frozen-renderer, and browser regressions pass.

@@ -5,7 +5,7 @@ The application has one small state object containing only user-owned design inp
 - finished board length, width, thickness
 - blade kerf
 - edge inset and replacement species
-- optional top/bottom border selection, width, and species
+- optional top/bottom border selection and an unbounded array of width/species bands
 - strip schedule
 
 No rows, columns, sizing mode, layout mode, orientation mode, trim allowance, or finishing allowance are stored.
@@ -49,3 +49,4 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 - With borders off, the diamond field occupies the full finished width.
 - With borders on, diamond field width = finished width − (2 × border width).
 - Borders are drawn as a separate overlay around the source-identical frozen renderer.
+- v3.0.14 extends that overlay to an outside-to-inside band schedule mirrored on both long edges; total border width is the sum of all bands.

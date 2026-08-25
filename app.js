@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.13';
+const VERSION = '3.0.14';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -28,8 +28,7 @@ const defaultState = () => ({
   boardWidth: 11.625,
   finishedThickness: 1.5,
   includeBorders: false,
-  borderWidth: 0.5,
-  borderWood: 'maple',
+  borderBands: [{ width: 0.5, wood: 'maple' }],
   bladeKerf: 0.125,
   edgeInset: 0.5,
   edgeWood: 'walnut',
@@ -84,14 +83,18 @@ function previewGrid() {
 }
 
 function borderEngineering() {
-  const requestedWidth = Math.max(0, number(state.borderWidth));
+  const bands = state.borderBands.map(band => ({
+    width: Math.max(0.0625, number(band.width)),
+    wood: WOODS[band.wood] ? band.wood : 'maple'
+  }));
+  const requestedWidth = bands.reduce((sum, band) => sum + band.width, 0);
   const maximumWidth = Math.max(0, number(state.boardWidth) / 2 - 0.0625);
   const effectiveWidth = state.includeBorders ? Math.min(requestedWidth, maximumWidth) : 0;
   const diamondFieldWidth = Math.max(0.125, number(state.boardWidth) - 2 * effectiveWidth);
   const borderVolume = state.includeBorders
     ? 2 * number(state.boardLength) * effectiveWidth * number(state.finishedThickness)
     : 0;
-  return { requestedWidth, effectiveWidth, maximumWidth, diamondFieldWidth, borderVolume, valid: !state.includeBorders || requestedWidth <= maximumWidth };
+  return { bands, requestedWidth, effectiveWidth, maximumWidth, diamondFieldWidth, borderVolume, valid: !state.includeBorders || requestedWidth <= maximumWidth };
 }
 
 function svgEl(name, attrs = {}) {
@@ -220,7 +223,7 @@ function renderBoard() {
 }
 
 function renderBorders() {
-  if (!state.includeBorders || !WOODS[state.borderWood]) return;
+  if (!state.includeBorders) return;
   const svg = $('boardSvg');
   const boardX = 42;
   const boardY = 42;
@@ -236,13 +239,18 @@ function renderBorders() {
   const fieldX = 600 - fieldW / 2;
   const fieldY = 380 - fieldH / 2;
   const border = borderEngineering();
-  const borderPixels = fieldH * border.effectiveWidth / Math.max(0.125, number(state.boardWidth));
-  const fill = `url(#wood-${state.borderWood})`;
-  [fieldY, fieldY + fieldH - borderPixels].forEach(y => {
-    svg.append(svgEl('rect', {
-      x: fieldX, y, width: fieldW, height: borderPixels,
-      class: 'end-grain-border', fill, stroke: '#4d382d', 'stroke-width': '.8'
-    }));
+  let offsetPixels = 0;
+  border.bands.forEach((band, index) => {
+    const bandPixels = fieldH * band.width / Math.max(0.125, number(state.boardWidth));
+    const fill = `url(#wood-${band.wood})`;
+    [fieldY + offsetPixels, fieldY + fieldH - offsetPixels - bandPixels].forEach(y => {
+      svg.append(svgEl('rect', {
+        x: fieldX, y, width: fieldW, height: bandPixels,
+        class: 'end-grain-border', 'data-border-index': String(index),
+        fill, stroke: '#4d382d', 'stroke-width': '.8'
+      }));
+    });
+    offsetPixels += bandPixels;
   });
 }
 
@@ -253,6 +261,43 @@ function renderPreview() {
 
 function woodOptions(selected) {
   return Object.entries(WOODS).map(([key, wood]) => `<option value="${key}" ${key === selected ? 'selected' : ''}>${wood.name}</option>`).join('');
+}
+
+function buildBorderEditor() {
+  const holder = $('borderEditor');
+  holder.innerHTML = '';
+  state.borderBands.forEach((band, index) => {
+    const row = document.createElement('div');
+    row.className = 'border-row';
+    row.innerHTML = `
+      <span class="swatch" style="background:${WOODS[band.wood]?.color || '#999'}"></span>
+      <label>Band ${index + 1}<input data-border-width="${index}" type="number" min="0.0625" max="6" step="0.0625" value="${number(band.width).toFixed(4)}"></label>
+      <label>Wood<select data-border-wood="${index}">${woodOptions(band.wood)}</select></label>
+      <button class="text-button border-remove" data-remove-border="${index}" type="button" aria-label="Remove border band ${index + 1}">Remove</button>`;
+    holder.append(row);
+  });
+  holder.querySelectorAll('[data-border-width]').forEach(input => {
+    input.addEventListener('input', event => {
+      state.borderBands[Number(event.target.dataset.borderWidth)].width = Math.max(0.0625, number(event.target.value));
+      renderPreview(); renderMetrics();
+    });
+    input.addEventListener('change', commit);
+  });
+  holder.querySelectorAll('[data-border-wood]').forEach(select => {
+    select.addEventListener('change', event => {
+      const index = Number(event.target.dataset.borderWood);
+      state.borderBands[index].wood = event.target.value;
+      buildBorderEditor(); renderPreview(); commit();
+    });
+  });
+  holder.querySelectorAll('[data-remove-border]').forEach(button => {
+    button.addEventListener('click', event => {
+      const index = Number(event.currentTarget.dataset.removeBorder);
+      state.borderBands.splice(index, 1);
+      if (!state.borderBands.length) state.includeBorders = false;
+      render(); commit();
+    });
+  });
 }
 
 function buildStripEditor() {
@@ -342,7 +387,7 @@ function renderMetrics() {
     ? `${number(state.boardLength).toFixed(3)} × ${border.diamondFieldWidth.toFixed(3)} in`
     : `${number(state.boardLength).toFixed(3)} × ${number(state.boardWidth).toFixed(3)} in (full board)`;
   $('borderMaterialMetric').textContent = state.includeBorders
-    ? `2 × ${number(state.boardLength).toFixed(3)} × ${border.effectiveWidth.toFixed(3)} × ${number(state.finishedThickness).toFixed(3)} in`
+    ? `${border.bands.length} band${border.bands.length === 1 ? '' : 's'} per edge; ${border.effectiveWidth.toFixed(3)} in total per edge`
     : 'No border material required';
   $('borderWarning').hidden = border.valid;
   $('borderWarning').textContent = `Border width must be less than half the finished board width (maximum ${border.maximumWidth.toFixed(3)} in).`;
@@ -353,6 +398,7 @@ function render() {
   renderEngineering();
   renderMetrics();
   buildStripEditor();
+  buildBorderEditor();
   syncInputs();
   updateHistoryButtons();
 }
@@ -362,8 +408,6 @@ function syncInputs() {
   $('boardWidth').value = state.boardWidth;
   $('finishedThickness').value = state.finishedThickness;
   $('includeBorders').checked = state.includeBorders;
-  $('borderWidth').value = state.borderWidth;
-  $('borderWood').innerHTML = woodOptions(state.borderWood);
   $('bladeKerf').value = state.bladeKerf;
   $('edgeInset').value = state.edgeInset;
   $('edgeWood').innerHTML = woodOptions(state.edgeWood);
@@ -387,8 +431,13 @@ function restore(serialized) {
   const parsed = JSON.parse(serialized);
   state = { ...defaultState(), ...parsed, version: VERSION };
   state.strips = Array.isArray(parsed.strips) && parsed.strips.length ? parsed.strips.map(strip => ({ width: Math.max(0.03125, number(strip.width)), wood: WOODS[strip.wood] ? strip.wood : 'maple' })) : defaultState().strips;
+  const legacyBand = parsed.borderWidth ? [{ width: parsed.borderWidth, wood: parsed.borderWood }] : null;
+  state.borderBands = Array.isArray(parsed.borderBands) && parsed.borderBands.length
+    ? parsed.borderBands.map(band => ({ width: Math.max(0.0625, number(band.width)), wood: WOODS[band.wood] ? band.wood : 'maple' }))
+    : (legacyBand || defaultState().borderBands);
+  delete state.borderWidth;
+  delete state.borderWood;
   if (!WOODS[state.edgeWood]) state.edgeWood = 'walnut';
-  if (!WOODS[state.borderWood]) state.borderWood = 'maple';
   render();
 }
 
@@ -427,11 +476,14 @@ function bindEvents() {
   bindNumberInput('boardLength', 'boardLength');
   bindNumberInput('boardWidth', 'boardWidth');
   bindNumberInput('finishedThickness', 'finishedThickness');
-  bindNumberInput('borderWidth', 'borderWidth');
   bindNumberInput('bladeKerf', 'bladeKerf');
 
   $('includeBorders').addEventListener('change', event => { state.includeBorders = event.target.checked; render(); commit(); });
-  $('borderWood').addEventListener('change', event => { state.borderWood = event.target.value; renderPreview(); commit(); });
+  $('addBorderBandBtn').addEventListener('click', () => {
+    state.borderBands.push({ width: 0.125, wood: 'maple' });
+    state.includeBorders = true;
+    render(); commit();
+  });
 
   $('edgeInset').addEventListener('input', event => { state.edgeInset = number(event.target.value); renderPreview(); renderMetrics(); });
   $('edgeInset').addEventListener('change', commit);

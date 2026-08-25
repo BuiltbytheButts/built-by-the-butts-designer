@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
   <title>Diamond End Grain Designer</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.13" />
+  <link rel="stylesheet" href="styles.css?v=3.0.14" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.13</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.14</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -35,6 +35,16 @@
       </section>
 
       <section>
+        <div class="section-heading-row"><h2>Top &amp; Bottom Borders</h2><button id="addBorderBandBtn" class="text-button" type="button">+ Add Border</button></div>
+        <label class="toggle-row"><input id="includeBorders" type="checkbox" /> Include all-end-grain borders</label>
+        <p class="help">Add as many border bands as needed. The schedule runs from the outside edge toward the diamond field and is mirrored on the top and bottom. Borders remain inside the finished dimensions.</p>
+        <div id="borderFields"><div id="borderEditor"></div></div>
+        <div class="engineering-card"><span>Diamond field size</span><strong id="diamondFieldMetric"></strong></div>
+        <div class="engineering-card"><span>Border schedule</span><strong id="borderMaterialMetric"></strong></div>
+        <p id="borderWarning" class="crosscut-warning" role="alert" hidden></p>
+      </section>
+
+      <section>
         <div class="section-heading-row"><h2>Strip Schedule</h2><button id="resetStripsBtn" class="text-button" type="button">Reset</button></div>
         <p class="help">These are finished design widths. Rough-rip guidance is shown as a recommendation only.</p>
         <div class="strip-toolbar">
@@ -54,21 +64,6 @@
         </div>
         <p class="help">Cut depth controls only the two removed 45° corner areas. The laminated strip geometry stays fixed; replacement wood fills only what is cut away.</p>
         <label>Replacement wood<select id="edgeWood"></select></label>
-      </section>
-
-      <section>
-        <h2>Top &amp; Bottom Borders</h2>
-        <label class="toggle-row"><input id="includeBorders" type="checkbox" /> Include all-end-grain borders</label>
-        <p class="help">Borders are included inside the finished board dimensions. Turning them off gives the entire finished width to the diamond field.</p>
-        <div id="borderFields">
-          <div class="two-col">
-            <label>Border width (each, in)<input id="borderWidth" type="number" min="0.0625" max="6" step="0.0625" /></label>
-            <label>Border wood<select id="borderWood"></select></label>
-          </div>
-        </div>
-        <div class="engineering-card"><span>Diamond field size</span><strong id="diamondFieldMetric"></strong></div>
-        <div class="engineering-card"><span>Finished border material</span><strong id="borderMaterialMetric"></strong></div>
-        <p id="borderWarning" class="crosscut-warning" role="alert" hidden></p>
       </section>
 
       <section>
@@ -106,8 +101,8 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="geometry.js?v=3.0.13"></script>
-  <script src="manufacturing.js?v=3.0.13"></script>
-  <script src="app.js?v=3.0.13"></script>
+  <script src="geometry.js?v=3.0.14"></script>
+  <script src="manufacturing.js?v=3.0.14"></script>
+  <script src="app.js?v=3.0.14"></script>
 </body>
 </html>

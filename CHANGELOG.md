@@ -1,3 +1,12 @@
+## v3.0.14 — Unlimited Multi-Band Borders
+- Moved Top & Bottom Borders above Strip Schedule.
+- Replaced the single border with an unlimited add/remove border-band schedule.
+- Every band has an independent finished width and wood species.
+- Bands are ordered outside-to-inside and mirrored on the two long edges.
+- Diamond field width subtracts twice the combined band width.
+- Existing v3.0.13 single-border project data migrates into one border band.
+- Frozen diamond, laminate, Edge Rip, and crosscut behavior remains unchanged.
+
 ## v3.0.13 — Optional Top & Bottom End-Grain Borders
 - Added an Include all-end-grain borders choice; borders default off.
 - Added adjustable border width and wood species.
