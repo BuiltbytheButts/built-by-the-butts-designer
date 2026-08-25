@@ -189,3 +189,13 @@ PASS — syntax; material quantities; geometry; manufacturing; actual crosscut b
 - All four center-to-center corner cuts and CUT labels verified.
 - Two-row 45-degree dry fit and dynamic top-view crosscut spacing verified.
 - Assigned quantity is sourced from calculated crosscuts, not laminated rows.
+
+
+# v3.0.27 Master-Blank Workflow Test Report
+
+PASS — syntax; material quantities; geometry; manufacturing; actual crosscut behavior; version/cache; frozen geometry/renderer; browser, border, and print regression.
+
+- Bordered guide places long-edge border glue-up before crosscut marking.
+- Top-view master blank uses longitudinal species bands and calculated dotted crosscut lines across the full width.
+- Crosscut-line count follows the actual calculated crosscut count.
+- Selected Edge Rip uses two outlined, labeled opposing wedges and remains hidden at zero depth.

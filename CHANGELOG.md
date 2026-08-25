@@ -1,3 +1,9 @@
+## v3.0.27 — Correct Master-Blank Workflow
+- Border bands are now glued to both long edges before the master blank is crosscut.
+- Crosscut diagram is a true top view with longitudinal wood strips and dotted lines running across the full blank.
+- Selected Edge Rip wedges are larger, outlined, and explicitly labeled.
+- No-border builds retain a full-width master-blank preparation step.
+
 ## v3.0.26 — Ten-Step Build Sequence
 - Dimensioned the glued blank as a true required-size square on both sides.
 - Marked all four dotted 45-degree corner cuts and labeled each CUT.

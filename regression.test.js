@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.26/g) || []).length === 5, 'All asset cache keys must be v3.0.26');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.27/g) || []).length === 5, 'All asset cache keys must be v3.0.27');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   assert(html.indexOf('Top &amp; Bottom Borders') < html.indexOf('Strip Schedule'), 'Border section is not above Strip Schedule');
 
@@ -52,7 +52,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.26', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.27', 'Wrong visible version');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
   assert(await page.locator('#printPlanBtn').isVisible(), 'Print Workshop Plan action is missing');
   const planText = await page.locator('#printPlan').textContent();
@@ -64,10 +64,10 @@ function functionSource(source, name) {
   assert(await page.locator('#printPlan .guide-svg').count() === 10, 'Every illustrated step must contain a diagram');
   assert((await page.locator('#printPlan').textContent()).includes('0.125 in blade kerf'), 'Illustrated crosscut step does not reflect blade kerf');
   assert((await page.locator('#printPlan').textContent()).includes('crosscuts assigned to this build'), 'Assigned crosscut count is not shown in one line');
-  assert(await page.locator('#printPlan .guide-center-cut').count() === 1, 'Center-to-center 45-degree guide is missing');
+  assert(await page.locator('#printPlan svg[aria-label*=four] .guide-center-cut').count() === 1, 'Center-to-center 45-degree guide is missing');
   assert((await page.locator('#printPlan').textContent()).includes('2.125 × 2.125 in'), 'Square lamination dimensions are not shown on both sides');
   assert((await page.locator('#printPlan').textContent()).includes('Dry-fit the 45° cut pieces'), 'Two-row 45-degree dry fit step is missing');
-  assert((await page.locator('#printPlan').textContent()).includes('Top view · 12 crosscut lines'), 'Top-view crosscut diagram is missing');
+  assert((await page.locator('#printPlan').textContent()).includes('run each dotted cut line fully across its width'), 'Top-view crosscut instruction is missing');
   assert((await page.locator('#printPlan').textContent()).includes('1.625 in'), 'Calculated crosscut spacing is missing');
   assert(((await page.locator('#printPlan').textContent()).match(/CUT/g) || []).length >= 4, 'All four corner cuts are not labeled');
   await page.locator('#edgeInset').fill('0');
@@ -155,6 +155,13 @@ function functionSource(source, name) {
     includeBorders: true, borderBands: [{ width: 1.25, wood: 'walnut' }]
   })));
   assert(await page.locator('.bordered-diamond-field').getAttribute('data-laminated-rows') === '7', '1.25 in border should render seven complete rows');
+  await page.evaluate(() => renderWorkshopPlan());
+  const borderedPlanText = await page.locator('#printPlan').textContent();
+  assert(borderedPlanText.includes('Glue the borders before crosscutting'), 'Border-before-crosscut step is missing');
+  assert(borderedPlanText.indexOf('Glue the borders before crosscutting') < borderedPlanText.indexOf('Mark the crosscuts from the top view'), 'Borders are not glued before crosscutting in the guide');
+  const guideCrosscutCount = await page.evaluate(() => crosscutEngineering().crosscutCount);
+  assert(await page.locator('#printPlan svg[aria-label*=completed] .guide-center-cut').count() === guideCrosscutCount - 1, 'Top-view crosscut lines do not match the calculated count');
+  assert((await page.locator('#printPlan').textContent()).includes('EDGE RIP'), 'Selected Edge Rip is not visibly labeled');
   assert(await page.locator('.bordered-diamond-cell').count() === 105, 'Seven rows by fifteen crosscuts should render 105 complete cells');
   assert(await page.locator('[data-row="0"]').count() === 15 && await page.locator('[data-row="6"]').count() === 15, 'First or last complete row is missing');
   assert(/^translate\([^)]*\) scale\([^ ,)]+\)$/.test(await page.locator('.bordered-diamond-cell').first().getAttribute('transform')), '1.25 in bordered cells are not uniformly scaled squares');
