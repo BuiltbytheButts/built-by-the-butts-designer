@@ -1,3 +1,9 @@
+## v3.0.28 — Board Reference and Separate Edge Rip
+- Added the exact generated finished-board image at the beginning of every printed guide.
+- Edge Rip is now its own conditional illustrated step after all four initial 45-degree cuts.
+- Edge Rip diagram shows the transverse cut across the selected wood area.
+- Builds with zero Edge Rip omit that step and retain a ten-step guide.
+
 ## v3.0.27 — Correct Master-Blank Workflow
 - Border bands are now glued to both long edges before the master blank is crosscut.
 - Crosscut diagram is a true top view with longitudinal wood strips and dotted lines running across the full blank.

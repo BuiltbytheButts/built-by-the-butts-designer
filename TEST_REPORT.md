@@ -199,3 +199,13 @@ PASS — syntax; material quantities; geometry; manufacturing; actual crosscut b
 - Top-view master blank uses longitudinal species bands and calculated dotted crosscut lines across the full width.
 - Crosscut-line count follows the actual calculated crosscut count.
 - Selected Edge Rip uses two outlined, labeled opposing wedges and remains hidden at zero depth.
+
+
+# v3.0.28 Board Reference and Edge Rip Sequence Test Report
+
+PASS — syntax; material quantities; geometry; manufacturing; actual crosscut behavior; version/cache; frozen geometry/renderer; browser, border, and print regression.
+
+- Exact finished-board SVG is reproduced at the beginning of the printed guide.
+- Board reference follows current wood, border, dimension, and pattern state without changing the live renderer.
+- Nonzero Edge Rip adds a separate illustrated step after the four 45-degree cuts and before dry fit.
+- Zero Edge Rip removes the separate step and all Edge Rip print content.

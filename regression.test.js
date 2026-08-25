@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.27/g) || []).length === 5, 'All asset cache keys must be v3.0.27');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.28/g) || []).length === 5, 'All asset cache keys must be v3.0.28');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   assert(html.indexOf('Top &amp; Bottom Borders') < html.indexOf('Strip Schedule'), 'Border section is not above Strip Schedule');
 
@@ -52,7 +52,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.27', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.28', 'Wrong visible version');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
   assert(await page.locator('#printPlanBtn').isVisible(), 'Print Workshop Plan action is missing');
   const planText = await page.locator('#printPlan').textContent();
@@ -60,8 +60,13 @@ function functionSource(source, name) {
     assert(planText.includes(heading), `Printable plan is missing ${heading}`);
   }
   assert((await page.locator('#printPlan').textContent()).includes('18.625 × 11.625 × 1.500 in'), 'Printable plan does not reflect current dimensions');
-  assert(await page.locator('#printPlan .guide-step').count() === 10, 'Illustrated guide must contain ten steps');
-  assert(await page.locator('#printPlan .guide-svg').count() === 10, 'Every illustrated step must contain a diagram');
+  assert(await page.locator('#printPlan .print-board-reference').count() === 1, 'Finished board reference is missing from the printout');
+  assert((await page.locator('#printPlan .print-board-section').textContent()).includes('Keep this image available throughout the build'), 'Finished board reference guidance is missing');
+  const guideTitles = await page.locator('#printPlan .guide-copy h3').allTextContents();
+  assert(guideTitles.indexOf('Make the four 45° cuts') < guideTitles.indexOf('Complete the Edge Rip after the 45° cuts'), 'Edge Rip is not after the first 45-degree cuts');
+  assert(guideTitles.indexOf('Complete the Edge Rip after the 45° cuts') < guideTitles.indexOf('Dry-fit the 45° cut pieces'), 'Edge Rip is not a separate step before dry fit');
+  assert(await page.locator('#printPlan .guide-step').count() === 11, 'Edge Rip build must contain eleven illustrated steps');
+  assert(await page.locator('#printPlan .guide-svg').count() === 11, 'Every illustrated step must contain a diagram');
   assert((await page.locator('#printPlan').textContent()).includes('0.125 in blade kerf'), 'Illustrated crosscut step does not reflect blade kerf');
   assert((await page.locator('#printPlan').textContent()).includes('crosscuts assigned to this build'), 'Assigned crosscut count is not shown in one line');
   assert(await page.locator('#printPlan svg[aria-label*=four] .guide-center-cut').count() === 1, 'Center-to-center 45-degree guide is missing');
@@ -75,6 +80,7 @@ function functionSource(source, name) {
   await page.evaluate(() => renderWorkshopPlan());
   assert(!(await page.locator('#printPlan').textContent()).includes('Edge Rip selected'), 'Illustration shows Edge Rip when none is selected');
   assert(!(await page.locator('#printPlan').textContent()).includes('Cut depth:'), 'Edge Rip schedule shows when none is selected');
+  assert(await page.locator('#printPlan .guide-step').count() === 10, 'Zero Edge Rip should remove its separate illustrated step');
   await page.locator('#edgeInset').fill('0.5');
   await page.locator('#edgeInset').dispatchEvent('input');
   await page.evaluate(() => renderWorkshopPlan());
@@ -161,7 +167,7 @@ function functionSource(source, name) {
   assert(borderedPlanText.indexOf('Glue the borders before crosscutting') < borderedPlanText.indexOf('Mark the crosscuts from the top view'), 'Borders are not glued before crosscutting in the guide');
   const guideCrosscutCount = await page.evaluate(() => crosscutEngineering().crosscutCount);
   assert(await page.locator('#printPlan svg[aria-label*=completed] .guide-center-cut').count() === guideCrosscutCount - 1, 'Top-view crosscut lines do not match the calculated count');
-  assert((await page.locator('#printPlan').textContent()).includes('EDGE RIP'), 'Selected Edge Rip is not visibly labeled');
+  assert((await page.locator('#printPlan').textContent()).includes('CUT ACROSS WALNUT'), 'Selected Edge Rip cut is not visibly labeled across the chosen wood');
   assert(await page.locator('.bordered-diamond-cell').count() === 105, 'Seven rows by fifteen crosscuts should render 105 complete cells');
   assert(await page.locator('[data-row="0"]').count() === 15 && await page.locator('[data-row="6"]').count() === 15, 'First or last complete row is missing');
   assert(/^translate\([^)]*\) scale\([^ ,)]+\)$/.test(await page.locator('.bordered-diamond-cell').first().getAttribute('transform')), '1.25 in bordered cells are not uniformly scaled squares');
