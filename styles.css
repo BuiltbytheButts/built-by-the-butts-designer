@@ -5,3 +5,4 @@
 .border-row{display:grid;grid-template-columns:24px 1fr 1.15fr auto;gap:8px;align-items:end;padding:10px 0;border-top:1px solid #eee5dc}.border-remove{padding:10px 2px}
 .metric-row{grid-template-columns:repeat(5,1fr)}
 .material-help{display:block;color:var(--muted);line-height:1.4;margin:9px 0}.material-table-wrap{overflow-x:auto}.material-table{width:100%;border-collapse:collapse;font-size:12px}.material-table th,.material-table td{padding:8px 5px;border-bottom:1px solid var(--line);text-align:right}.material-table th:first-child,.material-table td:first-child{text-align:left}.material-table small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.price-input{min-width:72px;padding:6px;text-align:right}

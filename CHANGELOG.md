@@ -1,3 +1,12 @@
+## v3.0.21 — Editable Species Pricing
+- Added an editable USD price per board foot for every species used by the design.
+- Prices default to zero and are never inferred from external suppliers.
+- Estimated species cost = validated purchase board feet × entered price per board foot.
+- Species shared by diamond laminate, Edge Rip, or borders retain one combined price and cost row.
+- Added a total estimated material cost that updates immediately with price or waste changes.
+- Species prices persist in saved project data with safe zero-price defaults for older projects.
+- Frozen v3.0.20 quantity calculations and v3.0.19 geometry/renderer remain unchanged.
+
 ## v3.0.20 — Material Quantity by Species
 - Added finished cubic inches, net board feet, and estimated purchase board feet by species.
 - Added an editable waste allowance, defaulting to 15 percent.

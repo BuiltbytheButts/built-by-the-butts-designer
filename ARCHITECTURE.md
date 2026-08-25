@@ -63,3 +63,8 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 - Finished composition includes diamond laminate after Edge Rip replacement, replacement wood, and every physical border band.
 - Purchase board feet retains the original laminate consumed before Edge Rip, adds rough-crosscut and blade-kerf consumption, then applies editable waste.
 - Species shared across components are combined into one purchasing row.
+
+## v3.0.21 pricing invariant
+- Prices are user-owned USD-per-board-foot inputs and default to zero.
+- Estimated cost is calculated only from the v3.0.20 purchase board-foot result.
+- A species has one price regardless of how many design components use it.

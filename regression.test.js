@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.20/g) || []).length === 5, 'All asset cache keys must be v3.0.20');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.21/g) || []).length === 5, 'All asset cache keys must be v3.0.21');
   assert(html.indexOf('Top &amp; Bottom Borders') < html.indexOf('Strip Schedule'), 'Border section is not above Strip Schedule');
 
   const browser = await chromium.launch({
@@ -51,7 +51,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.20', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.21', 'Wrong visible version');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
   assert(await page.locator('#wastePercent').isEditable(), 'Waste allowance is not editable');
   assert(await page.locator('#materialNetMetric').textContent() === '2.255 bd ft', 'Default net board-foot total is incorrect');
@@ -61,6 +61,15 @@ function functionSource(source, name) {
   await page.locator('#wastePercent').dispatchEvent('input');
   const purchaseAfterWasteChange = Number((await page.locator('#materialPurchaseMetric').textContent()).split(' ')[0]);
   assert(purchaseAfterWasteChange > purchaseBeforeWasteChange, 'Waste allowance did not increase purchase board feet');
+  assert(await page.locator('#materialCostMetric').textContent() === '$0.00', 'Pricing should default to zero');
+  assert(await page.locator('[data-wood-price]').count() === 3, 'Each combined species should have one price input');
+  const walnutPrice = page.locator('[data-wood-price="walnut"]');
+  const walnutRow = walnutPrice.locator('xpath=ancestor::tr');
+  await walnutPrice.fill('10');
+  await walnutPrice.dispatchEvent('input');
+  const walnutBuyBf = Number(await walnutRow.locator('td').nth(3).textContent());
+  assert(await walnutRow.locator('td').nth(5).textContent() === `$${(walnutBuyBf * 10).toFixed(2)}`, 'Walnut species cost is incorrect');
+  assert(await page.locator('#materialCostMetric').textContent() === `$${(walnutBuyBf * 10).toFixed(2)}`, 'Total material cost is incorrect');
 
   await page.locator('#boardLength').fill('18');
   await page.locator('#boardLength').dispatchEvent('input');

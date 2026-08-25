@@ -14,6 +14,7 @@
     const moduleWidth = Math.max(0.001, Number(input.moduleWidth) || 0.001);
     const diamondWidth = Math.max(0, Number(input.diamondFieldWidth) || 0);
     const wastePercent = Math.max(0, Number(input.wastePercent) || 0);
+    const prices = input.prices && typeof input.prices === 'object' ? input.prices : {};
     const strips = Array.isArray(input.strips) ? input.strips.filter(strip => Number(strip.width) > 0) : [];
     const borders = input.includeBorders && Array.isArray(input.borderBands) ? input.borderBands : [];
     const crosscutCount = Math.max(0, Math.floor(Number(input.crosscutCount) || 0));
@@ -63,11 +64,12 @@
       row.components.borders = (row.components.borders || 0) + volume;
     });
 
-    const rows = Object.values(bySpecies).map(row => ({
-      ...row,
-      netBoardFeet: row.finishedCubicInches / BOARD_FOOT_CUBIC_INCHES,
-      purchaseBoardFeet: (row.purchaseBaseCubicInches / BOARD_FOOT_CUBIC_INCHES) * (1 + wastePercent / 100)
-    })).sort((a, b) => a.species.localeCompare(b.species));
+    const rows = Object.values(bySpecies).map(row => {
+      const netBoardFeet = row.finishedCubicInches / BOARD_FOOT_CUBIC_INCHES;
+      const purchaseBoardFeet = (row.purchaseBaseCubicInches / BOARD_FOOT_CUBIC_INCHES) * (1 + wastePercent / 100);
+      const pricePerBoardFoot = Math.max(0, Number(prices[row.species]) || 0);
+      return { ...row, netBoardFeet, purchaseBoardFeet, pricePerBoardFoot, estimatedCost: purchaseBoardFeet * pricePerBoardFoot };
+    }).sort((a, b) => a.species.localeCompare(b.species));
     const designedVolume = rows.reduce((sum, row) => sum + row.finishedCubicInches, 0);
     return {
       rows,
@@ -78,7 +80,8 @@
       crosscutFactor,
       edgeFraction,
       totalNetBoardFeet: rows.reduce((sum, row) => sum + row.netBoardFeet, 0),
-      totalPurchaseBoardFeet: rows.reduce((sum, row) => sum + row.purchaseBoardFeet, 0)
+      totalPurchaseBoardFeet: rows.reduce((sum, row) => sum + row.purchaseBoardFeet, 0),
+      totalEstimatedCost: rows.reduce((sum, row) => sum + row.estimatedCost, 0)
     };
   }
 

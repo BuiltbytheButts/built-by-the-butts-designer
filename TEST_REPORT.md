@@ -138,3 +138,14 @@ This report tests Change #15 only.
 - Editable waste changes purchase board feet without changing net finished quantity.
 - Unmatched border schedules show an unfilled-volume warning; matched schedules clear it.
 - All frozen geometry, crosscut, manufacturing, border, cache, and browser regressions pass.
+# v3.0.21 Species Pricing Test Report
+
+## Result: PASS
+
+- Every combined species receives exactly one editable price-per-board-foot input.
+- All new and migrated projects default missing prices to $0.00.
+- Per-species cost equals full-precision purchase board feet multiplied by the entered price.
+- Total estimated cost equals the sum of all species costs.
+- Waste changes purchase board feet and estimated cost without changing net finished quantities.
+- Pricing updates immediately and persists through the existing project state/save workflow.
+- All material quantity, geometry, crosscut, manufacturing, border, cache, and browser regressions pass.

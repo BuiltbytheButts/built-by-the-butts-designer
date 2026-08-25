@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.20';
+const VERSION = '3.0.21';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -30,6 +30,7 @@ const defaultState = () => ({
   includeBorders: false,
   borderBands: [{ width: 0.5, wood: 'maple' }],
   wastePercent: 15,
+  woodPrices: Object.fromEntries(Object.keys(WOODS).map(key => [key, 0])),
   bladeKerf: 0.125,
   edgeInset: 0.5,
   edgeWood: 'walnut',
@@ -123,7 +124,8 @@ function materialQuantity() {
     includeBorders: state.includeBorders, borderBands: border.bands,
     edgeInset: state.edgeInset, edgeWood: state.edgeWood,
     crosscutCount: crosscuts.crosscutCount, roughCrosscut: crosscuts.roughCrosscut,
-    bladeKerf: state.bladeKerf, wastePercent: state.wastePercent
+    bladeKerf: state.bladeKerf, wastePercent: state.wastePercent,
+    prices: state.woodPrices
   });
 }
 
@@ -506,13 +508,26 @@ function renderMaterial() {
     if (row.components.diamondLaminate) parts.push('Diamond laminate');
     if (row.components.edgeRip) parts.push('Edge Rip');
     if (row.components.borders) parts.push('Borders');
-    return `<tr><td><strong>${WOODS[row.species]?.name || row.species}</strong><small>${parts.join(' + ')}</small></td><td>${row.finishedCubicInches.toFixed(2)}</td><td>${row.netBoardFeet.toFixed(3)}</td><td>${row.purchaseBoardFeet.toFixed(3)}</td></tr>`;
+    return `<tr><td><strong>${WOODS[row.species]?.name || row.species}</strong><small>${parts.join(' + ')}</small></td><td>${row.finishedCubicInches.toFixed(2)}</td><td>${row.netBoardFeet.toFixed(3)}</td><td>${row.purchaseBoardFeet.toFixed(3)}</td><td><input class="price-input" data-wood-price="${row.species}" type="number" min="0" step="0.01" value="${row.pricePerBoardFoot.toFixed(2)}" aria-label="${WOODS[row.species]?.name || row.species} price per board foot"></td><td data-species-cost="${row.species}">$${row.estimatedCost.toFixed(2)}</td></tr>`;
   }).join('');
   $('materialNetMetric').textContent = `${plan.totalNetBoardFeet.toFixed(3)} bd ft`;
   $('materialPurchaseMetric').textContent = `${plan.totalPurchaseBoardFeet.toFixed(3)} bd ft`;
+  $('materialCostMetric').textContent = `$${plan.totalEstimatedCost.toFixed(2)}`;
   $('materialVolumeHelp').textContent = `${plan.designedVolume.toFixed(2)} cu in designed of ${plan.targetVolume.toFixed(2)} cu in target.`;
   $('materialGapWarning').hidden = plan.unfilledVolume <= 0.01;
   $('materialGapWarning').textContent = `${plan.unfilledVolume.toFixed(2)} cu in remains unfilled. Match the border schedule before using purchase totals.`;
+  document.querySelectorAll('[data-wood-price]').forEach(input => {
+    input.addEventListener('input', event => {
+      state.woodPrices[event.target.dataset.woodPrice] = Math.max(0, number(event.target.value));
+      const updated = materialQuantity();
+      updated.rows.forEach(row => {
+        const cell = document.querySelector(`[data-species-cost="${row.species}"]`);
+        if (cell) cell.textContent = `$${row.estimatedCost.toFixed(2)}`;
+      });
+      $('materialCostMetric').textContent = `$${updated.totalEstimatedCost.toFixed(2)}`;
+    });
+    input.addEventListener('change', commit);
+  });
 }
 
 function render() {
@@ -559,6 +574,7 @@ function restore(serialized) {
   state.borderBands = Array.isArray(parsed.borderBands) && parsed.borderBands.length
     ? parsed.borderBands.map(band => ({ width: Math.max(0.0625, number(band.width)), wood: WOODS[band.wood] ? band.wood : 'maple' }))
     : (legacyBand || defaultState().borderBands);
+  state.woodPrices = { ...defaultState().woodPrices, ...(parsed.woodPrices || {}) };
   delete state.laminatedRows;
   delete state.borderWidth;
   delete state.borderWood;
