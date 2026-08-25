@@ -1,3 +1,8 @@
+## v3.0.24 — Illustrated Build Guide
+- Added a nine-step illustrated procedure generated from the active design.
+- Visuals show wood colors, strip order, crosscuts, kerf, Edge Rip, assembly orientation, borders, and final sizing.
+- Added a color-coded material key and retained the quick checklist.
+
 ## v3.0.23 — Printable Cut List & Workshop Plan
 - Added a Print Workshop Plan action that opens the browser print/save-PDF dialog.
 - Added a print-only live plan generated from current design state immediately before printing.
@@ -185,3 +190,7 @@
 - Added rough-crosscut guidance (+1/8 in) as a recommendation rather than a user allowance.
 - Preserved even-count Crosscut Engineering with master blank length and kerf.
 - Added clean JSON save/open, undo/redo, SVG export, edge-rip controls, and strip-pair controls.
+## v3.0.24 — Illustrated Build Guide
+- Added a nine-step illustrated procedure generated from the active design.
+- Visuals show wood colors, strip order, crosscuts, kerf, Edge Rip, assembly orientation, borders, and final sizing.
+- Added a color-coded material key and retained the quick checklist.

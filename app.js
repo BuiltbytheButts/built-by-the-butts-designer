@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.23';
+const VERSION = '3.0.24';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -530,6 +530,58 @@ function renderMaterial() {
   });
 }
 
+function guideWood(wood) {
+  return WOODS[wood]?.color || '#b9aa98';
+}
+
+function guideArrow(x1, y1, x2, y2, label = '') {
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="guide-arrow" marker-end="url(#guide-arrowhead)"/>${label ? `<text x="${(x1 + x2) / 2}" y="${Math.min(y1, y2) - 7}" text-anchor="middle">${label}</text>` : ''}`;
+}
+
+function guideSvg(content, label) {
+  return `<svg class="guide-svg" viewBox="0 0 420 190" role="img" aria-label="${label}"><defs><marker id="guide-arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#8f431f"/></marker><pattern id="guide-kerf" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M-2 8 L8 -2 M2 10 L10 2" stroke="#c23b22" stroke-width="2"/></pattern></defs>${content}</svg>`;
+}
+
+function buildGuideVisuals(crosscuts, border, lamination) {
+  const strips = activeStrips();
+  const total = Math.max(moduleWidth(), 0.001);
+  let stripX = 40;
+  const stripBlocks = strips.map((strip, index) => {
+    const width = 340 * number(strip.width) / total;
+    const block = `<rect x="${stripX.toFixed(2)}" y="58" width="${width.toFixed(2)}" height="74" fill="${guideWood(strip.wood)}"/><text x="${(stripX + width / 2).toFixed(2)}" y="150" text-anchor="middle">${index + 1}</text>`;
+    stripX += width;
+    return block;
+  }).join('');
+  const pieceCount = Math.min(crosscuts.crosscutCount, 12);
+  const pieceWidth = 310 / Math.max(pieceCount, 1);
+  const pieces = Array.from({ length: pieceCount }, (_, index) => `<rect x="${48 + index * pieceWidth}" y="65" width="${Math.max(5, pieceWidth - 3)}" height="62" fill="${index % 2 ? guideWood(state.edgeWood) : guideWood(strips[index % strips.length]?.wood)}"/><line x1="${48 + (index + 1) * pieceWidth - 1.5}" y1="54" x2="${48 + (index + 1) * pieceWidth - 1.5}" y2="138" class="guide-cut"/>`).join('');
+  const diamonds = Array.from({ length: 8 }, (_, index) => {
+    const col = index % 4;
+    const row = Math.floor(index / 4);
+    const cx = 90 + col * 80;
+    const cy = 62 + row * 72;
+    return `<polygon points="${cx},${cy - 30} ${cx + 36},${cy} ${cx},${cy + 30} ${cx - 36},${cy}" fill="${guideWood(strips[0]?.wood)}" stroke="${guideWood(state.edgeWood)}" stroke-width="9"/><polygon points="${cx},${cy - 15} ${cx + 18},${cy} ${cx},${cy + 15} ${cx - 18},${cy}" fill="${guideWood(strips[Math.floor(strips.length / 2)]?.wood)}"/>`;
+  }).join('');
+  const borderTop = state.includeBorders ? border.bands.reduce((html, band, index) => html + `<rect x="45" y="${30 + index * 8}" width="330" height="8" fill="${guideWood(band.wood)}"/>`, '') : '';
+  const borderBottom = state.includeBorders ? border.bands.reduce((html, band, index) => html + `<rect x="45" y="${152 - index * 8}" width="330" height="8" fill="${guideWood(band.wood)}"/>`, '') : '';
+  const steps = [
+    { title: 'Prepare and label the lumber', text: `Mill the selected species square and straight. Mark each species and keep enough stock for the ${materialsText()} estimate plus your ${number(state.wastePercent).toFixed(0)}% allowance.`, svg: guideSvg(`${strips.map((strip, i) => `<rect x="${45 + i * 52}" y="55" width="42" height="78" rx="3" fill="${guideWood(strip.wood)}"/><text x="${66 + i * 52}" y="151" text-anchor="middle">${i + 1}</text>`).join('')}<text x="210" y="28" text-anchor="middle">Label stock to match the strip schedule</text>`, 'Prepared and numbered wood stock') },
+    { title: 'Rip the laminate strips', text: `Rough-rip every strip about 1/16 in wider than its finished design width. Joint and plane consistently; the assembled blank must finish at least ${lamination.recommended.toFixed(3)} in before the 45° cuts.`, svg: guideSvg(`<rect x="48" y="62" width="324" height="66" fill="${guideWood(strips[0]?.wood)}"/>${[1,2,3,4,5].map(i => `<line x1="${48 + i * 54}" y1="48" x2="${48 + i * 54}" y2="142" class="guide-cut"/>`).join('')}<text x="210" y="32" text-anchor="middle">Rip oversize → finish to schedule</text>`, 'Rip lines through rough lumber') },
+    { title: 'Dry-fit the strip order', text: 'Arrange the pieces in the exact numbered order shown below. Confirm the wood colors and symmetry before applying glue.', svg: guideSvg(`${stripBlocks}<path d="M40 42 H380" class="guide-dimension"/><text x="210" y="31" text-anchor="middle">${total.toFixed(4)} in design module</text>`, 'Color-coded laminate strip order') },
+    { title: 'Glue and flatten the laminated blank', text: `Apply glue evenly, clamp across the full blank, then flatten it. Verify the blank is at least ${lamination.recommended.toFixed(3)} in in the required direction before continuing.`, svg: guideSvg(`${stripBlocks}${guideArrow(28,95,62,95,'clamp')}${guideArrow(392,95,358,95,'clamp')}<rect x="38" y="52" width="344" height="86" fill="none" stroke="#222" stroke-width="2"/>`, 'Clamped laminated blank') },
+    { title: 'Make the 45° cuts and Edge Rip', text: `Make the validated 45° cuts. Remove only the two specified corner areas to a ${number(state.edgeInset).toFixed(3)} in depth and replace them with ${WOODS[state.edgeWood]?.name || state.edgeWood}.`, svg: guideSvg(`<rect x="115" y="28" width="190" height="134" fill="${guideWood(strips[0]?.wood)}" transform="rotate(45 210 95)"/><polygon points="115,95 160,50 160,140" fill="${guideWood(state.edgeWood)}"/><polygon points="305,95 260,50 260,140" fill="${guideWood(state.edgeWood)}"/><line x1="102" y1="155" x2="318" y2="39" class="guide-cut"/><text x="210" y="181" text-anchor="middle">45° cuts · replacement corners</text>`, 'Forty-five degree cuts and Edge Rip replacement areas') },
+    { title: 'Crosscut the master blank', text: `Prepare at least ${crosscuts.requiredBlankLength.toFixed(3)} in of master blank. Cut ${crosscuts.crosscutCount} pieces at about ${crosscuts.roughCrosscut.toFixed(3)} in each, allowing for the editable ${crosscuts.bladeKerf.toFixed(3)} in blade kerf.`, svg: guideSvg(`<rect x="35" y="65" width="350" height="62" fill="${guideWood(strips[0]?.wood)}"/>${pieces}<rect x="45" y="51" width="${Math.max(4, pieceWidth * .12)}" height="90" fill="url(#guide-kerf)"/><text x="210" y="28" text-anchor="middle">${crosscuts.crosscutCount} crosscuts · kerf shown in red</text>`, 'Master blank divided into crosscuts with blade kerf') },
+    { title: 'Rotate and mirror the crosscuts', text: `Keep the pieces in order. Rotate every second piece 180° and mirror adjacent faces so the bands close into diamonds. Dry-fit ${border.selectedRows} complete laminated rows before gluing.`, svg: guideSvg(`${diamonds}${guideArrow(72,170,145,170,'rotate every second piece')}<path d="M316 157 A22 22 0 1 1 344 137" fill="none" class="guide-arrow" marker-end="url(#guide-arrowhead)"/>`, 'Alternating pieces arranged into diamonds') },
+    { title: state.includeBorders ? 'Prepare and attach the borders' : 'Glue the full-width diamond field', text: state.includeBorders ? `Prepare each listed border band separately. Build matching top and bottom schedules totaling ${border.requiredWidth.toFixed(4)} in per edge, then glue them to the completed diamond field.` : 'No borders are selected. Glue the complete diamond field at full width and keep the rows aligned during clamping.', svg: guideSvg(`${borderTop}<rect x="45" y="${state.includeBorders ? 54 : 28}" width="330" height="${state.includeBorders ? 90 : 134}" fill="#b65c3d"/>${diamonds.replaceAll('cy - 30','cy - 30')}${borderBottom}<text x="210" y="181" text-anchor="middle">${state.includeBorders ? `${border.bands.length} band(s) on each edge` : 'Full-width diamond field'}</text>`, state.includeBorders ? 'Diamond field with top and bottom border bands' : 'Full-width diamond field') },
+    { title: 'Flatten, trim, sand, and finish', text: `Flatten both faces, trim square, ease the edges, sand, and apply a food-safe finish appropriate to your use. Final target: ${number(state.boardLength).toFixed(3)} × ${number(state.boardWidth).toFixed(3)} × ${number(state.finishedThickness).toFixed(3)} in.`, svg: guideSvg(`<rect x="55" y="35" width="310" height="120" rx="7" fill="#b65c3d" stroke="#6e5a4b" stroke-width="5"/>${diamonds}<path d="M55 171 H365" class="guide-dimension"/><text x="210" y="186" text-anchor="middle">${number(state.boardLength).toFixed(3)} × ${number(state.boardWidth).toFixed(3)} × ${number(state.finishedThickness).toFixed(3)} in</text>`, 'Finished cutting board with final dimensions') }
+  ];
+  return steps.map((step, index) => `<article class="guide-step"><div class="guide-step-number">${index + 1}</div><div class="guide-copy"><h3>${step.title}</h3><p>${step.text}</p></div>${step.svg}</article>`).join('');
+}
+
+function materialsText() {
+  return materialQuantity().rows.map(row => WOODS[row.species]?.name || row.species).join(', ');
+}
+
 function renderWorkshopPlan() {
   const crosscuts = crosscutEngineering();
   const border = borderEngineering();
@@ -543,6 +595,8 @@ function renderWorkshopPlan() {
   const borderStep = state.includeBorders
     ? `<li>Prepare two mirrored border schedules totaling ${border.requiredWidth.toFixed(4)} in per edge, then attach them to the complete diamond field.</li>`
     : '<li>Continue with the full-width diamond field; no border preparation is required.</li>';
+  const materialKey = materials.rows.map(row => `<span class="guide-key-item"><i style="background:${guideWood(row.species)}"></i>${WOODS[row.species]?.name || row.species}: ${row.purchaseBoardFeet.toFixed(3)} bd ft</span>`).join('');
+  const illustratedSteps = buildGuideVisuals(crosscuts, border, lamination);
   $('printPlan').innerHTML = `
     <header><p class="print-eyebrow">Built By The Butts</p><h1>Diamond End Grain Workshop Plan</h1><p>Designer v${VERSION}</p></header>
     <section class="print-summary"><h2>Finished Design</h2><p><strong>${number(state.boardLength).toFixed(3)} × ${number(state.boardWidth).toFixed(3)} × ${number(state.finishedThickness).toFixed(3)} in</strong></p><p>${crosscuts.crosscutCount} crosscuts · ${border.selectedRows} laminated rows · ${state.includeBorders ? `${border.bands.length} border band${border.bands.length === 1 ? '' : 's'} per edge` : 'No borders'}</p></section>
@@ -551,7 +605,8 @@ function renderWorkshopPlan() {
     <section><h2>Edge Rip</h2><p>Cut depth: <strong>${number(state.edgeInset).toFixed(3)} in</strong> · Replacement: <strong>${WOODS[state.edgeWood]?.name || state.edgeWood}</strong></p></section>
     <section><h2>Border Schedule</h2><p>Required total per edge: <strong>${state.includeBorders ? `${border.requiredWidth.toFixed(4)} in` : 'Not applicable'}</strong>${state.includeBorders && !border.scheduleMatches ? ` · Current schedule needs adjustment by ${Math.abs(border.difference).toFixed(4)} in per edge.` : ''}</p><table><thead><tr><th>Band</th><th>Species</th><th>Width</th><th>Finished length</th><th>Quantity</th></tr></thead><tbody>${borderRows}</tbody></table></section>
     <section><h2>Material Quantity (Estimate)</h2><p>Waste allowance: ${materials.wastePercent.toFixed(1)}% · Estimated purchase: ${materials.totalPurchaseBoardFeet.toFixed(3)} bd ft · Estimated cost: $${materials.totalEstimatedCost.toFixed(2)}</p><table><thead><tr><th>Species</th><th>Cu in</th><th>Net BF</th><th>Buy BF</th><th>$/BF</th><th>Cost</th></tr></thead><tbody>${materialRows}</tbody></table><p class="print-note">Actual material use varies with stock selection, milling, defects, and individual shop practices.</p></section>
-    <section><h2>Workshop Sequence</h2><ol><li>Review the complete design and confirm that all warnings are cleared or intentionally accepted.</li><li>Mill stock and rough-rip the laminate strips according to the strip schedule.</li><li>Glue the laminated blank and mill it to the required pre-45° size.</li><li>Make the validated 45° cuts, then complete the Edge Rip and replacement-stock operation.</li><li>Prepare at least ${crosscuts.requiredBlankLength.toFixed(3)} in of master blank and cut ${crosscuts.crosscutCount} pieces at approximately ${crosscuts.roughCrosscut.toFixed(3)} in using a ${crosscuts.bladeKerf.toFixed(3)} in kerf.</li><li>Rotate and mirror the crosscuts into ${border.selectedRows} complete laminated rows and glue the diamond field.</li>${borderStep}<li>Flatten, trim, and finish to ${number(state.boardLength).toFixed(3)} × ${number(state.boardWidth).toFixed(3)} × ${number(state.finishedThickness).toFixed(3)} in.</li></ol></section>`;
+    <section><h2>Illustrated Build Procedure</h2><p class="print-note">Diagrams are generated from this design. Wood colors are a guide; actual boards vary.</p><div class="guide-key">${materialKey}</div><div class="guide-steps">${illustratedSteps}</div></section>
+    <section><h2>Workshop Sequence — Quick Checklist</h2><ol><li>Review the complete design and confirm that all warnings are cleared or intentionally accepted.</li><li>Mill stock and rough-rip the laminate strips according to the strip schedule.</li><li>Glue the laminated blank and mill it to the required pre-45° size.</li><li>Make the validated 45° cuts, then complete the Edge Rip and replacement-stock operation.</li><li>Prepare at least ${crosscuts.requiredBlankLength.toFixed(3)} in of master blank and cut ${crosscuts.crosscutCount} pieces at approximately ${crosscuts.roughCrosscut.toFixed(3)} in using a ${crosscuts.bladeKerf.toFixed(3)} in kerf.</li><li>Rotate and mirror the crosscuts into ${border.selectedRows} complete laminated rows and glue the diamond field.</li>${borderStep}<li>Flatten, trim, and finish to ${number(state.boardLength).toFixed(3)} × ${number(state.boardWidth).toFixed(3)} × ${number(state.finishedThickness).toFixed(3)} in.</li></ol></section>`;
 }
 
 function render() {

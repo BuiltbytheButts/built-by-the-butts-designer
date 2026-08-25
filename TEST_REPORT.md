@@ -159,3 +159,12 @@ This report tests Change #15 only.
 - Current dimensions, strip schedule, border schedule, quantities, prices, and calculated results populate the plan.
 - Print-only styling hides the interactive application and formats tables for paper/PDF.
 - All material, pricing, geometry, crosscut, manufacturing, border, cache, and browser regressions pass.
+
+
+# v3.0.24 Illustrated Build Guide Test Report
+
+PASS — syntax; material quantities; geometry; manufacturing; actual crosscut behavior; version/cache; frozen geometry/renderer; browser, border, and print regression.
+
+- Nine numbered procedure steps and nine generated SVG diagrams verified.
+- Wood key, blade kerf, dimensions, row count, Edge Rip, and border-dependent wording verified against current state.
+- Existing v3.0.23 calculations and renderer remain unchanged.

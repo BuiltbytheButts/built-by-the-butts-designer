@@ -73,3 +73,8 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 - The print plan is derived from current state and existing validated calculation functions immediately before `window.print()`.
 - Print markup contains no independent engineering formulas.
 - Print CSS hides the interactive workspace and formats the plan for paper or Save as PDF.
+
+
+## v3.0.24 illustrated-guide invariant
+
+The print-only procedure is regenerated from current state and contains nine SVG diagrams. It may consume engineering results but must not alter frozen laminate geometry or the finished-board renderer.
