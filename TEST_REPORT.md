@@ -70,3 +70,15 @@ This report tests Change #15 only.
 - v3.0.13 single-border saved data migrates to the new one-band schedule.
 - Visible version and all cache keys are 3.0.14.
 - All syntax, geometry, manufacturing, crosscut, frozen-renderer, and browser regressions pass.
+# v3.0.15 Laminated Row Engineering Test Report
+
+## Result: PASS
+
+- A 7.375 in no-border board with 1.500 in modules calculates five laminated rows.
+- Enabling borders initially removes two rows and retains three complete laminated rows.
+- Three rows require 1.4375 in of replacement border per edge.
+- Selecting two rows creates a 3.000 in diamond field and requires 2.1875 in per edge.
+- Four independently colored bands totaling 2.1875 in clear the mismatch warning.
+- Underage and overage schedules show the remaining/excess width and warning.
+- Turning borders off restores automatic laminated-row calculation and the full-diamond view.
+- All multi-border, crosscut, geometry, manufacturing, cache, and frozen-renderer regressions pass.

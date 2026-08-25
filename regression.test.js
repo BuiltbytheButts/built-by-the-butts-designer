@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.14/g) || []).length === 4, 'All asset cache keys must be v3.0.14');
+  assert(!/v=3\.0\.(10|11|12|13|14)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.15/g) || []).length === 4, 'All asset cache keys must be v3.0.15');
   assert(html.indexOf('Top &amp; Bottom Borders') < html.indexOf('Strip Schedule'), 'Border section is not above Strip Schedule');
 
   const browser = await chromium.launch({
@@ -51,7 +51,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.14', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.15', 'Wrong visible version');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
 
   await page.locator('#boardLength').fill('18');
@@ -76,28 +76,36 @@ function functionSource(source, name) {
   assert((await page.locator('#diamondFieldMetric').textContent()).includes('(full board)'), 'Border-off diamond field should use full width');
   await page.locator('#boardWidth').fill('7.375');
   await page.locator('#boardWidth').dispatchEvent('input');
+  assert(await page.locator('#laminatedRowMetric').textContent() === '5', 'Automatic no-border laminated-row count is incorrect');
   await page.locator('#includeBorders').check();
   assert(await page.locator('.end-grain-border').count() === 2, 'Top and bottom borders were not rendered');
-  assert(await page.locator('#diamondFieldMetric').textContent() === '19.500 × 6.375 in', 'Border width was not subtracted twice from finished width');
-  assert(await page.locator('#borderMaterialMetric').textContent() === '1 band per edge; 0.500 in total per edge', 'Border material result is incorrect');
+  assert(await page.locator('#laminatedRows').inputValue() === '3', 'Enabling borders did not initially remove two laminated rows');
+  assert(await page.locator('#requiredBorderMetric').textContent() === '1.4375 in per edge', 'Initial replacement-border calculation is incorrect');
+  assert(await page.locator('#borderWarning').isVisible(), 'Mismatched border schedule should warn');
+  await page.locator('#laminatedRows').fill('2');
+  await page.locator('#laminatedRows').dispatchEvent('input');
+  assert(await page.locator('#diamondFieldMetric').textContent() === '19.500 × 3.000 in', 'Two-row diamond field is incorrect');
+  assert(await page.locator('#requiredBorderMetric').textContent() === '2.1875 in per edge', 'Two-row replacement-border calculation is incorrect');
   for (let i = 0; i < 3; i += 1) await page.locator('#addBorderBandBtn').click();
   assert(await page.locator('[data-border-width]').count() === 4, 'Four-band schedule was not created');
-  for (let i = 0; i < 4; i += 1) {
-    await page.locator('[data-border-width]').nth(i).fill('0.25');
+  for (const [i, width] of ['0.5', '0.5', '0.5', '0.6875'].entries()) {
+    await page.locator('[data-border-width]').nth(i).fill(width);
     await page.locator('[data-border-width]').nth(i).dispatchEvent('input');
   }
   for (const [i, wood] of ['walnut', 'padauk', 'cherry', 'maple'].entries()) {
     await page.locator('[data-border-wood]').nth(i).selectOption(wood);
   }
   assert(await page.locator('.end-grain-border').count() === 8, 'Four mirrored bands should render eight border strips');
-  assert(await page.locator('#diamondFieldMetric').textContent() === '19.500 × 5.375 in', 'Multi-band total was not subtracted twice from finished width');
-  assert(await page.locator('#borderMaterialMetric').textContent() === '4 bands per edge; 1.000 in total per edge', 'Multi-band material summary is incorrect');
+  assert(await page.locator('#borderMaterialMetric').textContent() === '4 bands per edge; 2.188 in total per edge', 'Multi-band material summary is incorrect');
+  assert(await page.locator('#borderDifferenceMetric').textContent() === 'Matched ✓', 'Matching border schedule was not recognized');
+  assert(await page.locator('#borderWarning').isHidden(), 'Matched border schedule should not warn');
   await page.locator('#addBorderBandBtn').click();
   assert(await page.locator('[data-border-width]').count() === 5, 'Border schedule has an artificial four-band limit');
   await page.locator('[data-remove-border="4"]').click();
   assert(await page.locator('[data-border-width]').count() === 4, 'Border remove control failed');
   await page.locator('#includeBorders').uncheck();
   assert(await page.locator('.end-grain-border').count() === 0, 'Turning borders off did not restore full-diamond view');
+  assert(await page.locator('#laminatedRowMetric').textContent() === '5', 'Turning borders off did not restore automatic laminated rows');
   await page.evaluate(() => restore(JSON.stringify({ includeBorders: true, borderWidth: 0.75, borderWood: 'padauk' })));
   assert(await page.locator('[data-border-width]').count() === 1, 'Legacy single border did not migrate to one band');
   assert(await page.locator('[data-border-width]').inputValue() === '0.7500', 'Legacy border width migration failed');

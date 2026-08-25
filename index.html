@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
   <title>Diamond End Grain Designer</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.14" />
+  <link rel="stylesheet" href="styles.css?v=3.0.15" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.14</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.15</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -38,9 +38,14 @@
         <div class="section-heading-row"><h2>Top &amp; Bottom Borders</h2><button id="addBorderBandBtn" class="text-button" type="button">+ Add Border</button></div>
         <label class="toggle-row"><input id="includeBorders" type="checkbox" /> Include all-end-grain borders</label>
         <p class="help">Add as many border bands as needed. The schedule runs from the outside edge toward the diamond field and is mirrored on the top and bottom. Borders remain inside the finished dimensions.</p>
-        <div id="borderFields"><div id="borderEditor"></div></div>
+        <div id="borderFields">
+          <label>Laminated rows to keep<input id="laminatedRows" type="number" min="1" step="1" /></label>
+          <div id="borderEditor"></div>
+        </div>
         <div class="engineering-card"><span>Diamond field size</span><strong id="diamondFieldMetric"></strong></div>
+        <div class="engineering-card"><span>Required border width</span><strong id="requiredBorderMetric"></strong></div>
         <div class="engineering-card"><span>Border schedule</span><strong id="borderMaterialMetric"></strong></div>
+        <div class="engineering-card"><span>Border width check</span><strong id="borderDifferenceMetric"></strong></div>
         <p id="borderWarning" class="crosscut-warning" role="alert" hidden></p>
       </section>
 
@@ -79,6 +84,7 @@
       <div class="metric-row">
         <article><span>Required Lamination Size Before 45° Cuts</span><strong id="moduleWidthMetric"></strong><small id="laminationMinimumMetric"></small></article>
         <article><span>Calculated crosscuts</span><strong id="crosscutMetric"></strong></article>
+        <article><span>Laminated rows</span><strong id="laminatedRowMetric"></strong></article>
         <article><span>Finished board target</span><strong id="boardSizeMetric"></strong></article>
         <article><span>Finished thickness</span><strong id="thicknessMetric"></strong></article>
       </div>
@@ -101,8 +107,8 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="geometry.js?v=3.0.14"></script>
-  <script src="manufacturing.js?v=3.0.14"></script>
-  <script src="app.js?v=3.0.14"></script>
+  <script src="geometry.js?v=3.0.15"></script>
+  <script src="manufacturing.js?v=3.0.15"></script>
+  <script src="app.js?v=3.0.15"></script>
 </body>
 </html>

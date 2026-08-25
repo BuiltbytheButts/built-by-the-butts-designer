@@ -1,3 +1,13 @@
+## v3.0.15 — Laminated Row & Border Replacement Engineering
+- Added a Laminated Rows result alongside Calculated Crosscuts.
+- No-border designs calculate laminated rows automatically from finished width and module width.
+- Enabling borders initially removes one complete laminated row from each long edge.
+- The user can select any positive whole number of laminated rows, including a two-row centerpiece.
+- Required border width per edge = (finished width − selected rows × module width) ÷ 2.
+- Added required-width, scheduled-width, remaining/excess, and mismatch warning results.
+- Future material costing can use the selected laminated-row count instead of charging for replaced rows.
+- Frozen diamond, laminate, Edge Rip, and crosscut geometry remains unchanged.
+
 ## v3.0.14 — Unlimited Multi-Band Borders
 - Moved Top & Bottom Borders above Strip Schedule.
 - Replaced the single border with an unlimited add/remove border-band schedule.
