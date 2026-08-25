@@ -168,3 +168,13 @@ PASS — syntax; material quantities; geometry; manufacturing; actual crosscut b
 - Nine numbered procedure steps and nine generated SVG diagrams verified.
 - Wood key, blade kerf, dimensions, row count, Edge Rip, and border-dependent wording verified against current state.
 - Existing v3.0.23 calculations and renderer remain unchanged.
+
+
+# v3.0.25 Illustrated Guide Refinement Test Report
+
+PASS — syntax; material quantities; geometry; manufacturing; actual crosscut behavior; version/cache; frozen geometry/renderer; browser, border, and print regression.
+
+- Square stock and square laminate illustrations verified.
+- All assigned laminated rows are shown together in one line.
+- Dotted adjacent-edge-center 45-degree guide verified.
+- Edge Rip visuals, wording, and schedule are suppressed at zero cut depth and restored when selected.

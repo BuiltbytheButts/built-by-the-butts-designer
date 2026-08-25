@@ -78,3 +78,8 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 ## v3.0.24 illustrated-guide invariant
 
 The print-only procedure is regenerated from current state and contains nine SVG diagrams. It may consume engineering results but must not alter frozen laminate geometry or the finished-board renderer.
+
+
+## v3.0.25 guide-display invariant
+
+Guide-only shapes may respond to design state but must not alter the frozen finished-board renderer. Edge Rip guide content is conditional on a nonzero cut depth.

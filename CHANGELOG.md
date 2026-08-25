@@ -1,3 +1,9 @@
+## v3.0.25 — Illustrated Guide Refinements
+- Changed laminate visuals to square stock and square assembled blanks.
+- Shows every assigned laminated row together in one line.
+- Added a dotted center-to-center 45° cut guide.
+- Edge Rip visuals and print schedule now appear only when a nonzero Edge Rip is selected.
+
 ## v3.0.24 — Illustrated Build Guide
 - Added a nine-step illustrated procedure generated from the active design.
 - Visuals show wood colors, strip order, crosscuts, kerf, Edge Rip, assembly orientation, borders, and final sizing.

@@ -1,4 +1,4 @@
-# Diamond End Grain Designer v3.0.24
+# Diamond End Grain Designer v3.0.25
 
 Clean-architecture foundation rebuild for Built By The Butts.
 
