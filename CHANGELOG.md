@@ -1,3 +1,8 @@
+## v3.0.22 — Material Estimate Wording
+- Renamed Material Quantity to Material Quantity (Estimate).
+- Added a visible note that actual usage varies by stock selection, milling, defects, and shop practices.
+- All accepted v3.0.21 quantity and pricing calculations remain unchanged.
+
 ## v3.0.21 — Editable Species Pricing
 - Added an editable USD price per board foot for every species used by the design.
 - Prices default to zero and are never inferred from external suppliers.
