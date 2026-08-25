@@ -178,3 +178,14 @@ PASS — syntax; material quantities; geometry; manufacturing; actual crosscut b
 - All assigned laminated rows are shown together in one line.
 - Dotted adjacent-edge-center 45-degree guide verified.
 - Edge Rip visuals, wording, and schedule are suppressed at zero cut depth and restored when selected.
+
+
+# v3.0.26 Ten-Step Illustrated Sequence Test Report
+
+PASS — syntax; material quantities; geometry; manufacturing; actual crosscut behavior; version/cache; frozen geometry/renderer; browser, border, and print regression.
+
+- Ten numbered steps and ten diagrams verified.
+- Required square dimension appears on both axes.
+- All four center-to-center corner cuts and CUT labels verified.
+- Two-row 45-degree dry fit and dynamic top-view crosscut spacing verified.
+- Assigned quantity is sourced from calculated crosscuts, not laminated rows.

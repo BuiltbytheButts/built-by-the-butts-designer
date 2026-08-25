@@ -1,3 +1,10 @@
+## v3.0.26 — Ten-Step Build Sequence
+- Dimensioned the glued blank as a true required-size square on both sides.
+- Marked all four dotted 45-degree corner cuts and labeled each CUT.
+- Added a two-row dry fit before crosscutting.
+- Added a top-view crosscut layout with calculated spacing.
+- Corrected the assembly language and count to assigned crosscuts.
+
 ## v3.0.25 — Illustrated Guide Refinements
 - Changed laminate visuals to square stock and square assembled blanks.
 - Shows every assigned laminated row together in one line.
