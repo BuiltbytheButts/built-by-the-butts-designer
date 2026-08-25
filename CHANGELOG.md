@@ -1,3 +1,8 @@
+## v3.0.33 — Dynamic Edge Title and Cleaner Square
+- Verified and regression-tested that the Edge Rip glue-up title follows the selected replacement species.
+- Finished square keeps a straight Walnut center with one light replacement piece on each end.
+- Simplified Step 1 to milling square and straight with extra planing and sanding allowance.
+
 ## v3.0.32 — Square Edge Rip Completion
 - Corrected the completed Step 7 replacement view from an octagon to a square.
 - The square shows the light replacement pieces attached to both ends of the target wood band.

@@ -245,3 +245,12 @@ PASS — syntax; material quantities; geometry; manufacturing; actual crosscut b
 
 - Completed Step 7 view is a square.
 - Both replacement wedges attach to the opposing ends of the target wood band.
+
+
+# v3.0.33 Dynamic Edge Title and Cleaner Square
+
+PASS — syntax; material quantities; geometry; manufacturing; actual crosscut behavior; version/cache; frozen geometry/renderer; browser, border, and print regression.
+
+- Edge Rip glue-up title verified against a live species change to Hard Maple.
+- Finished square retains a straight target-wood center and two opposing replacement ends.
+- Step 1 wording contains only milling and planing/sanding allowance guidance.
