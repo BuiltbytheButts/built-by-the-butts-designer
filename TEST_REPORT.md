@@ -219,3 +219,12 @@ PASS — syntax; material quantities; geometry; manufacturing; actual crosscut b
 - Nonzero Edge Rip generates two separate images after the first four 45-degree cuts: cut face, then replacement glue-up.
 - Zero Edge Rip removes both steps.
 - Assigned crosscuts render as a single diamond row.
+
+
+# v3.0.30 Edge Rip Before-and-After Test Report
+
+PASS — syntax; material quantities; geometry; manufacturing; actual crosscut behavior; version/cache; frozen geometry/renderer; browser, border, and print regression.
+
+- Replacement glue-up diagram contains a solid standalone replacement piece.
+- Completed view combines the selected replacement wood with the cut target wood.
+- Labels remain dynamic for the project-selected replacement species.

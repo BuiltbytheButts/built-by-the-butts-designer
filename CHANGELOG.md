@@ -1,3 +1,8 @@
+## v3.0.30 — Edge Rip Before-and-After View
+- Replacement glue-up diagram now shows the solid light replacement piece by itself first.
+- A second view shows that same piece combined with the Walnut edge after gluing.
+- Added a clear directional arrow and before/after labels.
+
 ## v3.0.29 — Printable Wood Colors and Two-Stage Edge Rip
 - Finished-board reference now uses direct printable wood fills so its colors survive print/PDF output.
 - Edge Rip now has one octagonal cut-face image followed by a separate 45-degree replacement glue-up image.

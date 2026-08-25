@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.29';
+const VERSION = '3.0.30';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -591,7 +591,7 @@ function buildGuideVisuals(crosscuts, border, lamination) {
   }, {
     title: `Glue the new 45° ${edgeRipSpecies} to the cut edges`,
     text: `Prepare matching 45° ${edgeRipSpecies} replacement pieces. Glue them directly to the freshly cut ${ripTargetSpecies} edges, keeping both mirrored assemblies aligned.`,
-    svg: guideSvg(`<path d="M32 145 L112 55 L192 145" fill="none" stroke="${guideWood(state.edgeWood)}" stroke-width="24"/><path d="M45 145 L112 70 L179 145" fill="none" stroke="${guideWood(ripTargetWood)}" stroke-width="18"/><path d="M228 145 L308 55 L388 145" fill="none" stroke="${guideWood(state.edgeWood)}" stroke-width="24"/><path d="M241 145 L308 70 L375 145" fill="none" stroke="${guideWood(ripTargetWood)}" stroke-width="18"/><line x1="112" y1="42" x2="112" y2="78" class="guide-arrow" marker-end="url(#guide-arrowhead)"/><line x1="308" y1="42" x2="308" y2="78" class="guide-arrow" marker-end="url(#guide-arrowhead)"/><text x="210" y="22" text-anchor="middle">Glue ${edgeRipSpecies} onto both cut ${ripTargetSpecies} edges</text>`, `New 45-degree ${edgeRipSpecies} pieces applied to the cut ${ripTargetSpecies} edges`)
+    svg: guideSvg(`<text x="102" y="22" text-anchor="middle">Solid ${edgeRipSpecies} piece</text><path d="M30 145 L102 62 L174 145" fill="none" stroke="#6e5a4b" stroke-width="32"/><path d="M30 145 L102 62 L174 145" fill="none" stroke="${guideWood(state.edgeWood)}" stroke-width="27"/><path d="M190 102 H226" class="guide-arrow" marker-end="url(#guide-arrowhead)"/><text x="310" y="22" text-anchor="middle">${edgeRipSpecies} glued to ${ripTargetSpecies}</text><path d="M238 145 L310 62 L382 145" fill="none" stroke="${guideWood(state.edgeWood)}" stroke-width="28"/><path d="M251 145 L310 78 L369 145" fill="none" stroke="${guideWood(ripTargetWood)}" stroke-width="18"/><line x1="310" y1="45" x2="310" y2="78" class="guide-arrow" marker-end="url(#guide-arrowhead)"/><text x="208" y="181" text-anchor="middle">Before glue-up → completed 45° replacement</text>`, `Solid ${edgeRipSpecies} replacement piece followed by the piece glued to the ${ripTargetSpecies} edge`)
   }] : [];
   const borderTop = state.includeBorders ? border.bands.reduce((html, band, index) => html + `<rect x="45" y="${30 + index * 8}" width="330" height="8" fill="${guideWood(band.wood)}"/>`, '') : '';
   const borderBottom = state.includeBorders ? border.bands.reduce((html, band, index) => html + `<rect x="45" y="${152 - index * 8}" width="330" height="8" fill="${guideWood(band.wood)}"/>`, '') : '';
