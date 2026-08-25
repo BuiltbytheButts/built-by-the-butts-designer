@@ -29,3 +29,19 @@ This report tests Change #15 only.
 - PASS — JavaScript syntax for `app.js` and `manufacturing.js`.
 - PASS — all CSS/JS cache-busting asset references = 3.0.8.
 - Browser dump preflight was unavailable in this container, so no browser-visual claim is made for this metric-only change.
+# v3.0.12 Release Test Report
+
+## Result: PASS
+
+- JavaScript syntax: `app.js`, `geometry.js`, and `manufacturing.js` pass syntax checks.
+- Geometry: existing exact-laminate and Edge Rip regression suite passes.
+- Manufacturing: 12-count balanced, 13-count unbalanced, required-blank, lamination, and editable-kerf tests pass.
+- Browser: v3.0.12 loads without page errors; actual counts drive preview; warning visibility follows parity.
+- Version/cache: visible badge and all four asset references use 3.0.12; no stale 3.0.10/3.0.11 cache keys remain.
+- Frozen regression: `geometry.js` is byte-identical to validated v3.0.11; `edgeCutGeometry`, `drawEndGrainCell`, and `renderBoard` are source-identical.
+
+### Locked acceptance cases
+
+- 18.000 in / 1.500 in thickness → 12 crosscuts, balanced, 20.875 in required blank at 0.125 in kerf.
+- 19.500 in / 1.500 in thickness → 13 crosscuts, visible unbalanced warning, 22.625 in required blank at 0.125 in kerf.
+- Same 13-count case at 0.100 in kerf → 22.325 in required blank.

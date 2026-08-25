@@ -1,4 +1,4 @@
-# Diamond End Grain Designer v3.0.4
+# Diamond End Grain Designer v3.0.12
 
 Clean-architecture foundation rebuild for Built By The Butts.
 
@@ -7,7 +7,8 @@ Clean-architecture foundation rebuild for Built By The Butts.
 - Strip schedule is the source of pattern geometry.
 - No rows/columns sizing mode exists in state, UI, or renderer.
 - Rough machining values are recommendations, not user-entered allowances.
-- Crosscut Engineering recommends balanced even counts.
+- Crosscut Engineering reports the actual calculated whole-crosscut count.
+- Odd counts drive the preview unchanged and display an unbalanced-pattern warning.
 - Renderer is built from physical square end-grain faces and contains no legacy v2 grid code.
 
 ## v3 foundation features
@@ -15,7 +16,7 @@ Clean-architecture foundation rebuild for Built By The Butts.
 - Editable strip schedule and species
 - Recommended rough rip beside each strip
 - Edge rip inset through 1 inch and replacement species
-- Crosscut blank length, kerf, rough-crosscut guidance, balanced even count, and next-even option
+- Editable kerf, rough-crosscut guidance, actual count, and required master blank length in one result
 - Undo/redo
 - JSON save/open
 - SVG export

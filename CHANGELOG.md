@@ -1,3 +1,12 @@
+## v3.0.12 — Truthful Actual Crosscut Preview
+- Removed Alternate Even Option and all alternate-count calculations from the UI.
+- The nearest whole calculated crosscut count now drives the preview without even-number coercion.
+- Odd counts remain visible and display an unbalanced-pattern warning.
+- Required master blank length is included in the single calculated crosscut result.
+- Blade kerf remains editable and recalculates required blank length.
+- Frozen v3.0.7 laminate, Edge Rip, and renderer geometry remain unchanged.
+- Updated visible version and every asset cache key to 3.0.12.
+
 ## v3.0.11 — Derived Master Blank Length + Crosscut Wording
 
 - Master blank length is now calculated from the finished-board-driven balanced crosscut recommendation.

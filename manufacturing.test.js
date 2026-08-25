@@ -14,28 +14,23 @@ console.log('MANUFACTURING ENGINEERING PASS');
 console.log('1.500 target ->', M.requiredLaminationSize(1.5));
 
 
-// Change #17 — finished-dimension-driven crosscut engineering.
-let plan=M.finishedDimensionCrosscutPlan({targetLength:18.625,finishedThickness:1.5,roughCrosscut:1.625,bladeKerf:0.125,masterBlankLength:24});
-assertEq(plan.balancedCount,12);
+// v3.0.12 — the actual nearest whole crosscut drives both result and preview.
+let plan=M.finishedDimensionCrosscutPlan({targetLength:18,finishedThickness:1.5,roughCrosscut:1.625,bladeKerf:0.125});
+assertEq(plan.crosscutCount,12);
+assertEq(plan.isBalanced,true);
 assertClose(plan.achievableLength,18.0);
 assertClose(plan.requiredBlankLength,20.875);
-assertClose(plan.blankDelta,3.125);
-assertEq(plan.alternateCount,14);
-assertClose(plan.alternateFinishedLength,21.0);
-assertClose(plan.alternateRequiredBlankLength,24.375);
-assertClose(plan.alternateBlankDelta,-0.375);
 
-plan=M.finishedDimensionCrosscutPlan({targetLength:20,finishedThickness:1.5,roughCrosscut:1.625,bladeKerf:0.125,masterBlankLength:30});
-assertEq(plan.balancedCount,14); // 21 is closer to 20 than 18.
-assertClose(plan.achievableLength,21.0);
+plan=M.finishedDimensionCrosscutPlan({targetLength:19.5,finishedThickness:1.5,roughCrosscut:1.625,bladeKerf:0.125});
+assertEq(plan.crosscutCount,13);
+assertEq(plan.isBalanced,false);
+assertClose(plan.achievableLength,19.5);
+assertClose(plan.requiredBlankLength,22.625);
 
-plan=M.finishedDimensionCrosscutPlan({targetLength:18,finishedThickness:1.5,roughCrosscut:1.625,bladeKerf:0.125,masterBlankLength:24});
-assertEq(plan.balancedCount,12);
-assertClose(plan.dimensionDelta,0);
-
-plan=M.finishedDimensionCrosscutPlan({targetLength:19.5,finishedThickness:1.5,roughCrosscut:1.625,bladeKerf:0.125,masterBlankLength:30});
-assertEq(plan.balancedCount,12); // Exact tie between 18 and 21: conserve material.
-console.log('FINISHED-DIMENSION CROSSCUT ENGINEERING PASS');
+plan=M.finishedDimensionCrosscutPlan({targetLength:20.8,finishedThickness:1.5,roughCrosscut:1.625,bladeKerf:0.125});
+assertEq(plan.crosscutCount,14);
+assertEq(plan.isBalanced,true);
+console.log('ACTUAL-CROSSCUT ENGINEERING PASS');
 
 (function testDerivedMasterBlankLength() {
   const plan = M.finishedDimensionCrosscutPlan({
@@ -44,7 +39,7 @@ console.log('FINISHED-DIMENSION CROSSCUT ENGINEERING PASS');
     roughCrosscut: 1.625,
     bladeKerf: 0.125
   });
-  assertEq(plan.balancedCount, 12);
+  assertEq(plan.crosscutCount, 12);
   assertClose(plan.requiredBlankLength, 20.875);
   assertClose(plan.recommendedMasterBlankLength, 20.875);
 })();

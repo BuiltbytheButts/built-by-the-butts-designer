@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.11';
+const VERSION = '3.0.12';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -75,7 +75,7 @@ function crosscutEngineering() {
 
 function previewGrid() {
   const module = Math.max(0.125, moduleWidth());
-  const lengthSliceCount = crosscutEngineering().balancedCount;
+  const lengthSliceCount = crosscutEngineering().crosscutCount;
   const widthModuleCount = Math.max(2, Math.ceil(number(state.boardWidth) / module));
   return { lengthSliceCount, widthModuleCount, module };
 }
@@ -273,17 +273,11 @@ function renderEngineering() {
   $('roughCrosscutMetric').textContent = `${x.roughCrosscut.toFixed(3)} in`;
   $('roughCrosscutHelp').textContent = `Finished target ${x.finishedThickness.toFixed(3)} in + approx. 1/8 in cleanup guidance.`;
 
-  $('masterBlankMetric').textContent = `${x.requiredBlankLength.toFixed(3)} in`;
-  const shopBlank = x.recommendedMasterBlankLength;
-  $('masterBlankHelp').textContent = shopBlank > x.requiredBlankLength + 0.0005
-    ? `Recommended starting blank: ${shopBlank.toFixed(3)} in (rounded up to nearest 1/8 in).`
-    : `Recommended starting blank: ${shopBlank.toFixed(3)} in.`;
-
-  $('balancedCountMetric').textContent = `${x.balancedCount} crosscuts`;
-  $('balancedCountHelp').textContent = `Approx. ${x.achievableLength.toFixed(3)} in finished; requires approx. ${x.requiredBlankLength.toFixed(3)} in rough blank.`;
-
-  $('nextEvenMetric').textContent = `${x.alternateCount} crosscuts`;
-  $('nextEvenHelp').textContent = `Approx. ${x.alternateFinishedLength.toFixed(3)} in finished; requires approx. ${x.alternateRequiredBlankLength.toFixed(3)} in rough blank.`;
+  $('crosscutCountMetric').textContent = `${x.crosscutCount} crosscuts`;
+  $('crosscutCountHelp').textContent = `Approx. ${x.achievableLength.toFixed(3)} in finished; requires approx. ${x.requiredBlankLength.toFixed(3)} in rough blank.`;
+  const warning = $('crosscutWarning');
+  warning.hidden = x.isBalanced;
+  warning.textContent = `⚠ ${x.crosscutCount} crosscuts produces an unbalanced pattern. Adjust finished length or finished thickness to produce an even crosscut count.`;
 }
 
 function renderMetrics() {
@@ -291,7 +285,7 @@ function renderMetrics() {
   const lamination = laminationRequirement();
   $('moduleWidthMetric').textContent = `${lamination.recommended.toFixed(3)} in`;
   $('laminationMinimumMetric').textContent = `Minimum ${lamination.minimum.toFixed(3)} in = ${lamination.target.toFixed(3)} × √2; rounded up to nearest 1/8 in.`;
-  $('crosscutMetric').textContent = x.balancedCount ? String(x.balancedCount) : '—';
+  $('crosscutMetric').textContent = x.crosscutCount ? String(x.crosscutCount) : '—';
   $('boardSizeMetric').textContent = `${number(state.boardLength).toFixed(3)} × ${number(state.boardWidth).toFixed(3)} in`;
   $('thicknessMetric').textContent = `${number(state.finishedThickness).toFixed(3)} in`;
   $('edgeInsetLabel').textContent = `${number(state.edgeInset).toFixed(3)} in`;

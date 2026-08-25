@@ -30,30 +30,19 @@
     const kerf = Math.max(0, Number(bladeKerf) || 0);
 
     const idealCount = target / finished;
-    const lowerEven = Math.max(2, Math.floor(idealCount / 2) * 2);
-    const upperEven = Math.max(2, Math.ceil(idealCount / 2) * 2);
-    const lowerLength = lowerEven * finished;
-    const upperLength = upperEven * finished;
-    const lowerError = Math.abs(target - lowerLength);
-    const upperError = Math.abs(target - upperLength);
-
-    // On an exact tie, prefer the lower even count: it conserves material and
-    // never overshoots the requested finished length unless the upper choice is closer.
-    const balancedCount = upperError < lowerError ? upperEven : lowerEven;
-    const achievableLength = balancedCount * finished;
+    // The requested finished dimensions are the source of truth. Do not hide an
+    // odd result by coercing it to an even count; the preview and warning must
+    // show the actual nearest whole-crosscut result.
+    const crosscutCount = Math.max(1, Math.round(idealCount));
+    const isBalanced = crosscutCount % 2 === 0;
+    const achievableLength = crosscutCount * finished;
     const dimensionDelta = achievableLength - target;
 
     const requiredBlankFor = count => count > 0
       ? count * rough + Math.max(0, count - 1) * kerf
       : 0;
-    const requiredBlankLength = requiredBlankFor(balancedCount);
+    const requiredBlankLength = requiredBlankFor(crosscutCount);
     const recommendedMasterBlankLength = Math.ceil((requiredBlankLength - 1e-12) / SHOP_INCREMENT) * SHOP_INCREMENT;
-
-    const alternateCount = balancedCount === lowerEven
-      ? (upperEven > lowerEven ? upperEven : balancedCount + 2)
-      : lowerEven;
-    const alternateFinishedLength = alternateCount * finished;
-    const alternateRequiredBlankLength = requiredBlankFor(alternateCount);
 
     return {
       targetLength: target,
@@ -63,15 +52,11 @@
       masterBlankLength: requiredBlankLength,
       recommendedMasterBlankLength,
       idealCount,
-      lowerEven,
-      upperEven,
-      balancedCount,
+      crosscutCount,
+      isBalanced,
       achievableLength,
       dimensionDelta,
-      requiredBlankLength,
-      alternateCount,
-      alternateFinishedLength,
-      alternateRequiredBlankLength
+      requiredBlankLength
     };
   }
 
