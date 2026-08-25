@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.17';
+const VERSION = '3.0.18';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -268,9 +268,69 @@ function renderBorders() {
   });
 }
 
-function renderPreview() {
-  renderBoard();
+function renderBorderedBoard() {
+  const svg = $('boardSvg');
+  svg.innerHTML = '';
+  addWoodPatterns(svg);
+
+  const boardW = 1116;
+  const boardH = 676;
+  const boardAspect = Math.max(0.15, number(state.boardLength) / Math.max(0.15, number(state.boardWidth)));
+  let fieldW = boardW;
+  let fieldH = fieldW / boardAspect;
+  if (fieldH > boardH) {
+    fieldH = boardH;
+    fieldW = fieldH * boardAspect;
+  }
+  const fieldX = 600 - fieldW / 2;
+  const fieldY = 380 - fieldH / 2;
+  svg.append(svgEl('rect', { x: fieldX - 3, y: fieldY - 3, width: fieldW + 6, height: fieldH + 6, rx: 8, fill: '#f6f0e9', stroke: '#917e70', 'stroke-width': '3' }));
+
+  const border = borderEngineering();
+  const rows = border.selectedRows;
+  const cols = crosscutEngineering().crosscutCount;
+  if (rows > 0 && cols > 0) {
+    const diamondH = fieldH * border.diamondFieldWidth / Math.max(0.125, number(state.boardWidth));
+    const diamondY = fieldY + (fieldH - diamondH) / 2;
+    const cellW = fieldW / cols;
+    const cellH = diamondH / rows;
+    const clipId = 'bordered-diamond-field-clip';
+    const defs = svgEl('defs');
+    const clip = svgEl('clipPath', { id: clipId });
+    clip.append(svgEl('rect', { x: fieldX, y: diamondY, width: fieldW, height: diamondH }));
+    defs.append(clip);
+    svg.append(defs);
+    const diamondField = svgEl('g', {
+      class: 'bordered-diamond-field',
+      'data-laminated-rows': String(rows),
+      'data-field-y': String(diamondY),
+      'data-field-height': String(diamondH),
+      'clip-path': `url(#${clipId})`
+    });
+    for (let row = 0; row < rows; row += 1) {
+      for (let col = 0; col < cols; col += 1) {
+        const cellGroup = svgEl('g', {
+          class: 'bordered-diamond-cell',
+          'data-row': String(row),
+          'data-column': String(col),
+          transform: `translate(${fieldX + col * cellW} ${diamondY + row * cellH}) scale(${cellW / 100} ${cellH / 100})`
+        });
+        const rotate180 = col % 2 === 1;
+        const slope = (row + col) % 2 === 0 ? 1 : -1;
+        drawEndGrainCell(cellGroup, 0, 0, 100, slope, rotate180);
+        diamondField.append(cellGroup);
+      }
+    }
+    svg.append(diamondField);
+  }
+
   renderBorders();
+  svg.append(svgEl('rect', { x: fieldX, y: fieldY, width: fieldW, height: fieldH, rx: 5, fill: 'none', stroke: '#4d382d', 'stroke-width': '1.2' }));
+}
+
+function renderPreview() {
+  if (state.includeBorders) renderBorderedBoard();
+  else renderBoard();
 }
 
 function woodOptions(selected) {

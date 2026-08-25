@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.17/g) || []).length === 4, 'All asset cache keys must be v3.0.17');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.18/g) || []).length === 4, 'All asset cache keys must be v3.0.18');
   assert(html.indexOf('Top &amp; Bottom Borders') < html.indexOf('Strip Schedule'), 'Border section is not above Strip Schedule');
 
   const browser = await chromium.launch({
@@ -51,7 +51,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.17', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.18', 'Wrong visible version');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
 
   await page.locator('#boardLength').fill('18');
@@ -102,6 +102,42 @@ function functionSource(source, name) {
   await page.locator('#includeBorders').uncheck();
   assert(await page.locator('.end-grain-border').count() === 0, 'Turning borders off did not restore full-diamond view');
   assert(await page.locator('#laminatedRowMetric').textContent() === '9', 'Turning borders off did not restore automatic laminated rows');
+
+  await page.evaluate(() => restore(JSON.stringify({
+    boardLength: 17.25, boardWidth: 13, finishedThickness: 1.125,
+    includeBorders: true, borderBands: [{ width: 1.25, wood: 'walnut' }]
+  })));
+  assert(await page.locator('.bordered-diamond-field').getAttribute('data-laminated-rows') === '7', '1.25 in border should render seven complete rows');
+  assert(await page.locator('.bordered-diamond-cell').count() === 105, 'Seven rows by fifteen crosscuts should render 105 complete cells');
+  assert(await page.locator('[data-row="0"]').count() === 15 && await page.locator('[data-row="6"]').count() === 15, 'First or last complete row is missing');
+  let alignment = await page.evaluate(() => {
+    const borders = [...document.querySelectorAll('.end-grain-border')];
+    const field = document.querySelector('.bordered-diamond-field');
+    const y = Number(field.dataset.fieldY);
+    const h = Number(field.dataset.fieldHeight);
+    return {
+      topGap: Math.abs(Number(borders[0].getAttribute('y')) + Number(borders[0].getAttribute('height')) - y),
+      bottomGap: Math.abs(Number(borders[1].getAttribute('y')) - (y + h))
+    };
+  });
+  assert(alignment.topGap < 1e-6 && alignment.bottomGap < 1e-6, '1.25 in borders do not meet complete laminate rows exactly');
+  await page.locator('[data-border-width]').fill('3.5');
+  await page.locator('[data-border-width]').dispatchEvent('input');
+  assert(await page.locator('.bordered-diamond-field').getAttribute('data-laminated-rows') === '4', '3.5 in border should render four complete rows');
+  assert(await page.locator('.bordered-diamond-cell').count() === 60, 'Four rows by fifteen crosscuts should render 60 complete cells');
+  assert(await page.locator('[data-row="0"]').count() === 15 && await page.locator('[data-row="3"]').count() === 15, '3.5 in case has a partial boundary row');
+  alignment = await page.evaluate(() => {
+    const borders = [...document.querySelectorAll('.end-grain-border')];
+    const field = document.querySelector('.bordered-diamond-field');
+    const y = Number(field.dataset.fieldY);
+    const h = Number(field.dataset.fieldHeight);
+    return {
+      topGap: Math.abs(Number(borders[0].getAttribute('y')) + Number(borders[0].getAttribute('height')) - y),
+      bottomGap: Math.abs(Number(borders[1].getAttribute('y')) - (y + h))
+    };
+  });
+  assert(alignment.topGap < 1e-6 && alignment.bottomGap < 1e-6, '3.5 in borders do not meet complete laminate rows exactly');
+
   await page.evaluate(() => restore(JSON.stringify({ includeBorders: true, borderWidth: 0.75, borderWood: 'padauk' })));
   assert(await page.locator('[data-border-width]').count() === 1, 'Legacy single border did not migrate to one band');
   assert(await page.locator('[data-border-width]').inputValue() === '0.7500', 'Legacy border width migration failed');

@@ -1,3 +1,11 @@
+## v3.0.18 — Complete-Row Bordered Preview
+- Replaced border masking over the full-board pattern with a dedicated bordered-board compositor.
+- Borders render at the outside edges and the diamond field is rebuilt between them.
+- The first and last laminated rows now meet the borders exactly with no partial hidden rows.
+- The preview renders exactly calculated laminated rows × calculated crosscuts.
+- Verified 1.250 in borders produce seven complete rows and 3.500 in borders produce four complete rows in the reported 13 in board case.
+- Frozen cell, laminate, Edge Rip, and unbordered renderer functions remain unchanged.
+
 ## v3.0.17 — Strict Whole-Row Border Replacement
 - Border-driven laminated rows now always round down to complete rows that physically fit.
 - When a border crosses into the next laminated row, that row is automatically removed.

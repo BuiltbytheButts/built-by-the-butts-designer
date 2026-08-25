@@ -104,3 +104,14 @@ This report tests Change #15 only.
 - Increasing the schedule to 5.0000 in produces a matched result and clears the warning.
 - Same-species multi-band entries remain distinct physical bands.
 - All previous geometry, crosscut, manufacturing, migration, cache, and frozen-renderer regressions pass.
+# v3.0.18 Bordered Preview Alignment Test Report
+
+## Result: PASS
+
+- 17.250 × 13.000 in case with 1.125 in thickness calculates fifteen crosscuts.
+- A 1.250 in matched border renders exactly seven complete rows and 105 complete cells.
+- A 3.500 in matched border renders exactly four complete rows and 60 complete cells.
+- First and last row boundaries meet the top and bottom borders with zero measured gap or overlap.
+- No full-board pattern remains masked underneath the borders in bordered mode.
+- Frozen `geometry.js`, `edgeCutGeometry`, `drawEndGrainCell`, and `renderBoard` remain unchanged.
+- All crosscut, manufacturing, migration, cache, and prior browser regressions pass.
