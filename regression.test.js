@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.22/g) || []).length === 5, 'All asset cache keys must be v3.0.22');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.23/g) || []).length === 5, 'All asset cache keys must be v3.0.23');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   assert(html.indexOf('Top &amp; Bottom Borders') < html.indexOf('Strip Schedule'), 'Border section is not above Strip Schedule');
 
@@ -52,8 +52,17 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.22', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.23', 'Wrong visible version');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
+  assert(await page.locator('#printPlanBtn').isVisible(), 'Print Workshop Plan action is missing');
+  const planText = await page.locator('#printPlan').textContent();
+  for (const heading of ['Finished Design', 'Lamination Engineering', 'Crosscut Engineering', 'Edge Rip', 'Border Schedule', 'Material Quantity (Estimate)', 'Workshop Sequence']) {
+    assert(planText.includes(heading), `Printable plan is missing ${heading}`);
+  }
+  assert((await page.locator('#printPlan').textContent()).includes('18.625 × 11.625 × 1.500 in'), 'Printable plan does not reflect current dimensions');
+  await page.evaluate(() => { window.__printCalled = false; window.print = () => { window.__printCalled = true; }; });
+  await page.locator('#printPlanBtn').click();
+  assert(await page.evaluate(() => window.__printCalled), 'Print Workshop Plan did not invoke printing');
   assert(await page.locator('#wastePercent').isEditable(), 'Waste allowance is not editable');
   assert(await page.locator('#materialNetMetric').textContent() === '2.255 bd ft', 'Default net board-foot total is incorrect');
   assert(await page.locator('#materialTableBody tr').count() === 3, 'Default species were not combined into three rows');

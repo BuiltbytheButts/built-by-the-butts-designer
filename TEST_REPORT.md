@@ -149,3 +149,13 @@ This report tests Change #15 only.
 - Waste changes purchase board feet and estimated cost without changing net finished quantities.
 - Pricing updates immediately and persists through the existing project state/save workflow.
 - All material quantity, geometry, crosscut, manufacturing, border, cache, and browser regressions pass.
+# v3.0.23 Printable Workshop Plan Test Report
+
+## Result: PASS
+
+- Print Workshop Plan action is visible and invokes the browser print workflow.
+- Plan regenerates from current state immediately before printing.
+- Finished Design, Lamination Engineering, Crosscut Engineering, Edge Rip, Border Schedule, Material Quantity (Estimate), and Workshop Sequence are present.
+- Current dimensions, strip schedule, border schedule, quantities, prices, and calculated results populate the plan.
+- Print-only styling hides the interactive application and formats tables for paper/PDF.
+- All material, pricing, geometry, crosscut, manufacturing, border, cache, and browser regressions pass.

@@ -68,3 +68,8 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 - Prices are user-owned USD-per-board-foot inputs and default to zero.
 - Estimated cost is calculated only from the v3.0.20 purchase board-foot result.
 - A species has one price regardless of how many design components use it.
+
+## v3.0.23 print invariant
+- The print plan is derived from current state and existing validated calculation functions immediately before `window.print()`.
+- Print markup contains no independent engineering formulas.
+- Print CSS hides the interactive workspace and formats the plan for paper or Save as PDF.

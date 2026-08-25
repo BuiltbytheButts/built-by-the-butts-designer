@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.22';
+const VERSION = '3.0.23';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -530,11 +530,36 @@ function renderMaterial() {
   });
 }
 
+function renderWorkshopPlan() {
+  const crosscuts = crosscutEngineering();
+  const border = borderEngineering();
+  const lamination = laminationRequirement();
+  const materials = materialQuantity();
+  const stripRows = activeStrips().map((strip, index) => `<tr><td>${index + 1}</td><td>${WOODS[strip.wood]?.name || strip.wood}</td><td>${number(strip.width).toFixed(4)} in</td><td>${recommendedRoughRip(strip.width).toFixed(4)} in</td><td>1 per laminated blank</td></tr>`).join('');
+  const borderRows = state.includeBorders
+    ? border.bands.map((band, index) => `<tr><td>${index + 1}</td><td>${WOODS[band.wood]?.name || band.wood}</td><td>${band.width.toFixed(4)} in</td><td>${number(state.boardLength).toFixed(3)} in</td><td>2</td></tr>`).join('')
+    : '<tr><td colspan="5">No borders selected</td></tr>';
+  const materialRows = materials.rows.map(row => `<tr><td>${WOODS[row.species]?.name || row.species}</td><td>${row.finishedCubicInches.toFixed(2)}</td><td>${row.netBoardFeet.toFixed(3)}</td><td>${row.purchaseBoardFeet.toFixed(3)}</td><td>$${row.pricePerBoardFoot.toFixed(2)}</td><td>$${row.estimatedCost.toFixed(2)}</td></tr>`).join('');
+  const borderStep = state.includeBorders
+    ? `<li>Prepare two mirrored border schedules totaling ${border.requiredWidth.toFixed(4)} in per edge, then attach them to the complete diamond field.</li>`
+    : '<li>Continue with the full-width diamond field; no border preparation is required.</li>';
+  $('printPlan').innerHTML = `
+    <header><p class="print-eyebrow">Built By The Butts</p><h1>Diamond End Grain Workshop Plan</h1><p>Designer v${VERSION}</p></header>
+    <section class="print-summary"><h2>Finished Design</h2><p><strong>${number(state.boardLength).toFixed(3)} × ${number(state.boardWidth).toFixed(3)} × ${number(state.finishedThickness).toFixed(3)} in</strong></p><p>${crosscuts.crosscutCount} crosscuts · ${border.selectedRows} laminated rows · ${state.includeBorders ? `${border.bands.length} border band${border.bands.length === 1 ? '' : 's'} per edge` : 'No borders'}</p></section>
+    <section><h2>Lamination Engineering</h2><p>Required size before 45° cuts: <strong>${lamination.recommended.toFixed(3)} in</strong> (mathematical minimum ${lamination.minimum.toFixed(3)} in).</p><table><thead><tr><th>Strip</th><th>Species</th><th>Finished width</th><th>Rough rip</th><th>Quantity</th></tr></thead><tbody>${stripRows}</tbody></table></section>
+    <section><h2>Crosscut Engineering</h2><table><tbody><tr><th>Calculated crosscuts</th><td>${crosscuts.crosscutCount}${crosscuts.isBalanced ? ' — balanced' : ' — unbalanced warning'}</td></tr><tr><th>Recommended rough crosscut</th><td>${crosscuts.roughCrosscut.toFixed(3)} in</td></tr><tr><th>Blade kerf</th><td>${crosscuts.bladeKerf.toFixed(3)} in</td></tr><tr><th>Required master blank</th><td>${crosscuts.requiredBlankLength.toFixed(3)} in</td></tr><tr><th>Projected finished run</th><td>${crosscuts.achievableLength.toFixed(3)} in</td></tr></tbody></table></section>
+    <section><h2>Edge Rip</h2><p>Cut depth: <strong>${number(state.edgeInset).toFixed(3)} in</strong> · Replacement: <strong>${WOODS[state.edgeWood]?.name || state.edgeWood}</strong></p></section>
+    <section><h2>Border Schedule</h2><p>Required total per edge: <strong>${state.includeBorders ? `${border.requiredWidth.toFixed(4)} in` : 'Not applicable'}</strong>${state.includeBorders && !border.scheduleMatches ? ` · Current schedule needs adjustment by ${Math.abs(border.difference).toFixed(4)} in per edge.` : ''}</p><table><thead><tr><th>Band</th><th>Species</th><th>Width</th><th>Finished length</th><th>Quantity</th></tr></thead><tbody>${borderRows}</tbody></table></section>
+    <section><h2>Material Quantity (Estimate)</h2><p>Waste allowance: ${materials.wastePercent.toFixed(1)}% · Estimated purchase: ${materials.totalPurchaseBoardFeet.toFixed(3)} bd ft · Estimated cost: $${materials.totalEstimatedCost.toFixed(2)}</p><table><thead><tr><th>Species</th><th>Cu in</th><th>Net BF</th><th>Buy BF</th><th>$/BF</th><th>Cost</th></tr></thead><tbody>${materialRows}</tbody></table><p class="print-note">Actual material use varies with stock selection, milling, defects, and individual shop practices.</p></section>
+    <section><h2>Workshop Sequence</h2><ol><li>Review the complete design and confirm that all warnings are cleared or intentionally accepted.</li><li>Mill stock and rough-rip the laminate strips according to the strip schedule.</li><li>Glue the laminated blank and mill it to the required pre-45° size.</li><li>Make the validated 45° cuts, then complete the Edge Rip and replacement-stock operation.</li><li>Prepare at least ${crosscuts.requiredBlankLength.toFixed(3)} in of master blank and cut ${crosscuts.crosscutCount} pieces at approximately ${crosscuts.roughCrosscut.toFixed(3)} in using a ${crosscuts.bladeKerf.toFixed(3)} in kerf.</li><li>Rotate and mirror the crosscuts into ${border.selectedRows} complete laminated rows and glue the diamond field.</li>${borderStep}<li>Flatten, trim, and finish to ${number(state.boardLength).toFixed(3)} × ${number(state.boardWidth).toFixed(3)} × ${number(state.finishedThickness).toFixed(3)} in.</li></ol></section>`;
+}
+
 function render() {
   renderPreview();
   renderEngineering();
   renderMetrics();
   renderMaterial();
+  renderWorkshopPlan();
   buildStripEditor();
   buildBorderEditor();
   syncInputs();
@@ -679,6 +704,7 @@ function bindEvents() {
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     download('diamond-end-grain-board-v3.svg', 'image/svg+xml;charset=utf-8', `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(clone)}`);
   });
+  $('printPlanBtn').addEventListener('click', () => { renderWorkshopPlan(); window.print(); });
 }
 
 function initialize() {

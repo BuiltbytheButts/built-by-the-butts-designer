@@ -1,3 +1,11 @@
+## v3.0.23 — Printable Cut List & Workshop Plan
+- Added a Print Workshop Plan action that opens the browser print/save-PDF dialog.
+- Added a print-only live plan generated from current design state immediately before printing.
+- Includes finished dimensions, lamination engineering, strip schedule, crosscuts, Edge Rip, border schedule, material estimate, pricing, and ordered workshop steps.
+- Strip and border tables include species, finished/rough dimensions, and physical quantities.
+- Print styling removes the application interface and formats sections and tables for paper/PDF output.
+- Frozen v3.0.22 design, material, pricing, geometry, and renderer calculations remain unchanged.
+
 ## v3.0.22 — Material Estimate Wording
 - Renamed Material Quantity to Material Quantity (Estimate).
 - Added a visible note that actual usage varies by stock selection, milling, defects, and shop practices.
