@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
   <title>Diamond End Grain Designer</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.12" />
+  <link rel="stylesheet" href="styles.css?v=3.0.13" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.12</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.13</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -57,6 +57,21 @@
       </section>
 
       <section>
+        <h2>Top &amp; Bottom Borders</h2>
+        <label class="toggle-row"><input id="includeBorders" type="checkbox" /> Include all-end-grain borders</label>
+        <p class="help">Borders are included inside the finished board dimensions. Turning them off gives the entire finished width to the diamond field.</p>
+        <div id="borderFields">
+          <div class="two-col">
+            <label>Border width (each, in)<input id="borderWidth" type="number" min="0.0625" max="6" step="0.0625" /></label>
+            <label>Border wood<select id="borderWood"></select></label>
+          </div>
+        </div>
+        <div class="engineering-card"><span>Diamond field size</span><strong id="diamondFieldMetric"></strong></div>
+        <div class="engineering-card"><span>Finished border material</span><strong id="borderMaterialMetric"></strong></div>
+        <p id="borderWarning" class="crosscut-warning" role="alert" hidden></p>
+      </section>
+
+      <section>
         <h2>Crosscut Engineering</h2>
         <label>Blade kerf (in)<input id="bladeKerf" type="number" min="0" max="0.25" step="0.001" /></label>
         <div class="engineering-card"><span>Recommended rough crosscut</span><strong id="roughCrosscutMetric"></strong><small id="roughCrosscutHelp"></small></div>
@@ -91,8 +106,8 @@
   </main>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="geometry.js?v=3.0.12"></script>
-  <script src="manufacturing.js?v=3.0.12"></script>
-  <script src="app.js?v=3.0.12"></script>
+  <script src="geometry.js?v=3.0.13"></script>
+  <script src="manufacturing.js?v=3.0.13"></script>
+  <script src="app.js?v=3.0.13"></script>
 </body>
 </html>

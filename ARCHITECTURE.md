@@ -3,8 +3,9 @@
 ## State
 The application has one small state object containing only user-owned design inputs:
 - finished board length, width, thickness
-- master blank length and blade kerf
+- blade kerf
 - edge inset and replacement species
+- optional top/bottom border selection, width, and species
 - strip schedule
 
 No rows, columns, sizing mode, layout mode, orientation mode, trim allowance, or finishing allowance are stored.
@@ -42,3 +43,9 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 - Mathematical minimum = finished thickness × √2.
 - Shop recommendation rounds that minimum upward to the nearest 1/8 inch.
 - This calculation is manufacturing guidance only and cannot modify the frozen v3.0.7 renderer.
+
+## v3.0.13 border invariant
+- Finished dimensions are always the outside board dimensions.
+- With borders off, the diamond field occupies the full finished width.
+- With borders on, diamond field width = finished width − (2 × border width).
+- Borders are drawn as a separate overlay around the source-identical frozen renderer.

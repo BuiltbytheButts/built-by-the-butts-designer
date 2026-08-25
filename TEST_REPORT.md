@@ -45,3 +45,16 @@ This report tests Change #15 only.
 - 18.000 in / 1.500 in thickness → 12 crosscuts, balanced, 20.875 in required blank at 0.125 in kerf.
 - 19.500 in / 1.500 in thickness → 13 crosscuts, visible unbalanced warning, 22.625 in required blank at 0.125 in kerf.
 - Same 13-count case at 0.100 in kerf → 22.325 in required blank.
+# v3.0.13 Border Engineering Test Report
+
+## Result: PASS
+
+- Border-off mode uses the full finished-board width and renders no border material.
+- Border-on mode renders exactly two long-edge borders inside the finished dimensions.
+- 7.375 in finished width with two 0.500 in borders produces a 6.375 in diamond field.
+- Changing each border to 0.750 in produces a 5.875 in diamond field.
+- Turning borders off restores the full-diamond view.
+- Border material dimensions respond to length, border width, and finished thickness.
+- Visible version and all asset cache keys are 3.0.13.
+- `geometry.js`, `edgeCutGeometry`, `drawEndGrainCell`, and `renderBoard` remain unchanged from the validated baseline.
+- All v3.0.12 crosscut, manufacturing, and browser regressions continue to pass.

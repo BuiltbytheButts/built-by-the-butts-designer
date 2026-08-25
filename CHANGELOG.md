@@ -1,3 +1,13 @@
+## v3.0.13 — Optional Top & Bottom End-Grain Borders
+- Added an Include all-end-grain borders choice; borders default off.
+- Added adjustable border width and wood species.
+- Finished board dimensions always remain the outside dimensions.
+- With borders on, diamond field width = finished width − two border widths.
+- With borders off, the diamond field uses the complete finished-board width.
+- Added finished border material dimensions for two long-edge pieces.
+- Added invalid-width protection and warning.
+- Frozen v3.0.12 diamond, laminate, and Edge Rip renderer remains source-identical.
+
 ## v3.0.12 — Truthful Actual Crosscut Preview
 - Removed Alternate Even Option and all alternate-count calculations from the UI.
 - The nearest whole calculated crosscut count now drives the preview without even-number coercion.

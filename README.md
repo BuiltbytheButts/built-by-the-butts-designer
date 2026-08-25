@@ -1,4 +1,4 @@
-# Diamond End Grain Designer v3.0.12
+# Diamond End Grain Designer v3.0.13
 
 Clean-architecture foundation rebuild for Built By The Butts.
 
@@ -9,6 +9,8 @@ Clean-architecture foundation rebuild for Built By The Butts.
 - Rough machining values are recommendations, not user-entered allowances.
 - Crosscut Engineering reports the actual calculated whole-crosscut count.
 - Odd counts drive the preview unchanged and display an unbalanced-pattern warning.
+- Optional all-end-grain borders run along the two long edges inside the finished dimensions.
+- Border width and species are adjustable; turning borders off restores the full-diamond field.
 - Renderer is built from physical square end-grain faces and contains no legacy v2 grid code.
 
 ## v3 foundation features

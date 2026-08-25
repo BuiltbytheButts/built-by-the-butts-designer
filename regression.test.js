@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.12/g) || []).length === 4, 'All asset cache keys must be v3.0.12');
+  assert(!/v=3\.0\.(10|11|12)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.13/g) || []).length === 4, 'All asset cache keys must be v3.0.13');
 
   const browser = await chromium.launch({
     headless: true,
@@ -50,7 +50,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.12', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.13', 'Wrong visible version');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
 
   await page.locator('#boardLength').fill('18');
@@ -70,6 +70,20 @@ function functionSource(source, name) {
   await page.locator('#bladeKerf').fill('0.100');
   await page.locator('#bladeKerf').dispatchEvent('input');
   assert((await page.locator('#crosscutCountHelp').textContent()).includes('22.325 in rough blank'), 'Editable kerf did not recalculate master blank');
+
+  assert(await page.locator('.end-grain-border').count() === 0, 'Borders should default off');
+  assert((await page.locator('#diamondFieldMetric').textContent()).includes('(full board)'), 'Border-off diamond field should use full width');
+  await page.locator('#boardWidth').fill('7.375');
+  await page.locator('#boardWidth').dispatchEvent('input');
+  await page.locator('#includeBorders').check();
+  assert(await page.locator('.end-grain-border').count() === 2, 'Top and bottom borders were not rendered');
+  assert(await page.locator('#diamondFieldMetric').textContent() === '19.500 × 6.375 in', 'Border width was not subtracted twice from finished width');
+  assert((await page.locator('#borderMaterialMetric').textContent()).startsWith('2 × 19.500 × 0.500'), 'Border material result is incorrect');
+  await page.locator('#borderWidth').fill('0.75');
+  await page.locator('#borderWidth').dispatchEvent('input');
+  assert(await page.locator('#diamondFieldMetric').textContent() === '19.500 × 5.875 in', 'Adjustable border width did not resize diamond field');
+  await page.locator('#includeBorders').uncheck();
+  assert(await page.locator('.end-grain-border').count() === 0, 'Turning borders off did not restore full-diamond view');
   assert(errors.length === 0, `Browser errors: ${errors.join('; ')}`);
   await browser.close();
   console.log('VERSION/CACHE PASS');
