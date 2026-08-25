@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.16';
+const VERSION = '3.0.17';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -96,7 +96,7 @@ function borderEngineering() {
   const availableDiamondWidth = Math.max(0, number(state.boardWidth) - 2 * requestedWidth);
   const idealRows = availableDiamondWidth / Math.max(0.125, moduleWidth());
   const selectedRows = state.includeBorders
-    ? (availableDiamondWidth > 0 ? Math.max(1, Math.round(idealRows)) : 0)
+    ? Math.max(0, Math.floor(idealRows + 1e-12))
     : automaticRows;
   const diamondFieldWidth = selectedRows * Math.max(0.125, moduleWidth());
   const requiredWidth = state.includeBorders ? Math.max(0, (number(state.boardWidth) - diamondFieldWidth) / 2) : 0;

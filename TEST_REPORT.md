@@ -93,3 +93,14 @@ This report tests Change #15 only.
 - Reducing the schedule to 4.2500 in produces a matched result and removes the warning.
 - Four same-species border entries remain four physical bands and render as eight mirrored strips.
 - All previous geometry, crosscut, manufacturing, migration, cache, and frozen-renderer regressions pass.
+# v3.0.17 Strict Whole-Row Test Report
+
+## Result: PASS
+
+- Laminated-row calculation rounds available diamond space down to complete rows.
+- 13.000 in board with 4.3125 in scheduled border per edge retains two 1.500 in rows.
+- The resulting diamond field is 3.000 in and required border is 5.0000 in per edge.
+- The schedule correctly reports 0.6875 in still needed per edge.
+- Increasing the schedule to 5.0000 in produces a matched result and clears the warning.
+- Same-species multi-band entries remain distinct physical bands.
+- All previous geometry, crosscut, manufacturing, migration, cache, and frozen-renderer regressions pass.

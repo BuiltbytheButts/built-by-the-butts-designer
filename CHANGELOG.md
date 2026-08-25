@@ -1,3 +1,11 @@
+## v3.0.17 — Strict Whole-Row Border Replacement
+- Border-driven laminated rows now always round down to complete rows that physically fit.
+- When a border crosses into the next laminated row, that row is automatically removed.
+- The warning reports how much more border width is required per edge to complete the replacement.
+- No design result implies ripping a laminated diamond row lengthwise.
+- Acceptance case: 13.000 in board with 4.3125 in border per edge → 2 rows, 5.0000 in required, 0.6875 in still needed.
+- Frozen diamond, laminate, Edge Rip, and crosscut geometry remains unchanged.
+
 ## v3.0.16 — Border-Driven Laminated Rows
 - Removed the manual laminated-row input.
 - Entered border-band widths are now the source of truth for the remaining diamond field.

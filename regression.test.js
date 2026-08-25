@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.16/g) || []).length === 4, 'All asset cache keys must be v3.0.16');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.17/g) || []).length === 4, 'All asset cache keys must be v3.0.17');
   assert(html.indexOf('Top &amp; Bottom Borders') < html.indexOf('Strip Schedule'), 'Border section is not above Strip Schedule');
 
   const browser = await chromium.launch({
@@ -51,7 +51,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.16', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.17', 'Wrong visible version');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
 
   await page.locator('#boardLength').fill('18');
@@ -86,12 +86,12 @@ function functionSource(source, name) {
   await page.locator('[data-border-width]').nth(1).fill('1.375');
   await page.locator('[data-border-width]').nth(1).dispatchEvent('input');
   await page.locator('[data-border-wood]').nth(1).selectOption('walnut');
-  assert(await page.locator('#laminatedRowMetric').textContent() === '3', 'Entered border widths did not dynamically calculate three laminated rows');
-  assert(await page.locator('#diamondFieldMetric').textContent() === '19.500 × 4.500 in', 'Dynamic three-row diamond field is incorrect');
-  assert(await page.locator('#requiredBorderMetric').textContent() === '4.2500 in per edge', 'Dynamic replacement-border calculation is incorrect');
-  assert(await page.locator('#borderDifferenceMetric').textContent() === '0.0625 in too wide per edge', 'Screenshot-case adjustment is incorrect');
+  assert(await page.locator('#laminatedRowMetric').textContent() === '2', 'Only complete laminated rows should remain after entered borders');
+  assert(await page.locator('#diamondFieldMetric').textContent() === '19.500 × 3.000 in', 'Whole-row diamond field is incorrect');
+  assert(await page.locator('#requiredBorderMetric').textContent() === '5.0000 in per edge', 'Whole-row replacement-border calculation is incorrect');
+  assert(await page.locator('#borderDifferenceMetric').textContent() === '0.6875 in still needed per edge', 'Whole-row completion warning is incorrect');
   assert(await page.locator('#borderWarning').isVisible(), 'Mismatched dynamic border schedule should warn');
-  await page.locator('[data-border-width]').nth(0).fill('2.875');
+  await page.locator('[data-border-width]').nth(0).fill('3.625');
   await page.locator('[data-border-width]').nth(0).dispatchEvent('input');
   assert(await page.locator('#borderDifferenceMetric').textContent() === 'Matched ✓', 'Matching border schedule was not recognized');
   assert(await page.locator('#borderWarning').isHidden(), 'Matched border schedule should not warn');
