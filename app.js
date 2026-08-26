@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.40';
+const VERSION = '3.0.41';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -518,13 +518,18 @@ function buildStripEditor() {
   const holder = $('stripEditor');
   holder.innerHTML = '';
   state.strips.forEach((strip, index) => {
+    const pairOffset = Math.min(index, state.strips.length - index - 1);
+    const pairName = state.strips.length % 2 === 1 && index === Math.floor(state.strips.length / 2)
+      ? stripOffsetLabel(index, state.strips.length)
+      : `${pairOffset + 1}A/${pairOffset + 1}B`;
     const row = document.createElement('div');
     row.className = `strip-row${highlightedStripIndices.includes(index) ? ' new-strip' : ''}`;
+    row.dataset.stripPairOffset = String(pairOffset);
     row.innerHTML = `
       <span class="swatch" data-wood-swatch="${strip.wood}" style="background:${WOODS[strip.wood]?.color || '#999'}"></span>
       <label>Strip ${stripOffsetLabel(index, state.strips.length)}<input data-strip-width="${index}" type="number" min="0.03125" max="3" step="0.03125" value="${number(strip.width).toFixed(4)}"></label>
       <label>Wood<select data-strip-wood="${index}">${woodOptions(strip.wood)}</select></label>
-      <div class="strip-meta">Recommended rough rip: ~${recommendedRoughRip(strip.width).toFixed(4)} in</div>`;
+      <div class="strip-meta"><span class="strip-rough-rip">Recommended rough rip: ~${recommendedRoughRip(strip.width).toFixed(4)} in</span><button class="text-button strip-pair-remove" data-remove-strip-pair="${pairOffset}" type="button">Remove ${pairName}</button></div>`;
     holder.append(row);
   });
 
@@ -532,7 +537,7 @@ function buildStripEditor() {
     input.addEventListener('input', event => {
       const index = Number(event.target.dataset.stripWidth);
       state.strips[index].width = Math.max(0.03125, number(event.target.value));
-      const meta = event.target.closest('.strip-row')?.querySelector('.strip-meta');
+      const meta = event.target.closest('.strip-row')?.querySelector('.strip-rough-rip');
       if (meta) meta.textContent = `Recommended rough rip: ~${recommendedRoughRip(state.strips[index].width).toFixed(4)} in`;
       renderPreview();
       renderMetrics();
@@ -550,6 +555,16 @@ function buildStripEditor() {
       renderMaterial();
       commit();
     });
+  });
+  holder.querySelectorAll('[data-remove-strip-pair]').forEach(button => {
+    const highlight = active => {
+      holder.querySelectorAll(`[data-strip-pair-offset="${button.dataset.removeStripPair}"]`).forEach(row => row.classList.toggle('pair-remove-active', active));
+    };
+    button.addEventListener('mouseenter', () => highlight(true));
+    button.addEventListener('mouseleave', () => highlight(false));
+    button.addEventListener('focus', () => highlight(true));
+    button.addEventListener('blur', () => highlight(false));
+    button.addEventListener('click', event => removeStripPair(event.currentTarget.dataset.removeStripPair));
   });
   buildInlineStripPairControls();
 }
@@ -594,15 +609,13 @@ function addStripPair(offset) {
   }, 1600);
 }
 
-function removeStripPair(location) {
+function removeStripPair(offset) {
   if (state.strips.length <= 2) return toast('Keep at least two strips');
-  if (location === 'outer') {
-    state.strips = state.strips.slice(1, -1);
-  } else {
-    const left = Math.floor((state.strips.length - 2) / 2);
-    state.strips.splice(left, 2);
-  }
-  buildStripEditor(); render(); commit();
+  const left = clamp(Math.round(number(offset)), 0, Math.floor((state.strips.length - 1) / 2));
+  const right = state.strips.length - left - 1;
+  state.strips.splice(right, 1);
+  if (left !== right) state.strips.splice(left, 1);
+  render(); commit();
 }
 
 function renderEngineering() {
@@ -1013,8 +1026,6 @@ function bindEvents() {
   });
 
   $('resetStripsBtn').addEventListener('click', () => { state.strips = defaultState().strips; render(); commit(); });
-  $('removeOuterPairBtn').addEventListener('click', () => removeStripPair('outer'));
-  $('removeInnerPairBtn').addEventListener('click', () => removeStripPair('inner'));
 
   $('undoBtn').addEventListener('click', () => {
     if (history.length <= 1) return;

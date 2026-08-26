@@ -1,3 +1,10 @@
+## v3.0.41 — Direct A/B Pair Removal
+- Removed the general Outside Pair and Center Pair deletion buttons.
+- Added a pair-specific Remove 1A/1B, Remove 2A/2B, and equivalent action beside every strip row.
+- Hovering or focusing a removal action highlights both matched strips before deletion.
+- Remaining pairs renumber outside-in after removal.
+- Preserved all approved calculations, conditional waste, wood library, geometry, and rendering.
+
 ## v3.0.40 — A/B Mirrored Strip Labels
 - Labels symmetrical strip pairs outside-in as 1A/1B, 2A/2B, and so on.
 - Inline + controls identify the exact A/B pair that will be created.

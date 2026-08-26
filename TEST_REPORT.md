@@ -1,3 +1,10 @@
+# v3.0.41 Direct A/B Pair Removal
+- PASS — obsolete Outside Pair and Center Pair removal controls are absent.
+- PASS — each A/B strip row identifies the exact mirrored pair that will be removed.
+- PASS — hovering or focusing highlights both matched rows.
+- PASS — clicking removes both rows and renumbers all remaining A/B pairs.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, waste, custom-wood, and frozen-renderer regressions.
+
 # v3.0.40 A/B Mirrored Strip Labels
 - PASS — eight strips label outside-in as 1A through 4A and mirror back from 4B through 1B.
 - PASS — inline additions show the new A/B pair name before insertion.
