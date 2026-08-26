@@ -38,16 +38,19 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.51/g) || []).length === 5, 'All asset cache keys must be v3.0.51');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.52/g) || []).length === 5, 'All asset cache keys must be v3.0.52');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
   assert(controlOrder.every((position, index) => position >= 0 && (!index || position > controlOrder[index - 1])), 'Left-panel control sections are not in the approved order');
   const sampleHtml = fs.readFileSync(path.join(root, 'sample-build.html'), 'utf8');
   assert(sampleHtml.includes('Independent Sample Build'), 'Independent Sample Build page is missing');
+  assert(!/href="sample-build\.css/.test(sampleHtml), 'Sample Build still depends on an external stylesheet');
+  assert(!/src="assets\/sample-build\//.test(sampleHtml), 'Sample Build still depends on external photo paths');
+  assert((sampleHtml.match(/src="data:image\/png;base64,/g) || []).length === 20, 'All twenty Sample Build photos must be embedded');
   assert((sampleHtml.match(/class=.step /g) || []).length === 10, 'Sample Build must contain ten ordered steps');
-  assert((sampleHtml.match(/<img /g) || []).length === 20, 'Sample Build must contain the twenty available original workshop photos');
-  assert((sampleHtml.match(/photo-placeholder/g) || []).length === 1, 'Only the final finishing-photo placeholder should remain');
+  assert((sampleHtml.match(/<img [^>]*data-photo-file=/g) || []).length === 20, 'Sample Build must contain the twenty available original workshop photos');
+  assert((sampleHtml.match(/class="photo-placeholder"/g) || []).length === 1, 'Only the final finishing-photo placeholder should remain');
   assert(sampleHtml.includes('rough-lumber-selection.png') && sampleHtml.includes('milled-lumber-stock.png'), 'Step 1 does not contain both supplied lumber photos');
   assert(sampleHtml.includes('strip-stack-measurement.png') && sampleHtml.includes('strip-order-dry-fit.png'), 'Step 2 does not contain both supplied strip photos');
   assert(sampleHtml.includes('laminated-assembly-measurement.png') && sampleHtml.includes('laminated-blank-glue-up.png') && sampleHtml.includes('squared-blank-measurement.png'), 'Step 3 does not contain all three supplied glue-up photos');
@@ -68,7 +71,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.51', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.52', 'Wrong visible version');
   assert(await page.locator('#sampleBuildLink').isVisible(), 'Sample Build link is missing');
   assert(await page.locator('#sampleBuildLink').getAttribute('target') === '_blank', 'Sample Build is not independent of the active designer view');
   assert(await page.locator('#laminationMinimumMetric').count() === 0, 'Minimum/rounding explanation still occupies the top metric card');
@@ -358,6 +361,16 @@ function functionSource(source, name) {
   assert(await samplePage.locator('.step').nth(7).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'The Step 8 photo failed to load');
   assert(await samplePage.locator('.step').nth(8).locator('img').count() === 1, 'Sample Build step 9 does not display the supplied dry-fit photo');
   assert(await samplePage.locator('.step').nth(8).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'The Step 9 photo failed to load');
+  assert(await samplePage.locator('.photo-thumbnail').count() === 20, 'Every Sample Build photo must be clickable');
+  assert(await samplePage.locator('.photo-thumbnail').first().getAttribute('role') === 'button', 'Photo thumbnails are not keyboard accessible');
+  await samplePage.locator('.photo-thumbnail').first().click();
+  assert(await samplePage.locator('#photoLightbox').isVisible(), 'Clicking a Sample Build photo did not open the enlarged viewer');
+  assert((await samplePage.locator('#photoLightboxImage').getAttribute('src')).startsWith('data:image/png;base64,'), 'Enlarged photo is not self-contained');
+  assert(await samplePage.locator('#photoLightboxCounter').textContent() === '1 of 20', 'Photo viewer counter is incorrect');
+  await samplePage.locator('#photoLightboxNext').click();
+  assert(await samplePage.locator('#photoLightboxCounter').textContent() === '2 of 20', 'Photo viewer next control failed');
+  await samplePage.locator('#photoLightboxClose').click();
+  assert(await samplePage.locator('#photoLightbox').isHidden(), 'Photo viewer close control failed');
   assert(sampleErrors.length === 0, `Sample Build browser errors: ${sampleErrors.join('; ')}`);
   assert(errors.length === 0, `Browser errors: ${errors.join('; ')}`);
   await browser.close();

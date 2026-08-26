@@ -1,3 +1,9 @@
+# v3.0.52 Self-Contained Clickable Sample Build Photos
+- PASS — all twenty original photos are embedded in Sample Build with no external photo or stylesheet dependency.
+- PASS — every thumbnail opens the enlarged viewer and exposes keyboard-accessible controls.
+- PASS — previous, next, caption, counter, close, and embedded enlarged-image behavior work in the browser.
+- PASS — syntax, photo loading, geometry, manufacturing, material, version/cache, border, print, and frozen-renderer regressions.
+
 # v3.0.51 Mirrored Border Row-Pair Replacement
 - PASS — mirrored borders remove one complete laminated row from both edges at each threshold.
 - PASS — 10.000 in board, 1.750 in module, and 0.500 in entered border produces four rows and requires 1.500 in per edge.

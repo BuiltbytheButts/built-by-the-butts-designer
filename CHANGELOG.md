@@ -1,3 +1,9 @@
+## v3.0.52 — Self-Contained Clickable Sample Build Photos
+- Embedded all twenty original Sample Build photos directly into the page so nested ZIP paths cannot break them.
+- Added a large photo viewer with click/keyboard opening, captions, photo counter, previous/next controls, Escape, and close.
+- Kept the editable photo assets and Sample Build template for future additions.
+- Preserved all approved Designer calculations, mirrored-border engineering, geometry, and rendering.
+
 ## v3.0.51 — Mirrored Border Row-Pair Replacement
 - Corrected Top & Bottom Borders so laminate rows are removed as mirrored pairs: one complete row from each edge.
 - A 10.000 in board with a 1.750 in module and entered 0.500 in border now retains four rows and requires 1.500 in per edge.

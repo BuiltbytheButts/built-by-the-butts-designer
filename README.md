@@ -1,4 +1,4 @@
-# Diamond End Grain Designer v3.0.51
+# Diamond End Grain Designer v3.0.52
 
 Clean-architecture foundation rebuild for Built By The Butts.
 
@@ -20,6 +20,7 @@ Clean-architecture foundation rebuild for Built By The Butts.
 - Material Quantity reports finished cubic inches, net board feet, and waste-adjusted purchase board feet by species.
 - Editable USD board-foot prices produce per-species and total estimated material costs.
 - Print Illustrated Build Guide produces a current cut list, material summary, and ten visual steps generated from the active design for paper or PDF.
+- Independent Sample Build is a self-contained photo guide; all original photos are embedded and open in an enlarged previous/next viewer.
 - Border engineering shows the exact replacement width required per edge and flags underage or overage.
 - Renderer is built from physical square end-grain faces and contains no legacy v2 grid code.
 
