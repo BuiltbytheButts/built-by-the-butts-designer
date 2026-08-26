@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Frequently Asked Questions for the Diamond End Grain Designer" />
+  <title>FAQ — Diamond End Grain Designer</title>
+  <style>
+    :root{--ink:#281b14;--muted:#705f54;--paper:#fffdfa;--line:#d7c9bc;--accent:#924923;--soft:#f3ece4;--warn:#fff4df}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#ece6de;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+    .page-header{padding:24px clamp(20px,5vw,72px);background:#241710;color:#fff}.header-row{display:flex;align-items:center;justify-content:space-between;gap:24px}.eyebrow{margin:0;text-transform:uppercase;letter-spacing:.18em;font-size:11px;color:#d7b79f}.page-header h1{margin:3px 0;font-size:clamp(30px,4vw,46px)}.subtitle{margin:0;color:#dccdc2}.nav{display:flex;flex-wrap:wrap;gap:9px}.button{display:inline-block;border:1px solid #ddcfc5;border-radius:10px;padding:9px 13px;background:#fff;color:#241710;text-decoration:none;font:inherit;cursor:pointer}.button.primary{background:#924923;border-color:#924923;color:#fff}
+    main{max-width:1040px;margin:0 auto;padding:28px 22px 56px}.intro,.group,.callout{background:var(--paper);border:1px solid var(--line);border-radius:16px}.intro{padding:25px}.intro h2{margin:0 0 7px;font-size:28px}.intro p{margin:5px 0;color:var(--muted)}.toc{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.toc a{padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--accent);text-decoration:none;font-size:13px;font-weight:700}
+    .group{margin-top:18px;padding:22px;scroll-margin-top:16px}.group h2{margin:0 0 13px;font-size:24px}.group-intro{color:var(--muted);margin:-5px 0 13px}.faq{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}.faq+ .faq{margin-top:9px}.faq summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 17px;cursor:pointer;font-weight:800;list-style:none}.faq summary::-webkit-details-marker{display:none}.faq summary::after{content:"+";display:grid;place-items:center;min-width:27px;height:27px;border-radius:50%;background:var(--soft);color:var(--accent);font-size:20px}.faq[open] summary{background:var(--soft)}.faq[open] summary::after{content:"−"}.answer{padding:3px 17px 16px;color:var(--muted)}.answer p{margin:8px 0}.answer strong{color:var(--ink)}.answer ul{margin:8px 0;padding-left:22px}.answer li{margin:6px 0}.example{padding:13px;border-left:5px solid var(--accent);border-radius:8px;background:var(--soft)}.callout{margin:18px 0;padding:16px 18px;background:var(--warn);border-color:#cc8432}.callout strong{display:block}
+    footer{display:flex;justify-content:space-between;gap:20px;padding:22px clamp(20px,5vw,72px);background:#241710;color:#dbcabe}footer a{color:#fff}
+    @media(max-width:760px){.header-row{display:grid}.nav{justify-content:start}footer{display:grid}}
+    @media print{@page{margin:.55in}.page-header{padding:0 0 14px;background:#fff;color:#111;border-bottom:2px solid #241710}.page-header .nav,footer,.toc{display:none}.eyebrow,.subtitle{color:#444}main{max-width:none;padding:14px 0}.intro,.group{break-inside:auto;box-shadow:none}.group{padding:13px;margin-top:11px}.group h2{font-size:17px}.faq{break-inside:avoid}.faq summary{font-size:11pt;padding:9px}.faq summary::after{display:none}.faq .answer{display:block!important;padding:0 9px 10px;font-size:9.5pt}}
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <div class="header-row">
+      <div><p class="eyebrow">Built By The Butts</p><h1>Diamond End Grain Designer FAQ</h1><p class="subtitle">Answers to common design, calculation, and workshop questions</p></div>
+      <nav class="nav" aria-label="FAQ navigation"><a class="button" href="index.html">Return to Designer</a><a class="button" href="user-guide.html">User Guide</a><a class="button" href="sample-build.html">Sample Build</a><button class="button primary" type="button" onclick="document.querySelectorAll('details').forEach(item=>item.open=true);window.print()">Print All Answers</button></nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro"><h2>Frequently asked questions</h2><p>Click a question to open its answer. These answers describe Designer v3.0.53 and the approved manufacturing behavior.</p><p>For a start-to-finish explanation of every control, see the <a href="user-guide.html">User Guide</a>.</p></section>
+    <nav class="toc" aria-label="FAQ categories"><a href="#design">Design &amp; Preview</a><a href="#crosscuts">Crosscuts</a><a href="#borders">Borders</a><a href="#edge-rip">Edge Rip</a><a href="#materials">Materials &amp; Cost</a><a href="#files">Files &amp; Guides</a><a href="#troubleshooting">Troubleshooting</a></nav>
+
+    <section id="design" class="group">
+      <h2>Design and preview</h2>
+      <details class="faq"><summary>Does the preview show the finished board or the full rough blank?</summary><div class="answer"><p>It shows the <strong>finished board face</strong>. Rough machining overage is reported in the engineering guidance and material estimate, but it is not added around the visual preview.</p></div></details>
+      <details class="faq"><summary>Why does the Designer start with finished dimensions?</summary><div class="answer"><p>The finished length, width, and thickness are the actual goal. The Designer works backward from those dimensions to determine crosscuts, rows, borders, lamination size, and rough master-blank length. There is no hidden rows-and-columns sizing mode.</p></div></details>
+      <details class="faq"><summary>Why can I change thickness without seeing a dramatically different pattern?</summary><div class="answer"><p>If the nearest whole crosscut count and laminated-row count remain the same, the arrangement can look similar. The thickness still changes the lamination requirement, rough-crosscut guidance, calculated finished run, master-blank length, material quantity, and the physical size represented by each crosscut.</p></div></details>
+      <details class="faq"><summary>Why are the diamonds kept square instead of stretched to fill the preview?</summary><div class="answer"><p>Stretching would show a shape that cannot be built from square end-grain faces. The Designer keeps one uniform scale, centers any length overage, and clips only at the finished ends.</p></div></details>
+      <details class="faq"><summary>Are the wood colors exact?</summary><div class="answer"><p>No. Colors help identify species and follow the pattern. Actual wood varies by tree, board, grain, age, sanding, lighting, and finish. Custom woods can be added with a name and approximate preview color.</p></div></details>
+      <details class="faq"><summary>What does “Required Lamination Size Before 45° Cuts” mean?</summary><div class="answer"><p>It is the practical square size of the laminated blank before the first 45-degree cuts. The mathematical minimum is finished thickness × √2. The Designer rounds <strong>up</strong> to the nearest 1/8 inch so the blank is not undersized.</p></div></details>
+    </section>
+
+    <section id="crosscuts" class="group">
+      <h2>Crosscuts and kerf</h2>
+      <details class="faq"><summary>How is the calculated crosscut count chosen?</summary><div class="answer"><p>The Designer divides finished length by finished thickness and uses the nearest whole crosscut count. That actual count drives the preview and manufacturing result.</p></div></details>
+      <details class="faq"><summary>Why does an odd crosscut count show a warning?</summary><div class="answer"><p>Alternating pieces form mirrored partners. An odd count leaves a different pattern termination at the two ends, so the finished board is visibly unbalanced. The Designer shows the real odd result instead of hiding it.</p></div></details>
+      <details class="faq"><summary>Why isn't there an Alternate Even Option?</summary><div class="answer"><p>An automatic even override could silently change the physical result. The current Designer keeps the requested finished dimensions as the source of truth. Change the finished length or thickness yourself when an even count is preferred.</p></div></details>
+      <details class="faq"><summary>What should I enter for blade kerf?</summary><div class="answer"><p>Enter the actual thickness of the blade making the crosscuts. Kerf is the material removed by each cut and directly increases the required master-blank length.</p></div></details>
+      <details class="faq"><summary>What is the recommended rough crosscut?</summary><div class="answer"><p>It is the finished thickness plus approximately 1/8 inch for flattening and cleanup. It is starting guidance, not a substitute for the allowance required by your process.</p></div></details>
+      <details class="faq"><summary>What does the required rough master-blank length include?</summary><div class="answer"><p>It includes every assigned rough crosscut plus the blade kerf between adjacent pieces. The result appears inside the single calculated crosscut result.</p></div></details>
+    </section>
+
+    <section id="borders" class="group">
+      <h2>Top and bottom borders</h2>
+      <details class="faq"><summary>Why do borders remove two laminated rows at a time?</summary><div class="answer"><p>The top and bottom borders are mirrored. Each border threshold therefore removes one complete row from the top and one complete row from the bottom. This prevents a design that would require ripping a patterned row lengthwise.</p></div></details>
+      <details class="faq"><summary>How does the 10-inch, 1.500-inch border example work?</summary><div class="answer"><p class="example">With a 1.750-inch laminate module, the unbordered 10.000-inch board uses six rows. Borders remove one row at each edge, leaving four rows: 4 × 1.750 = 7.000 inches. The remaining 3.000 inches is split across the mirrored edges, so each border must total 1.500 inches.</p></div></details>
+      <details class="faq"><summary>Why does the border panel say “still needed” or “too wide”?</summary><div class="answer"><p>Your entered physical bands are compared with the exact width needed to reach a complete mirrored row-pair boundary. Adjust the band widths until the check reads <strong>Matched ✓</strong>.</p></div></details>
+      <details class="faq"><summary>Can I use several border colors?</summary><div class="answer"><p>Yes. Add as many bands as required and choose the width and species for each. The schedule is mirrored at both long edges.</p></div></details>
+      <details class="faq"><summary>What if all border bands use the same species?</summary><div class="answer"><p>Add one entry for every physical band even when adjacent bands use the same species. Four same-color bands require four entries; the Designer does not merge them.</p></div></details>
+      <details class="faq"><summary>Do borders increase the finished board width?</summary><div class="answer"><p>No. The finished target remains the outside dimension. Borders replace patterned rows inside that width.</p></div></details>
+      <details class="faq"><summary>When are borders glued on?</summary><div class="answer"><p>Complete the long master blank first, then glue the borders to both long edges <strong>before crosscutting</strong>. This produces bordered end-grain pieces when the master blank is sliced.</p></div></details>
+    </section>
+
+    <section id="edge-rip" class="group">
+      <h2>Edge Rip</h2>
+      <details class="faq"><summary>What does the Edge Rip control change?</summary><div class="answer"><p>It changes only the two 45-degree corner areas removed from the completed first-cut section. Replacement wood fills only those removed areas; the original laminate geometry does not stretch or change.</p></div></details>
+      <details class="faq"><summary>When is the Edge Rip performed?</summary><div class="answer"><p>Make all four initial 45-degree cuts first. Then cut across the designated center section, prepare matching 45-degree replacement pieces, and glue them to the fresh cut edges.</p></div></details>
+      <details class="faq"><summary>How do I make a design without an Edge Rip?</summary><div class="answer"><p>Select <strong>Zero</strong>. The replacement geometry and Edge Rip steps are then omitted from the preview guidance and printable procedure.</p></div></details>
+    </section>
+
+    <section id="materials" class="group">
+      <h2>Materials, waste, and cost</h2>
+      <details class="faq"><summary>Why is Material Quantity labeled “Estimate”?</summary><div class="answer"><p>Every shop and board is different. Defects, grain selection, milling, machine setup, and workflow can change the actual amount purchased and used.</p></div></details>
+      <details class="faq"><summary>What do net board feet and estimated purchase mean?</summary><div class="answer"><p><strong>Net board feet</strong> is the designed wood volume. <strong>Estimated purchase</strong> adds rough-crosscut and kerf consumption plus the selected waste allowance.</p></div></details>
+      <details class="faq"><summary>Why does waste default to 35% or 40%?</summary><div class="answer"><p>The recommended minimum is 35% when there is no Edge Rip and 40% when an Edge Rip is selected. You may enter another value, but a warning remains visible below the recommendation.</p></div></details>
+      <details class="faq"><summary>What is included in Estimated Wood Cost?</summary><div class="answer"><p>It includes only estimated purchase board feet multiplied by the board-foot prices you enter. It does not include glue, sandpaper, finish, blades, electricity, labor, or other shop supplies.</p></div></details>
+      <details class="faq"><summary>Are border and Edge Rip woods deducted and combined correctly?</summary><div class="answer"><p>Yes. Patterned laminate, Edge Rip replacement, and border volumes are calculated separately, then combined by species. Replaced laminated rows are removed from patterned-laminate quantity.</p></div></details>
+    </section>
+
+    <section id="files" class="group">
+      <h2>Projects, exporting, and build guides</h2>
+      <details class="faq"><summary>What does Save Project store?</summary><div class="answer"><p>The downloaded JSON file stores the design dimensions, strips, border bands, Edge Rip, woods, custom colors, prices, kerf, and waste choices. Use Open Project to continue later.</p></div></details>
+      <details class="faq"><summary>What is Export SVG for?</summary><div class="answer"><p>It downloads the current finished-board design as scalable vector artwork. Use the engineering values and printed plan for machining dimensions rather than measuring the on-screen image.</p></div></details>
+      <details class="faq"><summary>What is the difference between the Illustrated Build Guide and Sample Build?</summary><div class="answer"><p>The <strong>Illustrated Build Guide</strong> is generated from the active project, including its woods, counts, dimensions, and selected operations. The <strong>Sample Build</strong> is an independent real-photo reference showing one actual build.</p></div></details>
+      <details class="faq"><summary>Can I print the User Guide, FAQ, or Sample Build?</summary><div class="answer"><p>Yes. Each page has its own print control. Printing the FAQ opens every answer first. The Sample Build can also be printed independently without altering the active design.</p></div></details>
+    </section>
+
+    <section id="troubleshooting" class="group">
+      <h2>Troubleshooting</h2>
+      <details class="faq"><summary>The Sample Build photos do not appear. What should I do?</summary><div class="answer"><p>Use Designer v3.0.52 or newer. All 20 photos are embedded directly in the Sample Build page, so they no longer depend on a nested photo folder. If an older copy is open, close it and open the current version.</p></div></details>
+      <details class="faq"><summary>How do I enlarge a Sample Build photo?</summary><div class="answer"><p>Click the photo, or focus it with the keyboard and press Enter or Space. Use the on-screen arrows or keyboard left/right arrows to move between photos. Close with the × button, the background, or Escape.</p></div></details>
+      <details class="faq"><summary>Why does an old saved project look slightly different after opening?</summary><div class="answer"><p>The Designer migrates supported older data into current controls. Mirrored border row-pair engineering may change a prior odd row reduction into the current manufacturable paired result. Review warnings and save a new copy after confirming it.</p></div></details>
+      <details class="faq"><summary>What should I check before trusting a material total?</summary><div class="answer"><p>Confirm that dimensions, strips, Edge Rip, border widths, species, kerf, and waste are correct; resolve the border and material-gap warnings; then compare the result with the actual boards available from your supplier.</p></div></details>
+    </section>
+
+    <div class="callout"><strong>Still unsure?</strong>Keep the finished-board preview, printed illustrated guide, and real-photo Sample Build together. Use the project's calculated dimensions and counts, and use the photos to confirm order and orientation.</div>
+  </main>
+
+  <footer><p>Built By The Butts · Diamond End Grain Designer FAQ · v3.0.53</p><a href="index.html">Return to the Designer</a></footer>
+</body>
+</html>

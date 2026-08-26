@@ -38,8 +38,9 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.52/g) || []).length === 5, 'All asset cache keys must be v3.0.52');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.53/g) || []).length === 5, 'All asset cache keys must be v3.0.53');
+  assert(html.includes('id="helpMenu"') && html.includes('user-guide.html') && html.includes('faq.html'), 'Designer Help menu is missing the User Guide or FAQ');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
   assert(controlOrder.every((position, index) => position >= 0 && (!index || position > controlOrder[index - 1])), 'Left-panel control sections are not in the approved order');
@@ -61,6 +62,12 @@ function functionSource(source, name) {
   assert(sampleHtml.includes('Crosscut the master blank and keep every piece in order'), 'Step 8 does not describe the supplied ordered crosscut sequence');
   assert(sampleHtml.includes('crosscut-diamond-dry-fit.png'), 'Step 9 does not contain the supplied diamond-field dry-fit photo');
   for (const asset of ['rough-lumber-selection.png','milled-lumber-stock.png','strip-stack-measurement.png','strip-order-dry-fit.png','laminated-assembly-measurement.png','laminated-blank-glue-up.png','squared-blank-measurement.png','marked-45-profile.png','cut-section-measurement.png','completed-45-sections.png','edge-rip-before-cut.png','edge-rip-cut-face.png','matched-edge-rip-pair.png','maple-walnut-glue-up.png','replacement-strip-glue-up.png','replacement-glue-up-alignment.png','master-blank-width-check.png','bordered-master-blank.png','master-blank-top-view.png','crosscut-diamond-dry-fit.png']) assert(fs.existsSync(path.join(root,'assets','sample-build',asset)), 'Sample photo missing: ' + asset);
+  const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
+  const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
+  for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Material Quantity and Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
+  assert(userGuideHtml.includes('Designer v3.0.53') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.53 page');
+  assert((faqHtml.match(/class="faq"/g) || []).length === 35, 'FAQ must contain the 35 approved questions');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.53') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.53 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -71,7 +78,11 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.52', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.53', 'Wrong visible version');
+  assert(await page.locator('#helpMenu').isVisible(), 'Help menu is missing');
+  await page.locator('#helpMenu summary').click();
+  assert(await page.locator('#userGuideLink').isVisible() && await page.locator('#faqLink').isVisible(), 'Help menu links did not open');
+  assert(await page.locator('#userGuideLink').getAttribute('target') === '_blank' && await page.locator('#faqLink').getAttribute('target') === '_blank', 'Help pages are not independent');
   assert(await page.locator('#sampleBuildLink').isVisible(), 'Sample Build link is missing');
   assert(await page.locator('#sampleBuildLink').getAttribute('target') === '_blank', 'Sample Build is not independent of the active designer view');
   assert(await page.locator('#laminationMinimumMetric').count() === 0, 'Minimum/rounding explanation still occupies the top metric card');
@@ -371,7 +382,24 @@ function functionSource(source, name) {
   assert(await samplePage.locator('#photoLightboxCounter').textContent() === '2 of 20', 'Photo viewer next control failed');
   await samplePage.locator('#photoLightboxClose').click();
   assert(await samplePage.locator('#photoLightbox').isHidden(), 'Photo viewer close control failed');
+  const userGuidePage = await browser.newPage();
+  const userGuideErrors = [];
+  userGuidePage.on('pageerror', error => userGuideErrors.push(error.message));
+  await userGuidePage.goto(pathToFileURL(path.join(root, 'user-guide.html')).href);
+  assert((await userGuidePage.locator('h1').textContent()).includes('User Guide'), 'User Guide heading is missing');
+  assert(await userGuidePage.locator('.section').count() === 9, 'User Guide does not display all nine major sections');
+  assert(await userGuidePage.getByRole('button', { name: 'Print Guide' }).isVisible(), 'User Guide print control is missing');
+  const faqPage = await browser.newPage();
+  const faqErrors = [];
+  faqPage.on('pageerror', error => faqErrors.push(error.message));
+  await faqPage.goto(pathToFileURL(path.join(root, 'faq.html')).href);
+  assert((await faqPage.locator('h1').textContent()).includes('FAQ'), 'FAQ heading is missing');
+  assert(await faqPage.locator('details.faq').count() === 35, 'FAQ does not display all 35 questions');
+  await faqPage.locator('details.faq summary').first().click();
+  assert(await faqPage.locator('details.faq').first().getAttribute('open') !== null, 'FAQ question did not expand');
   assert(sampleErrors.length === 0, `Sample Build browser errors: ${sampleErrors.join('; ')}`);
+  assert(userGuideErrors.length === 0, `User Guide browser errors: ${userGuideErrors.join('; ')}`);
+  assert(faqErrors.length === 0, `FAQ browser errors: ${faqErrors.join('; ')}`);
   assert(errors.length === 0, `Browser errors: ${errors.join('; ')}`);
   await browser.close();
   console.log('VERSION/CACHE PASS');

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="User Guide for the Diamond End Grain Designer" />
+  <title>User Guide — Diamond End Grain Designer</title>
+  <style>
+    :root{--ink:#281b14;--muted:#705f54;--paper:#fffdfa;--line:#d7c9bc;--accent:#924923;--soft:#f3ece4;--warn:#fff4df}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#ece6de;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+    .page-header{padding:24px clamp(20px,5vw,72px);background:#241710;color:#fff}.header-row{display:flex;align-items:center;justify-content:space-between;gap:24px}.eyebrow{margin:0;text-transform:uppercase;letter-spacing:.18em;font-size:11px;color:#d7b79f}.page-header h1{margin:3px 0;font-size:clamp(30px,4vw,46px)}.subtitle{margin:0;color:#dccdc2}.nav{display:flex;flex-wrap:wrap;gap:9px}.button{display:inline-block;border:1px solid #ddcfc5;border-radius:10px;padding:9px 13px;background:#fff;color:#241710;text-decoration:none;font:inherit;cursor:pointer}.button.primary{background:#924923;border-color:#924923;color:#fff}
+    main{max-width:1120px;margin:0 auto;padding:28px 22px 56px}.intro,.section,.callout{background:var(--paper);border:1px solid var(--line);border-radius:16px}.intro{display:grid;grid-template-columns:1.4fr .6fr;gap:24px;padding:25px}.intro h2{font-size:28px;margin:0 0 8px}.intro p{color:var(--muted)}.version-card{display:grid;align-content:center;gap:5px;padding:18px;border-radius:13px;background:var(--soft)}.version-card span{color:var(--muted);font-size:13px}.version-card strong{font-size:22px}
+    .toc{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.toc a{padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--accent);text-decoration:none;font-size:13px;font-weight:700}.section{margin-top:18px;padding:24px;scroll-margin-top:16px}.section h2{margin:0 0 12px;font-size:25px}.section h3{margin:22px 0 7px;font-size:18px}.section p{margin:7px 0;color:var(--muted)}.section strong{color:var(--ink)}.section ul,.section ol{margin:10px 0;padding-left:23px}.section li{margin:7px 0}
+    .steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;counter-reset:guide}.step{position:relative;padding:16px 16px 16px 58px;border:1px solid var(--line);border-radius:12px;background:var(--soft);counter-increment:guide}.step::before{content:counter(guide);position:absolute;left:15px;top:15px;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:var(--accent);color:#fff;font-weight:800}.step h3{margin:0 0 4px;font-size:16px}.step p{margin:0;font-size:14px}
+    .control-grid,.metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.control-card,.metric-card{padding:17px;border:1px solid var(--line);border-radius:12px;background:#fff}.control-card h3,.metric-card h3{margin:0 0 7px}.control-card p,.metric-card p{font-size:14px}.callout{margin:14px 0;padding:16px 18px;background:var(--warn);border-color:#cc8432}.callout strong{display:block;margin-bottom:4px}.example{padding:15px;border-left:5px solid var(--accent);background:var(--soft);border-radius:8px}.terms{display:grid;grid-template-columns:auto 1fr;gap:0}.terms dt,.terms dd{margin:0;padding:11px;border-bottom:1px solid var(--line)}.terms dt{font-weight:800}.terms dd{color:var(--muted)}
+    footer{display:flex;justify-content:space-between;gap:20px;padding:22px clamp(20px,5vw,72px);background:#241710;color:#dbcabe}footer a{color:#fff}
+    @media(max-width:780px){.header-row,.intro{display:grid;grid-template-columns:1fr}.steps,.control-grid,.metric-grid{grid-template-columns:1fr}.terms{grid-template-columns:1fr}.terms dt{padding-bottom:2px;border-bottom:0}.terms dd{padding-top:2px}.nav{justify-content:start}footer{display:grid}}
+    @media print{@page{margin:.55in}.page-header{padding:0 0 14px;background:#fff;color:#111;border-bottom:2px solid #241710}.page-header .nav,footer,.toc{display:none}.eyebrow,.subtitle{color:#444}main{max-width:none;padding:14px 0}.intro,.section{box-shadow:none;break-inside:avoid}.section{padding:16px;margin-top:12px}.section h2{font-size:18px}.section h3{font-size:14px}.section p,.section li{font-size:10pt}.steps,.control-grid,.metric-grid{gap:7px}.step,.control-card,.metric-card{break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <div class="header-row">
+      <div><p class="eyebrow">Built By The Butts</p><h1>Diamond End Grain Designer User Guide</h1><p class="subtitle">A practical guide from first dimensions through the workshop plan</p></div>
+      <nav class="nav" aria-label="Guide navigation"><a class="button" href="index.html">Return to Designer</a><a class="button" href="faq.html">FAQ</a><a class="button" href="sample-build.html">Sample Build</a><button class="button primary" type="button" onclick="window.print()">Print Guide</button></nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <div><h2>Design the finished board first</h2><p>The Designer starts with the board you want to finish—not a hidden grid or an oversized rough blank. Enter the finished dimensions, build the strip schedule, and let the engineering panels calculate the crosscuts, laminated rows, borders, material estimate, and shop guidance.</p></div>
+      <aside class="version-card"><span>Guide applies to</span><strong>Designer v3.0.53</strong><span>Calculations remain estimates until confirmed against your stock, machines, and shop practices.</span></aside>
+    </section>
+
+    <nav class="toc" aria-label="Table of contents">
+      <a href="#quick-start">Quick Start</a><a href="#controls">Controls</a><a href="#metrics">Top Results</a><a href="#warnings">Warnings</a><a href="#materials">Materials</a><a href="#projects">Project Tools</a><a href="#build-guides">Build Guides</a><a href="#workflow">Workshop Workflow</a><a href="#glossary">Glossary</a>
+    </nav>
+
+    <section id="quick-start" class="section">
+      <h2>Quick start</h2>
+      <div class="steps">
+        <article class="step"><h3>Enter finished dimensions</h3><p>Set the finished length, width, and thickness of the completed board.</p></article>
+        <article class="step"><h3>Build the strip schedule</h3><p>Choose the finished strip widths and wood species in their mirrored A/B order.</p></article>
+        <article class="step"><h3>Choose the Edge Rip</h3><p>Set the cut depth and replacement wood, or select Zero when the design has no Edge Rip.</p></article>
+        <article class="step"><h3>Choose borders</h3><p>Turn borders on only when required. Add one entry for every physical band at each edge.</p></article>
+        <article class="step"><h3>Enter the blade kerf</h3><p>Use the actual thickness of the blade that will make the crosscuts.</p></article>
+        <article class="step"><h3>Resolve visible warnings</h3><p>Check odd crosscuts, border underage or overage, waste, and unfilled material warnings.</p></article>
+        <article class="step"><h3>Enter wood prices</h3><p>Add your supplier's board-foot prices if you want an estimated wood cost.</p></article>
+        <article class="step"><h3>Save and print</h3><p>Save the project, print the illustrated build guide, and keep the Sample Build nearby for real-photo reference.</p></article>
+      </div>
+    </section>
+
+    <section id="controls" class="section">
+      <h2>Using the Designer controls</h2>
+      <div class="control-grid">
+        <article class="control-card"><h3>Finished Board Dimensions</h3><p><strong>Length</strong> drives the calculated whole-crosscut count. <strong>Width</strong> drives the laminated-row and border fit. <strong>Thickness</strong> is the finished thickness of the board and the finished width of each crosscut after flattening.</p></article>
+        <article class="control-card"><h3>Strip Schedule</h3><p>Strip widths are finished design widths. The Designer adds approximately 1/16 inch only as rough-rip guidance. Labels run outside-in: 1A mirrors 1B, 2A mirrors 2B, and so on. Adding or removing a pair changes both matching positions.</p></article>
+        <article class="control-card"><h3>Edge Rip</h3><p>The slider controls only the two 45-degree corner areas removed after the first four 45-degree cuts. Replacement wood fills only those removed areas. Select <strong>Zero</strong> when this operation is not part of the design.</p></article>
+        <article class="control-card"><h3>Top &amp; Bottom Borders</h3><p>Borders run along both long edges and are glued to the master blank before crosscutting. Every added band is a separate physical band. Adjacent bands may use the same species, but each still needs its own entry.</p></article>
+        <article class="control-card"><h3>Crosscut Engineering</h3><p>Blade kerf remains editable. The recommended rough crosscut is the finished thickness plus approximately 1/8 inch for cleanup. The calculated result includes the whole-crosscut count, projected finished run, and required rough master-blank length.</p></article>
+        <article class="control-card"><h3>Wood Library</h3><p>Choose from the built-in woods or add a custom name and color. Preview colors are identification aids only; actual color changes with the individual board, grain, age, sanding, and finish.</p></article>
+      </div>
+
+      <h3>How mirrored border rows work</h3>
+      <p>A top border and a bottom border must replace laminate symmetrically. The Designer therefore removes complete laminated rows as pairs: one full row from the top and one full row from the bottom. It never suggests ripping one patterned row lengthwise to create partial edge pieces.</p>
+      <div class="example"><strong>Example:</strong> A 10.000-inch board with a 1.750-inch laminate module begins with six rows. Turning on borders removes one row from each edge, leaving four full rows. The diamond field becomes 7.000 inches wide, so the required border is 1.500 inches at each edge.</div>
+    </section>
+
+    <section id="metrics" class="section">
+      <h2>Reading the top results</h2>
+      <div class="metric-grid">
+        <article class="metric-card"><h3>Required Lamination Size Before 45° Cuts</h3><p>The practical square blank size needed to produce the selected finished thickness after the 45-degree cuts. It is based on finished thickness × √2 and rounded upward to the nearest 1/8 inch.</p></article>
+        <article class="metric-card"><h3>Calculated Crosscuts</h3><p>The actual nearest whole number of crosscuts needed for the finished length. The preview uses this count exactly; the Designer does not silently force an even number.</p></article>
+        <article class="metric-card"><h3>Laminated Rows</h3><p>The complete patterned rows retained across the finished width. With borders selected, the count changes only by mirrored row pairs.</p></article>
+        <article class="metric-card"><h3>Finished Board Target</h3><p>The outside finished length and width. Borders remain inside these dimensions; they do not increase the finished board size.</p></article>
+        <article class="metric-card"><h3>Finished Thickness</h3><p>The target thickness after final flattening and sanding. This value also drives crosscut width, rough-crosscut guidance, and lamination-size engineering.</p></article>
+        <article class="metric-card"><h3>Preview</h3><p>The preview represents the finished board face. Pattern overage is centered and clipped at the ends so square diamond cells are never stretched into rectangles.</p></article>
+      </div>
+    </section>
+
+    <section id="warnings" class="section">
+      <h2>Understanding warnings</h2>
+      <div class="callout"><strong>A warning is a manufacturing check, not an automatic correction.</strong>The Designer keeps the actual values visible so you can decide whether to change the dimensions, border schedule, kerf, or waste allowance.</div>
+      <h3>Odd crosscut count</h3><p>An odd count produces an unbalanced pattern at the two ends. The preview deliberately shows the uneven result. Change the finished length or thickness if you want an even count.</p>
+      <h3>Border width mismatch</h3><p>The entered band total is compared with the width required to replace complete mirrored row pairs. “Still needed” means the entered bands are too narrow; “too wide” means their total exceeds the paired boundary. Adjust the physical bands until the result reads <strong>Matched ✓</strong>.</p>
+      <h3>Material gap</h3><p>Purchase totals should not be treated as reconciled while part of the finished width remains unfilled. Match the border schedule first.</p>
+      <h3>Waste below recommendation</h3><p>The default recommended minimum is 35% without an Edge Rip and 40% with an Edge Rip. You may override it, but the warning remains visible below the recommendation.</p>
+    </section>
+
+    <section id="materials" class="section">
+      <h2>Material Quantity and Estimated Wood Cost</h2>
+      <p>The material table separates the patterned laminate, Edge Rip replacement, and borders, then combines shared species. It reports finished cubic inches, net board feet, and estimated purchase board feet.</p>
+      <ul>
+        <li><strong>Net board feet</strong> represents the designed wood volume before the waste percentage.</li>
+        <li><strong>Estimated purchase</strong> includes rough-crosscut length, blade kerf, and the selected waste allowance.</li>
+        <li><strong>Estimated Wood Cost</strong> multiplies estimated purchase board feet by the price you enter for each species.</li>
+        <li>The estimate covers wood only. Glue, sandpaper, finish, blades, and other shop supplies are not included.</li>
+      </ul>
+      <p>Actual use will vary with board defects, grain selection, milling losses, machine setup, and individual shop practices.</p>
+    </section>
+
+    <section id="projects" class="section">
+      <h2>Project and output tools</h2>
+      <h3>Undo and Redo</h3><p>Moves backward or forward through design changes made during the current session.</p>
+      <h3>Save Project</h3><p>Downloads the current design as a JSON project file, including dimensions, strips, borders, Edge Rip, woods, prices, kerf, and waste settings.</p>
+      <h3>Open Project</h3><p>Loads a previously saved Designer JSON file. Older supported project formats are migrated into the current border-band and wood-library structure.</p>
+      <h3>Export SVG</h3><p>Downloads the current finished-board design as scalable vector artwork. Confirm dimensions and manufacturing values in the Designer rather than measuring the screen preview.</p>
+    </section>
+
+    <section id="build-guides" class="section">
+      <h2>Build references</h2>
+      <h3>Print Illustrated Build Guide</h3><p>Generates a guide from the active project. It contains the finished-board reference, current cut list, strip and border schedules, material estimate, selected Edge Rip steps, crosscut lines, and the ordered build procedure.</p>
+      <h3>Independent Sample Build</h3><p>Opens a separate real-photo reference without changing the current design. Click any photo to enlarge it, then use previous/next or the keyboard arrow keys. The photos are embedded in the page so they remain available even when the nested asset folder is not.</p>
+      <p>The illustrated guide follows the active design; the Sample Build shows one real build. When they differ, use the active project's dimensions and species while using the photos for process and orientation reference.</p>
+    </section>
+
+    <section id="workflow" class="section">
+      <h2>Recommended workshop workflow</h2>
+      <ol>
+        <li>Review the finished-board preview and save the project.</li>
+        <li>Mill the selected lumber square and straight, leaving allowance for planing and sanding.</li>
+        <li>Rip, label, and dry-fit the mirrored strip schedule.</li>
+        <li>Glue, flatten, and mill each laminated blank square to the required pre-45-degree size.</li>
+        <li>Mark adjacent edge centers and make all four initial 45-degree cuts.</li>
+        <li>If selected, make the Edge Rip across the target section and glue the replacement pieces to the cut edges.</li>
+        <li>Dry-fit the 45-degree sections, then assemble the full long master blank.</li>
+        <li>If selected, glue the complete borders to both long edges before crosscutting.</li>
+        <li>Mark and cut every assigned crosscut using the displayed rough spacing and actual kerf.</li>
+        <li>Keep crosscuts in order, rotate every second piece, and dry-fit the diamond field.</li>
+        <li>Glue, flatten, trim, sand, and finish to the displayed outside dimensions.</li>
+      </ol>
+      <div class="callout"><strong>Confirm every machine setup yourself.</strong>Use guards, push devices, eye and hearing protection, and dust collection appropriate to each operation.</div>
+    </section>
+
+    <section id="glossary" class="section">
+      <h2>Glossary</h2>
+      <dl class="terms">
+        <dt>Crosscut</dt><dd>One slice cut perpendicular to the long master blank. After rotation, its end-grain face becomes part of the finished pattern.</dd>
+        <dt>Laminate module</dt><dd>The combined finished width of the active strip schedule; it forms one patterned row dimension.</dd>
+        <dt>Laminated row</dt><dd>One complete row of square end-grain faces across the finished board width.</dd>
+        <dt>Master blank</dt><dd>The completed long patterned assembly—including borders when selected—before it is crosscut.</dd>
+        <dt>Blade kerf</dt><dd>The width of material removed by the saw blade during each crosscut.</dd>
+        <dt>Edge Rip</dt><dd>The optional cut across the designated center section after the first 45-degree cuts, followed by replacement wood on the cut edges.</dd>
+        <dt>Border band</dt><dd>One physical strip within the mirrored border schedule. Each entry appears at both long edges.</dd>
+        <dt>Finished target</dt><dd>The final outside length, width, and thickness after flattening, trimming, sanding, and finishing.</dd>
+      </dl>
+    </section>
+  </main>
+
+  <footer><p>Built By The Butts · Diamond End Grain Designer User Guide · v3.0.53</p><a href="index.html">Return to the Designer</a></footer>
+</body>
+</html>

@@ -1,3 +1,9 @@
+## v3.0.53 — User Guide and FAQ
+- Added an independent printable User Guide covering setup, controls, results, warnings, materials, project tools, references, workflow, and terminology.
+- Added an interactive FAQ with 35 practical answers across design, crosscuts, borders, Edge Rip, materials, files, and troubleshooting.
+- Added a compact Help menu in the Designer header with direct User Guide and FAQ links.
+- Preserved all approved calculations, self-contained Sample Build photos, mirrored-border engineering, geometry, and rendering.
+
 ## v3.0.52 — Self-Contained Clickable Sample Build Photos
 - Embedded all twenty original Sample Build photos directly into the page so nested ZIP paths cannot break them.
 - Added a large photo viewer with click/keyboard opening, captions, photo counter, previous/next controls, Escape, and close.

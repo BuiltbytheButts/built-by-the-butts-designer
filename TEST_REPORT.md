@@ -1,3 +1,10 @@
+# v3.0.53 User Guide and FAQ
+- PASS — the Designer Help menu exposes independent User Guide and FAQ links without crowding the header with two more buttons.
+- PASS — User Guide contains the quick start, every control group, top results, warnings, materials, project tools, build references, workflow, and glossary.
+- PASS — FAQ contains 35 interactive answers and opens/closes correctly in the browser.
+- PASS — both pages are self-contained, printable, responsive, and load with no browser errors.
+- PASS — syntax, geometry, manufacturing, material, version/cache, Sample Build, border, print, and frozen-renderer regressions.
+
 # v3.0.52 Self-Contained Clickable Sample Build Photos
 - PASS — all twenty original photos are embedded in Sample Build with no external photo or stylesheet dependency.
 - PASS — every thumbnail opens the enlarged viewer and exposes keyboard-accessible controls.
