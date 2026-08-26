@@ -1,17 +1,38 @@
 'use strict';
 
-const VERSION = '3.0.35';
+const VERSION = '3.0.36';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
 
-const WOODS = Object.freeze({
-  walnut: { name: 'Walnut', color: '#4b2d21' },
+const WOODS = {
+  ash: { name: 'Ash', color: '#c7ad7f' },
+  beech: { name: 'Beech', color: '#c89f72' },
+  birch: { name: 'Birch', color: '#d8bd8b' },
+  bloodwood: { name: 'Bloodwood', color: '#872d2b' },
+  bubinga: { name: 'Bubinga', color: '#8b493e' },
+  canarywood: { name: 'Canarywood', color: '#d2a244' },
   cherry: { name: 'Cherry', color: '#a75b3d' },
-  padauk: { name: 'Padauk', color: '#bc4a28' },
+  ebony: { name: 'Ebony', color: '#241c19' },
+  hickory: { name: 'Hickory', color: '#b39869' },
+  ipe: { name: 'Ipe', color: '#583c2c' },
+  jatoba: { name: 'Jatoba (Brazilian Cherry)', color: '#8f3f32' },
+  mahogany: { name: 'Mahogany', color: '#8b4b38' },
   maple: { name: 'Hard Maple', color: '#e4ca96' },
-  purpleheart: { name: 'Purpleheart', color: '#694064' }
-});
+  osageorange: { name: 'Osage Orange', color: '#d58b27' },
+  padauk: { name: 'Padauk', color: '#bc4a28' },
+  purpleheart: { name: 'Purpleheart', color: '#694064' },
+  redoak: { name: 'Red Oak', color: '#b87950' },
+  sapele: { name: 'Sapele', color: '#98513b' },
+  teak: { name: 'Teak', color: '#9b6c41' },
+  walnut: { name: 'Walnut', color: '#4b2d21' },
+  wenge: { name: 'Wenge', color: '#392822' },
+  whiteoak: { name: 'White Oak', color: '#b79a69' },
+  yellowheart: { name: 'Yellowheart', color: '#d8b73d' },
+  zebrawood: { name: 'Zebrawood', color: '#aa8a58' }
+};
+
+const BUILTIN_WOOD_KEYS = Object.freeze(Object.keys(WOODS));
 
 const DEFAULT_STRIPS = Object.freeze([
   { width: 0.5000, wood: 'cherry' },
@@ -29,6 +50,8 @@ const defaultState = () => ({
   finishedThickness: 1.5,
   includeBorders: false,
   borderBands: [{ width: 0.5, wood: 'maple' }],
+  customWoods: {},
+  nextCustomWoodId: 1,
   wastePercent: 15,
   woodPrices: Object.fromEntries(Object.keys(WOODS).map(key => [key, 0])),
   bladeKerf: 0.125,
@@ -47,6 +70,26 @@ const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const round = (value, places = 4) => Number(number(value).toFixed(places));
 const deepClone = value => JSON.parse(JSON.stringify(value));
+
+function sanitizeWoodName(value, fallback = 'Custom Wood') {
+  const cleaned = String(value || '').replace(/[<>&"\u0000-\u001f]/g, '').trim().slice(0, 40);
+  return cleaned || fallback;
+}
+
+function validWoodColor(value, fallback = '#9b7653') {
+  return /^#[0-9a-f]{6}$/i.test(String(value || '')) ? String(value).toLowerCase() : fallback;
+}
+
+function syncCustomWoods() {
+  Object.keys(WOODS).filter(key => key.startsWith('custom-')).forEach(key => delete WOODS[key]);
+  Object.entries(state.customWoods || {}).forEach(([key, wood]) => {
+    if (!/^custom-\d+$/.test(key)) return;
+    WOODS[key] = {
+      name: sanitizeWoodName(wood?.name),
+      color: validWoodColor(wood?.color)
+    };
+  });
+}
 
 function activeStrips() {
   return state.strips.filter(strip => strip.width > 0);
@@ -357,7 +400,65 @@ function renderPreview() {
 }
 
 function woodOptions(selected) {
-  return Object.entries(WOODS).map(([key, wood]) => `<option value="${key}" ${key === selected ? 'selected' : ''}>${wood.name}</option>`).join('');
+  const options = keys => keys.map(key => `<option value="${key}" ${key === selected ? 'selected' : ''}>${WOODS[key].name}</option>`).join('');
+  const customKeys = Object.keys(state.customWoods || {}).filter(key => WOODS[key]);
+  return `<optgroup label="Built-in woods">${options(BUILTIN_WOOD_KEYS)}</optgroup>${customKeys.length ? `<optgroup label="Your custom woods">${options(customKeys)}</optgroup>` : ''}`;
+}
+
+function customWoodIsUsed(key) {
+  return state.edgeWood === key || state.strips.some(strip => strip.wood === key) || state.borderBands.some(band => band.wood === key);
+}
+
+function updateWoodSwatches(key) {
+  document.querySelectorAll(`[data-wood-swatch="${key}"]`).forEach(swatch => {
+    swatch.style.background = WOODS[key]?.color || '#999';
+  });
+}
+
+function buildCustomWoodEditor() {
+  const holder = $('customWoodEditor');
+  holder.innerHTML = '';
+  const entries = Object.entries(state.customWoods || {});
+  $('customWoodEmpty').hidden = entries.length > 0;
+  entries.forEach(([key, wood], index) => {
+    const row = document.createElement('div');
+    row.className = 'custom-wood-row';
+    row.innerHTML = `
+      <input class="wood-color" data-custom-color="${key}" type="color" value="${validWoodColor(wood.color)}" aria-label="${wood.name} preview color">
+      <label>Custom wood ${index + 1}<input data-custom-name="${key}" type="text" maxlength="40" value="${wood.name}"></label>
+      <button class="text-button custom-wood-remove" data-remove-custom="${key}" type="button">Remove</button>`;
+    holder.append(row);
+  });
+
+  holder.querySelectorAll('[data-custom-name]').forEach(input => {
+    input.addEventListener('input', event => {
+      const key = event.target.dataset.customName;
+      state.customWoods[key].name = sanitizeWoodName(event.target.value, `Custom Wood ${key.split('-').at(-1)}`);
+      WOODS[key].name = state.customWoods[key].name;
+      renderMaterial();
+    });
+    input.addEventListener('change', () => { buildStripEditor(); buildBorderEditor(); syncInputs(); renderWorkshopPlan(); commit(); });
+  });
+  holder.querySelectorAll('[data-custom-color]').forEach(input => {
+    input.addEventListener('input', event => {
+      const key = event.target.dataset.customColor;
+      state.customWoods[key].color = validWoodColor(event.target.value);
+      WOODS[key].color = state.customWoods[key].color;
+      updateWoodSwatches(key);
+      renderPreview(); renderMaterial();
+    });
+    input.addEventListener('change', () => { renderWorkshopPlan(); commit(); });
+  });
+  holder.querySelectorAll('[data-remove-custom]').forEach(button => {
+    button.addEventListener('click', event => {
+      const key = event.currentTarget.dataset.removeCustom;
+      if (customWoodIsUsed(key)) return toast('Change every use of this wood before removing it');
+      delete state.customWoods[key];
+      delete state.woodPrices[key];
+      delete WOODS[key];
+      buildCustomWoodEditor(); buildStripEditor(); buildBorderEditor(); syncInputs(); commit();
+    });
+  });
 }
 
 function buildBorderEditor() {
@@ -367,7 +468,7 @@ function buildBorderEditor() {
     const row = document.createElement('div');
     row.className = 'border-row';
     row.innerHTML = `
-      <span class="swatch" style="background:${WOODS[band.wood]?.color || '#999'}"></span>
+      <span class="swatch" data-wood-swatch="${band.wood}" style="background:${WOODS[band.wood]?.color || '#999'}"></span>
       <label>Band ${index + 1}<input data-border-width="${index}" type="number" min="0.0625" max="6" step="0.0625" value="${number(band.width).toFixed(4)}"></label>
       <label>Wood<select data-border-wood="${index}">${woodOptions(band.wood)}</select></label>
       <button class="text-button border-remove" data-remove-border="${index}" type="button" aria-label="Remove border band ${index + 1}">Remove</button>`;
@@ -404,7 +505,7 @@ function buildStripEditor() {
     const row = document.createElement('div');
     row.className = 'strip-row';
     row.innerHTML = `
-      <span class="swatch" style="background:${WOODS[strip.wood]?.color || '#999'}"></span>
+      <span class="swatch" data-wood-swatch="${strip.wood}" style="background:${WOODS[strip.wood]?.color || '#999'}"></span>
       <label>Strip ${index + 1}<input data-strip-width="${index}" type="number" min="0.03125" max="3" step="0.03125" value="${number(strip.width).toFixed(4)}"></label>
       <label>Wood<select data-strip-wood="${index}">${woodOptions(strip.wood)}</select></label>
       <div class="strip-meta">Recommended rough rip: ~${recommendedRoughRip(strip.width).toFixed(4)} in</div>`;
@@ -710,6 +811,7 @@ function renderWorkshopPlan() {
 }
 
 function render() {
+  syncCustomWoods();
   renderPreview();
   renderEngineering();
   renderMetrics();
@@ -717,6 +819,7 @@ function render() {
   renderWorkshopPlan();
   buildStripEditor();
   buildBorderEditor();
+  buildCustomWoodEditor();
   syncInputs();
   updateHistoryButtons();
 }
@@ -749,6 +852,11 @@ function commit() {
 function restore(serialized) {
   const parsed = JSON.parse(serialized);
   state = { ...defaultState(), ...parsed, version: VERSION };
+  state.customWoods = Object.fromEntries(Object.entries(parsed.customWoods || {})
+    .filter(([key]) => /^custom-\d+$/.test(key))
+    .map(([key, wood]) => [key, { name: sanitizeWoodName(wood?.name), color: validWoodColor(wood?.color) }]));
+  state.nextCustomWoodId = Math.max(1, number(parsed.nextCustomWoodId) || 1, ...Object.keys(state.customWoods).map(key => number(key.split('-').at(-1)) + 1));
+  syncCustomWoods();
   state.strips = Array.isArray(parsed.strips) && parsed.strips.length ? parsed.strips.map(strip => ({ width: Math.max(0.03125, number(strip.width)), wood: WOODS[strip.wood] ? strip.wood : 'maple' })) : defaultState().strips;
   const legacyBand = parsed.borderWidth ? [{ width: parsed.borderWidth, wood: parsed.borderWood }] : null;
   state.borderBands = Array.isArray(parsed.borderBands) && parsed.borderBands.length
@@ -805,6 +913,17 @@ function bindEvents() {
     state.borderBands.push({ width: 0.125, wood: 'maple' });
     state.includeBorders = true;
     render(); commit();
+  });
+
+  $('addCustomWoodBtn').addEventListener('click', () => {
+    const key = `custom-${state.nextCustomWoodId}`;
+    state.nextCustomWoodId += 1;
+    state.customWoods[key] = { name: `Custom Wood ${key.split('-').at(-1)}`, color: '#9b7653' };
+    state.woodPrices[key] = 0;
+    syncCustomWoods();
+    buildCustomWoodEditor(); buildStripEditor(); buildBorderEditor(); syncInputs(); commit();
+    const nameInput = document.querySelector(`[data-custom-name="${key}"]`);
+    nameInput?.focus(); nameInput?.select();
   });
 
   $('edgeInset').addEventListener('input', event => { state.edgeInset = number(event.target.value); renderPreview(); renderMetrics(); renderMaterial(); });

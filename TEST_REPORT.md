@@ -1,3 +1,10 @@
+# v3.0.36 Expanded and Custom Wood Library
+- PASS — 24 built-in species are available anywhere a wood is selected.
+- PASS — a custom species name and color propagate to the board preview, materials, pricing, printable guide, and all wood selectors.
+- PASS — custom species survive project serialization and restore.
+- PASS — invalid custom data is normalized without affecting frozen geometry.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, and frozen-renderer regressions.
+
 # v3.0.7 Preflight Report
 
 ## Automated geometry

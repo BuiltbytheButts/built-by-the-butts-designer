@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
   <title>Diamond End Grain Designer</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.35" />
+  <link rel="stylesheet" href="styles.css?v=3.0.36" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.35</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.36</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -34,6 +34,13 @@
           <label>Finished width (in)<input id="boardWidth" type="number" min="1" max="36" step="0.125" /></label>
         </div>
         <label>Finished thickness (in)<input id="finishedThickness" type="number" min="0.75" max="3" step="0.125" /></label>
+      </section>
+
+      <section>
+        <div class="section-heading-row"><h2>Wood Library</h2><button id="addCustomWoodBtn" class="text-button" type="button">+ Add Custom Wood</button></div>
+        <p class="help">Choose from the expanded built-in species list anywhere wood is selected. Colors are visual guides; actual wood varies by board, grain, age, and finish.</p>
+        <div id="customWoodEditor"></div>
+        <p id="customWoodEmpty" class="custom-wood-empty">No custom woods added.</p>
       </section>
 
       <section>
@@ -125,9 +132,9 @@
   <article id="printPlan" class="print-plan" aria-label="Printable workshop plan"></article>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="geometry.js?v=3.0.35"></script>
-  <script src="manufacturing.js?v=3.0.35"></script>
-  <script src="material.js?v=3.0.35"></script>
-  <script src="app.js?v=3.0.35"></script>
+  <script src="geometry.js?v=3.0.36"></script>
+  <script src="manufacturing.js?v=3.0.36"></script>
+  <script src="material.js?v=3.0.36"></script>
+  <script src="app.js?v=3.0.36"></script>
 </body>
 </html>

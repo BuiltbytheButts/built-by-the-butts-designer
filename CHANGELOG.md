@@ -1,3 +1,9 @@
+## v3.0.36 — Expanded and Custom Wood Library
+- Expanded the built-in library from five to 24 commonly used decorative hardwood species, each with an approximate preview color.
+- Added reusable custom woods with an editable name and color.
+- Custom woods flow through strip, border, and Edge Rip choices, design rendering, material quantities, pricing, saved projects, SVG output, diagrams, and the printable workshop guide.
+- Preserved the frozen laminate, Edge Rip, and board renderer geometry.
+
 ## v3.0.35 — Independent Sample Build (Phase 1)
 - Added a standalone Sample Build page that opens separately from the active Designer.
 - Included four original workshop photos: Edge Rip cut face, maple/walnut glue-up, bordered master blank, and top-view master blank.

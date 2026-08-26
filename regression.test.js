@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.35/g) || []).length === 5, 'All asset cache keys must be v3.0.35');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.36/g) || []).length === 5, 'All asset cache keys must be v3.0.36');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   assert(html.indexOf('Top &amp; Bottom Borders') < html.indexOf('Strip Schedule'), 'Border section is not above Strip Schedule');
   const sampleHtml = fs.readFileSync(path.join(root, 'sample-build.html'), 'utf8');
@@ -57,11 +57,46 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.35', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.36', 'Wrong visible version');
   assert(await page.locator('#sampleBuildLink').isVisible(), 'Sample Build link is missing');
   assert(await page.locator('#sampleBuildLink').getAttribute('target') === '_blank', 'Sample Build is not independent of the active designer view');
   assert(await page.locator('#laminationMinimumMetric').count() === 0, 'Minimum/rounding explanation still occupies the top metric card');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
+  assert(await page.locator('#edgeWood option').count() === 24, 'Expanded built-in wood library must contain 24 species');
+  await page.locator('#addCustomWoodBtn').click();
+  assert(await page.locator('[data-custom-name]').count() === 1, 'Custom wood editor was not added');
+  await page.locator('[data-custom-name]').fill('Ambrosia Maple');
+  await page.locator('[data-custom-name]').dispatchEvent('input');
+  await page.locator('[data-custom-name]').dispatchEvent('change');
+  await page.locator('[data-custom-color]').fill('#88aa66');
+  await page.locator('[data-custom-color]').dispatchEvent('input');
+  await page.locator('[data-custom-color]').dispatchEvent('change');
+  assert(await page.locator('#edgeWood option[value="custom-1"]').textContent() === 'Ambrosia Maple', 'Custom wood is missing from Edge Rip choices');
+  assert(await page.locator('[data-border-wood]').first().locator('option[value="custom-1"]').count() === 1, 'Custom wood is missing from border choices');
+  await page.locator('#edgeWood').selectOption('custom-1');
+  assert(await page.evaluate(() => state.edgeWood) === 'custom-1', 'Custom wood was not accepted by Edge Rip');
+  assert(await page.locator('#boardSvg .edge-replacement[fill="url(#wood-custom-1)"]').count() > 0, 'Custom Edge Rip color did not reach the board renderer');
+  await page.locator('[data-border-wood]').first().evaluate(select => {
+    select.value = 'custom-1';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  assert(await page.evaluate(() => state.borderBands[0].wood) === 'custom-1', 'Custom wood was not accepted by the border schedule');
+  await page.locator('[data-strip-wood]').first().selectOption('custom-1');
+  assert(await page.locator('#boardSvg pattern#wood-custom-1 rect').getAttribute('fill') === '#88aa66', 'Custom color did not reach the board renderer');
+  assert((await page.locator('#materialTableBody').textContent()).includes('Ambrosia Maple'), 'Custom wood is missing from material quantities');
+  assert(await page.locator('[data-wood-price="custom-1"]').count() === 1, 'Custom wood is missing from pricing');
+  await page.evaluate(() => renderWorkshopPlan());
+  assert((await page.locator('#printPlan').textContent()).includes('Ambrosia Maple'), 'Custom wood is missing from the printable guide');
+  const customSnapshot = await page.evaluate(() => snapshot());
+  await page.evaluate(serialized => restore(serialized), customSnapshot);
+  assert(await page.locator('[data-custom-name]').inputValue() === 'Ambrosia Maple', 'Custom wood did not survive project restore');
+  await page.evaluate(() => restore(JSON.stringify({
+    customWoods: { 'custom-7': { name: '<Unsafe Wood>', color: 'red' } },
+    strips: [{ width: 1, wood: 'custom-7' }]
+  })));
+  assert(await page.locator('[data-custom-name]').inputValue() === 'Unsafe Wood', 'Custom wood name was not normalized during restore');
+  assert(await page.locator('[data-custom-color]').inputValue() === '#9b7653', 'Invalid custom color was not normalized during restore');
+  await page.evaluate(() => restore(JSON.stringify(defaultState())));
   assert(await page.locator('#printPlanBtn').isVisible(), 'Print Workshop Plan action is missing');
   const planText = await page.locator('#printPlan').textContent();
   for (const heading of ['Finished Design', 'Lamination Engineering', 'Crosscut Engineering', 'Edge Rip', 'Border Schedule', 'Material Quantity (Estimate)', 'Illustrated Build Procedure', 'Workshop Sequence — Quick Checklist']) {
