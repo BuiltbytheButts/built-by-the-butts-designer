@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.37/g) || []).length === 5, 'All asset cache keys must be v3.0.37');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.38/g) || []).length === 5, 'All asset cache keys must be v3.0.38');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
   assert(controlOrder.every((position, index) => position >= 0 && (!index || position > controlOrder[index - 1])), 'Left-panel control sections are not in the approved order');
@@ -58,11 +58,13 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.37', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.38', 'Wrong visible version');
   assert(await page.locator('#sampleBuildLink').isVisible(), 'Sample Build link is missing');
   assert(await page.locator('#sampleBuildLink').getAttribute('target') === '_blank', 'Sample Build is not independent of the active designer view');
   assert(await page.locator('#laminationMinimumMetric').count() === 0, 'Minimum/rounding explanation still occupies the top metric card');
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
+  assert((await page.locator('#bladeKerf').locator('xpath=ancestor::label').textContent()).includes('enter your blade’s thickness'), 'Blade-thickness note is missing');
+  assert(await page.locator('#materialCostMetric').locator('xpath=preceding-sibling::span').textContent() === 'Estimated Wood Cost', 'Estimated Wood Cost label is incorrect');
   assert(await page.locator('#edgeWood option').count() === 24, 'Expanded built-in wood library must contain 24 species');
   await page.locator('#addCustomWoodBtn').click();
   assert(await page.locator('[data-custom-name]').count() === 1, 'Custom wood editor was not added');
@@ -97,6 +99,20 @@ function functionSource(source, name) {
   })));
   assert(await page.locator('[data-custom-name]').inputValue() === 'Unsafe Wood', 'Custom wood name was not normalized during restore');
   assert(await page.locator('[data-custom-color]').inputValue() === '#9b7653', 'Invalid custom color was not normalized during restore');
+  await page.evaluate(() => restore(JSON.stringify(defaultState())));
+  await page.evaluate(() => {
+    state.strips = Array.from({ length: 8 }, (_, index) => ({ width: 0.2 + index * 0.01, wood: 'maple' }));
+    render();
+  });
+  assert(await page.locator('#stripPairPosition option').count() === 5, 'Eight strips should offer five symmetrical insertion positions');
+  assert(await page.locator('#stripPairPosition option').nth(2).textContent() === 'Between 2–3 and 6–7', 'Symmetrical strip position is not clearly identified');
+  await page.locator('#stripPairPosition').selectOption('2');
+  assert(await page.locator('.strip-insertion-target').count() === 2, 'Both selected insertion gaps are not highlighted');
+  assert((await page.locator('#stripPairHelp').textContent()).includes('between Strips 2–3, and one between Strips 6–7'), 'Exact pair placement explanation is missing');
+  await page.locator('#addStripPairBtn').click();
+  assert(await page.locator('[data-strip-width]').count() === 10, 'Selected symmetrical pair was not added');
+  const insertedWidths = await page.evaluate(() => [state.strips[2].width, state.strips[7].width]);
+  assert(insertedWidths.every(width => width === 0.125), 'New strips were not inserted at the two selected gaps');
   await page.evaluate(() => restore(JSON.stringify(defaultState())));
   assert(await page.locator('#printPlanBtn').isVisible(), 'Print Workshop Plan action is missing');
   const planText = await page.locator('#printPlan').textContent();

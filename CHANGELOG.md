@@ -1,3 +1,10 @@
+## v3.0.38 — Clear Kerf, Wood Cost, and Strip-Pair Placement
+- Added “enter your blade’s thickness” beside Blade kerf.
+- Renamed Estimated material cost to Estimated Wood Cost with no additional qualifier.
+- Replaced the ambiguous add-pair buttons with a symmetrical insertion-position selector.
+- Shows the exact two target gaps with dashed markers before adding a strip pair.
+- Preserved all approved calculations, wood-library behavior, geometry, and rendering.
+
 ## v3.0.37 — Control Panel Reordering
 - Moved Top & Bottom Borders directly after Edge Rip.
 - Moved the expanded Wood Library to the bottom of the control panel.

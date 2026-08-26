@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.37';
+const VERSION = '3.0.38';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -535,16 +535,56 @@ function buildStripEditor() {
       commit();
     });
   });
+  buildStripPairControls();
 }
 
-function addStripPair(location) {
+function stripPairDescription(offset, count = state.strips.length) {
+  const maximum = Math.floor(count / 2);
+  const safeOffset = clamp(Math.round(number(offset)), 0, maximum);
+  if (safeOffset === 0) return `Adds one new strip before Strip 1 and one after Strip ${count}.`;
+  if (count % 2 === 0 && safeOffset === maximum) return `Adds two adjacent strips at the center, between Strips ${safeOffset} and ${safeOffset + 1}.`;
+  return `Adds one strip between Strips ${safeOffset}–${safeOffset + 1}, and one between Strips ${count - safeOffset}–${count - safeOffset + 1}.`;
+}
+
+function stripPairOptionLabel(offset, count = state.strips.length) {
+  const maximum = Math.floor(count / 2);
+  if (offset === 0) return 'Outside edges';
+  if (count % 2 === 0 && offset === maximum) return `Center — between Strips ${offset}–${offset + 1}`;
+  return `Between ${offset}–${offset + 1} and ${count - offset}–${count - offset + 1}`;
+}
+
+function renderStripPairTargets() {
+  const holder = $('stripEditor');
+  holder.querySelectorAll('.strip-insertion-target').forEach(marker => marker.remove());
+  const rows = [...holder.querySelectorAll('.strip-row')];
+  if (!rows.length) return;
+  const offset = clamp(Math.round(number($('stripPairPosition').value)), 0, Math.floor(rows.length / 2));
+  const gaps = [...new Set([offset, rows.length - offset])].sort((a, b) => b - a);
+  gaps.forEach(gap => {
+    const marker = document.createElement('div');
+    marker.className = 'strip-insertion-target';
+    marker.textContent = gaps.length === 1 ? 'Add 2 new strips here' : 'Add 1 new strip here';
+    holder.insertBefore(marker, rows[gap] || null);
+  });
+  $('stripPairHelp').textContent = stripPairDescription(offset, rows.length);
+}
+
+function buildStripPairControls() {
+  const select = $('stripPairPosition');
+  const maximum = Math.floor(state.strips.length / 2);
+  const previous = select.value === '' ? maximum : clamp(Math.round(number(select.value)), 0, maximum);
+  select.innerHTML = Array.from({ length: maximum + 1 }, (_, offset) => `<option value="${offset}">${stripPairOptionLabel(offset)}</option>`).join('');
+  select.value = String(previous);
+  renderStripPairTargets();
+}
+
+function addStripPair(offset) {
   const pair = [{ width: 0.125, wood: 'maple' }, { width: 0.125, wood: 'maple' }];
-  if (location === 'outer') {
-    state.strips = [pair[0], ...state.strips, pair[1]];
-  } else {
-    const middle = Math.floor(state.strips.length / 2);
-    state.strips.splice(middle, 0, ...pair);
-  }
+  const count = state.strips.length;
+  const leftGap = clamp(Math.round(number(offset)), 0, Math.floor(count / 2));
+  const rightGap = count - leftGap;
+  state.strips.splice(rightGap, 0, pair[1]);
+  state.strips.splice(leftGap, 0, pair[0]);
   buildStripEditor(); render(); commit();
 }
 
@@ -939,8 +979,8 @@ function bindEvents() {
   });
 
   $('resetStripsBtn').addEventListener('click', () => { state.strips = defaultState().strips; render(); commit(); });
-  $('addOuterPairBtn').addEventListener('click', () => addStripPair('outer'));
-  $('addInnerPairBtn').addEventListener('click', () => addStripPair('inner'));
+  $('stripPairPosition').addEventListener('change', renderStripPairTargets);
+  $('addStripPairBtn').addEventListener('click', () => addStripPair($('stripPairPosition').value));
   $('removeOuterPairBtn').addEventListener('click', () => removeStripPair('outer'));
   $('removeInnerPairBtn').addEventListener('click', () => removeStripPair('inner'));
 

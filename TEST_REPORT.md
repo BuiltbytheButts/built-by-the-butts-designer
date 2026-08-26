@@ -1,3 +1,10 @@
+# v3.0.38 Kerf, Wood Cost, and Strip-Pair Placement
+- PASS — blade thickness guidance is visible beside Blade kerf.
+- PASS — Estimated Wood Cost appears by itself.
+- PASS — eight strips expose all five valid symmetrical insertion positions.
+- PASS — both chosen gaps are highlighted and receive one new strip each.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, custom-wood, and frozen-renderer regressions.
+
 # v3.0.37 Control Panel Reordering
 - PASS — Top & Bottom Borders appears directly after Edge Rip.
 - PASS — Wood Library is the final control-panel section.
