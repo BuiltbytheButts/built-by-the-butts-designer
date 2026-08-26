@@ -1,3 +1,8 @@
+## v3.0.37 — Control Panel Reordering
+- Moved Top & Bottom Borders directly after Edge Rip.
+- Moved the expanded Wood Library to the bottom of the control panel.
+- Kept all approved calculations, wood-library behavior, geometry, and rendering unchanged.
+
 ## v3.0.36 — Expanded and Custom Wood Library
 - Expanded the built-in library from five to 24 commonly used decorative hardwood species, each with an approximate preview color.
 - Added reusable custom woods with an editable name and color.

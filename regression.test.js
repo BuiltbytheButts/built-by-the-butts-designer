@@ -38,10 +38,11 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.36/g) || []).length === 5, 'All asset cache keys must be v3.0.36');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.37/g) || []).length === 5, 'All asset cache keys must be v3.0.37');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
-  assert(html.indexOf('Top &amp; Bottom Borders') < html.indexOf('Strip Schedule'), 'Border section is not above Strip Schedule');
+  const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
+  assert(controlOrder.every((position, index) => position >= 0 && (!index || position > controlOrder[index - 1])), 'Left-panel control sections are not in the approved order');
   const sampleHtml = fs.readFileSync(path.join(root, 'sample-build.html'), 'utf8');
   assert(sampleHtml.includes('Independent Sample Build'), 'Independent Sample Build page is missing');
   assert((sampleHtml.match(/class=.step /g) || []).length === 10, 'Sample Build must contain ten ordered steps');
@@ -57,7 +58,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.36', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.37', 'Wrong visible version');
   assert(await page.locator('#sampleBuildLink').isVisible(), 'Sample Build link is missing');
   assert(await page.locator('#sampleBuildLink').getAttribute('target') === '_blank', 'Sample Build is not independent of the active designer view');
   assert(await page.locator('#laminationMinimumMetric').count() === 0, 'Minimum/rounding explanation still occupies the top metric card');

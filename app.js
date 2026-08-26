@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.36';
+const VERSION = '3.0.37';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';

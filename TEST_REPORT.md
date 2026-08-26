@@ -1,3 +1,8 @@
+# v3.0.37 Control Panel Reordering
+- PASS — Top & Bottom Borders appears directly after Edge Rip.
+- PASS — Wood Library is the final control-panel section.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, custom-wood, and frozen-renderer regressions.
+
 # v3.0.36 Expanded and Custom Wood Library
 - PASS — 24 built-in species are available anywhere a wood is selected.
 - PASS — a custom species name and color propagate to the board preview, materials, pricing, printable guide, and all wood selectors.

@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
   <title>Diamond End Grain Designer</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.36" />
+  <link rel="stylesheet" href="styles.css?v=3.0.37" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.36</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.37</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -37,27 +37,6 @@
       </section>
 
       <section>
-        <div class="section-heading-row"><h2>Wood Library</h2><button id="addCustomWoodBtn" class="text-button" type="button">+ Add Custom Wood</button></div>
-        <p class="help">Choose from the expanded built-in species list anywhere wood is selected. Colors are visual guides; actual wood varies by board, grain, age, and finish.</p>
-        <div id="customWoodEditor"></div>
-        <p id="customWoodEmpty" class="custom-wood-empty">No custom woods added.</p>
-      </section>
-
-      <section>
-        <div class="section-heading-row"><h2>Top &amp; Bottom Borders</h2><button id="addBorderBandBtn" class="text-button" type="button">+ Add Border</button></div>
-        <label class="toggle-row"><input id="includeBorders" type="checkbox" /> Include all-end-grain borders</label>
-        <p class="help">Add one entry for every physical border band, even when adjacent bands use the same wood. Only complete laminated rows that fit after the entered borders are retained.</p>
-        <div id="borderFields">
-          <div id="borderEditor"></div>
-        </div>
-        <div class="engineering-card"><span>Diamond field size</span><strong id="diamondFieldMetric"></strong></div>
-        <div class="engineering-card"><span>Required border width</span><strong id="requiredBorderMetric"></strong></div>
-        <div class="engineering-card"><span>Border schedule</span><strong id="borderMaterialMetric"></strong></div>
-        <div class="engineering-card"><span>Border width check</span><strong id="borderDifferenceMetric"></strong></div>
-        <p id="borderWarning" class="crosscut-warning" role="alert" hidden></p>
-      </section>
-
-      <section>
         <div class="section-heading-row"><h2>Strip Schedule</h2><button id="resetStripsBtn" class="text-button" type="button">Reset</button></div>
         <p class="help">These are finished design widths. Rough-rip guidance is shown as a recommendation only.</p>
         <div class="strip-toolbar">
@@ -77,6 +56,20 @@
         </div>
         <p class="help">Cut depth controls only the two removed 45° corner areas. The laminated strip geometry stays fixed; replacement wood fills only what is cut away.</p>
         <label>Replacement wood<select id="edgeWood"></select></label>
+      </section>
+
+      <section>
+        <div class="section-heading-row"><h2>Top &amp; Bottom Borders</h2><button id="addBorderBandBtn" class="text-button" type="button">+ Add Border</button></div>
+        <label class="toggle-row"><input id="includeBorders" type="checkbox" /> Include all-end-grain borders</label>
+        <p class="help">Add one entry for every physical border band, even when adjacent bands use the same wood. Only complete laminated rows that fit after the entered borders are retained.</p>
+        <div id="borderFields">
+          <div id="borderEditor"></div>
+        </div>
+        <div class="engineering-card"><span>Diamond field size</span><strong id="diamondFieldMetric"></strong></div>
+        <div class="engineering-card"><span>Required border width</span><strong id="requiredBorderMetric"></strong></div>
+        <div class="engineering-card"><span>Border schedule</span><strong id="borderMaterialMetric"></strong></div>
+        <div class="engineering-card"><span>Border width check</span><strong id="borderDifferenceMetric"></strong></div>
+        <p id="borderWarning" class="crosscut-warning" role="alert" hidden></p>
       </section>
 
       <section>
@@ -100,6 +93,13 @@
         <small id="materialVolumeHelp" class="material-help"></small>
         <div class="material-table-wrap"><table class="material-table"><thead><tr><th>Species</th><th>Cu in</th><th>Net BF</th><th>Buy BF</th><th>$/BF</th><th>Cost</th></tr></thead><tbody id="materialTableBody"></tbody></table></div>
         <p id="materialGapWarning" class="crosscut-warning" role="alert" hidden></p>
+      </section>
+
+      <section>
+        <div class="section-heading-row"><h2>Wood Library</h2><button id="addCustomWoodBtn" class="text-button" type="button">+ Add Custom Wood</button></div>
+        <p class="help">Choose from the expanded built-in species list anywhere wood is selected. Colors are visual guides; actual wood varies by board, grain, age, and finish.</p>
+        <div id="customWoodEditor"></div>
+        <p id="customWoodEmpty" class="custom-wood-empty">No custom woods added.</p>
       </section>
     </aside>
 
@@ -132,9 +132,9 @@
   <article id="printPlan" class="print-plan" aria-label="Printable workshop plan"></article>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="geometry.js?v=3.0.36"></script>
-  <script src="manufacturing.js?v=3.0.36"></script>
-  <script src="material.js?v=3.0.36"></script>
-  <script src="app.js?v=3.0.36"></script>
+  <script src="geometry.js?v=3.0.37"></script>
+  <script src="manufacturing.js?v=3.0.37"></script>
+  <script src="material.js?v=3.0.37"></script>
+  <script src="app.js?v=3.0.37"></script>
 </body>
 </html>
