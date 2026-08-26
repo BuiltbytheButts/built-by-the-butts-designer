@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.50/g) || []).length === 5, 'All asset cache keys must be v3.0.50');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.51/g) || []).length === 5, 'All asset cache keys must be v3.0.51');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
   assert(controlOrder.every((position, index) => position >= 0 && (!index || position > controlOrder[index - 1])), 'Left-panel control sections are not in the approved order');
@@ -68,7 +68,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.50', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.51', 'Wrong visible version');
   assert(await page.locator('#sampleBuildLink').isVisible(), 'Sample Build link is missing');
   assert(await page.locator('#sampleBuildLink').getAttribute('target') === '_blank', 'Sample Build is not independent of the active designer view');
   assert(await page.locator('#laminationMinimumMetric').count() === 0, 'Minimum/rounding explanation still occupies the top metric card');
@@ -231,6 +231,25 @@ function functionSource(source, name) {
   await page.locator('#bladeKerf').dispatchEvent('input');
   assert((await page.locator('#crosscutCountHelp').textContent()).includes('22.325 in rough blank'), 'Editable kerf did not recalculate master blank');
 
+  await page.evaluate(() => restore(JSON.stringify({
+    boardLength: 15.25,
+    boardWidth: 10,
+    finishedThickness: 1.5,
+    includeBorders: true,
+    borderBands: [{ width: 0.5, wood: 'maple' }],
+    strips: [
+      { width: 0.5, wood: 'cherry' },
+      { width: 0.375, wood: 'maple' },
+      { width: 0.375, wood: 'walnut' },
+      { width: 0.5, wood: 'cherry' }
+    ]
+  })));
+  assert(await page.locator('#laminatedRowMetric').textContent() === '4', 'A border must remove one complete laminated row from each edge');
+  assert(await page.locator('#diamondFieldMetric').textContent() === '15.250 × 7.000 in', 'Paired border-row diamond field is incorrect');
+  assert(await page.locator('#requiredBorderMetric').textContent() === '1.5000 in per edge', 'Paired border replacement must require 1.500 in at each edge');
+  assert(await page.locator('#borderDifferenceMetric').textContent() === '1.0000 in still needed per edge', 'Paired border completion warning is incorrect');
+  await page.evaluate(() => restore(JSON.stringify({})));
+
   assert(await page.locator('.end-grain-border').count() === 0, 'Borders should default off');
   assert((await page.locator('#diamondFieldMetric').textContent()).includes('(full board)'), 'Border-off diamond field should use full width');
   await page.locator('#boardWidth').fill('13');
@@ -238,20 +257,20 @@ function functionSource(source, name) {
   assert(await page.locator('#laminatedRowMetric').textContent() === '9', 'Automatic no-border laminated-row count is incorrect');
   await page.locator('#includeBorders').check();
   assert(await page.locator('.end-grain-border').count() === 2, 'Top and bottom borders were not rendered');
-  await page.locator('[data-border-width]').fill('2.9375');
+  await page.locator('[data-border-width]').fill('2.8125');
   await page.locator('[data-border-width]').dispatchEvent('input');
   await page.locator('[data-border-wood]').selectOption('padauk');
   await page.locator('#addBorderBandBtn').click();
   await page.locator('[data-border-width]').nth(1).fill('1.375');
   await page.locator('[data-border-width]').nth(1).dispatchEvent('input');
   await page.locator('[data-border-wood]').nth(1).selectOption('walnut');
-  assert(await page.locator('#laminatedRowMetric').textContent() === '2', 'Only complete laminated rows should remain after entered borders');
-  assert(await page.locator('#diamondFieldMetric').textContent() === '19.500 × 3.000 in', 'Whole-row diamond field is incorrect');
-  assert(await page.locator('#requiredBorderMetric').textContent() === '5.0000 in per edge', 'Whole-row replacement-border calculation is incorrect');
-  assert(await page.locator('#borderDifferenceMetric').textContent() === '0.6875 in still needed per edge', 'Whole-row completion warning is incorrect');
+  assert(await page.locator('#laminatedRowMetric').textContent() === '3', 'Only mirrored pairs of complete laminated rows should be removed');
+  assert(await page.locator('#diamondFieldMetric').textContent() === '18.625 × 4.500 in', 'Paired whole-row diamond field is incorrect');
+  assert(await page.locator('#requiredBorderMetric').textContent() === '4.2500 in per edge', 'Paired replacement-border calculation is incorrect');
+  assert(await page.locator('#borderDifferenceMetric').textContent() === '0.0625 in still needed per edge', 'Paired whole-row completion warning is incorrect');
   assert(await page.locator('#borderWarning').isVisible(), 'Mismatched dynamic border schedule should warn');
   assert(await page.locator('#materialGapWarning').isVisible(), 'Unfilled border schedule should block purchase totals');
-  await page.locator('[data-border-width]').nth(0).fill('3.625');
+  await page.locator('[data-border-width]').nth(0).fill('2.875');
   await page.locator('[data-border-width]').nth(0).dispatchEvent('input');
   assert(await page.locator('#borderDifferenceMetric').textContent() === 'Matched ✓', 'Matching border schedule was not recognized');
   assert(await page.locator('#borderWarning').isHidden(), 'Matched border schedule should not warn');
@@ -292,10 +311,15 @@ function functionSource(source, name) {
   assert(alignment.topGap < 1e-6 && alignment.bottomGap < 1e-6, '1.25 in borders do not meet complete laminate rows exactly');
   await page.locator('[data-border-width]').fill('3.5');
   await page.locator('[data-border-width]').dispatchEvent('input');
-  assert(await page.locator('.bordered-diamond-field').getAttribute('data-laminated-rows') === '4', '3.5 in border should render four complete rows');
-  assert(await page.locator('.bordered-diamond-cell').count() === 60, 'Four rows by fifteen crosscuts should render 60 complete cells');
-  assert(await page.locator('[data-row="0"]').count() === 15 && await page.locator('[data-row="3"]').count() === 15, '3.5 in case has a partial boundary row');
+  assert(await page.locator('.bordered-diamond-field').getAttribute('data-laminated-rows') === '3', '3.5 in border should remove three mirrored row pairs');
+  assert(await page.locator('.bordered-diamond-cell').count() === 45, 'Three rows by fifteen crosscuts should render 45 complete cells');
+  assert(await page.locator('[data-row="0"]').count() === 15 && await page.locator('[data-row="2"]').count() === 15, '3.5 in case has a partial boundary row');
   assert(/^translate\([^)]*\) scale\([^ ,)]+\)$/.test(await page.locator('.bordered-diamond-cell').first().getAttribute('transform')), '3.5 in bordered cells are not uniformly scaled squares');
+  assert(await page.locator('#requiredBorderMetric').textContent() === '4.2500 in per edge', 'Three removed row pairs should require 4.25 in per edge');
+  assert(await page.locator('#borderDifferenceMetric').textContent() === '0.7500 in still needed per edge', '3.5 in border should warn that 0.75 in per edge remains');
+  await page.locator('[data-border-width]').fill('4.25');
+  await page.locator('[data-border-width]').dispatchEvent('input');
+  assert(await page.locator('#borderDifferenceMetric').textContent() === 'Matched ✓', '4.25 in paired border schedule was not recognized');
   alignment = await page.evaluate(() => {
     const borders = [...document.querySelectorAll('.end-grain-border')];
     const field = document.querySelector('.bordered-diamond-field');
@@ -306,7 +330,7 @@ function functionSource(source, name) {
       bottomGap: Math.abs(Number(borders[1].getAttribute('y')) - (y + h))
     };
   });
-  assert(alignment.topGap < 1e-6 && alignment.bottomGap < 1e-6, '3.5 in borders do not meet complete laminate rows exactly');
+  assert(alignment.topGap < 1e-6 && alignment.bottomGap < 1e-6, '4.25 in paired borders do not meet complete laminate rows exactly');
 
   await page.evaluate(() => restore(JSON.stringify({ includeBorders: true, borderWidth: 0.75, borderWood: 'padauk' })));
   assert(await page.locator('[data-border-width]').count() === 1, 'Legacy single border did not migrate to one band');

@@ -60,10 +60,44 @@
     };
   }
 
+  function mirroredBorderRowPlan({
+    boardWidth,
+    moduleWidth,
+    requestedWidth,
+    automaticRows,
+    bordersEnabled
+  }) {
+    const width = Math.max(0, Number(boardWidth) || 0);
+    const module = Math.max(0.001, Number(moduleWidth) || 0.001);
+    const requested = Math.max(0, Number(requestedWidth) || 0);
+    const automatic = Math.max(0, Number.isFinite(Number(automaticRows))
+      ? Math.floor(Number(automaticRows))
+      : Math.round(width / module));
+
+    if (!bordersEnabled) {
+      return {
+        automaticRows: automatic,
+        removedRowsPerEdge: 0,
+        selectedRows: automatic,
+        diamondFieldWidth: automatic * module,
+        requiredWidth: 0
+      };
+    }
+
+    // Top and bottom borders are mirrored physical parts. A border can only
+    // replace full laminate rows as a pair: one row at each long edge.
+    const removedRowsPerEdge = Math.max(1, Math.ceil((requested - 1e-12) / module));
+    const selectedRows = Math.max(0, automatic - 2 * removedRowsPerEdge);
+    const diamondFieldWidth = selectedRows * module;
+    const requiredWidth = Math.max(0, (width - diamondFieldWidth) / 2);
+    return { automaticRows: automatic, removedRowsPerEdge, selectedRows, diamondFieldWidth, requiredWidth };
+  }
+
   return Object.freeze({
     SQRT2,
     SHOP_INCREMENT,
     requiredLaminationSize,
-    finishedDimensionCrosscutPlan
+    finishedDimensionCrosscutPlan,
+    mirroredBorderRowPlan
   });
 });

@@ -53,3 +53,50 @@ console.log('ACTUAL-CROSSCUT ENGINEERING PASS');
   });
   assertClose(plan.requiredBlankLength, 20.6);
 })();
+
+(function testMirroredBordersRemoveLaminatedRowsInPairs() {
+  let border = M.mirroredBorderRowPlan({
+    boardWidth: 10,
+    moduleWidth: 1.75,
+    requestedWidth: 0.5,
+    automaticRows: 6,
+    bordersEnabled: true
+  });
+  assertEq(border.removedRowsPerEdge, 1);
+  assertEq(border.selectedRows, 4);
+  assertClose(border.diamondFieldWidth, 7);
+  assertClose(border.requiredWidth, 1.5);
+
+  border = M.mirroredBorderRowPlan({
+    boardWidth: 13,
+    moduleWidth: 1.5,
+    requestedWidth: 1.25,
+    automaticRows: 9,
+    bordersEnabled: true
+  });
+  assertEq(border.selectedRows, 7);
+  assertClose(border.requiredWidth, 1.25);
+
+  border = M.mirroredBorderRowPlan({
+    boardWidth: 13,
+    moduleWidth: 1.5,
+    requestedWidth: 3.5,
+    automaticRows: 9,
+    bordersEnabled: true
+  });
+  assertEq(border.removedRowsPerEdge, 3);
+  assertEq(border.selectedRows, 3);
+  assertClose(border.requiredWidth, 4.25);
+
+  border = M.mirroredBorderRowPlan({
+    boardWidth: 10,
+    moduleWidth: 1.75,
+    requestedWidth: 0.5,
+    automaticRows: 6,
+    bordersEnabled: false
+  });
+  assertEq(border.removedRowsPerEdge, 0);
+  assertEq(border.selectedRows, 6);
+  assertClose(border.requiredWidth, 0);
+})();
+console.log('MIRRORED BORDER-ROW ENGINEERING PASS');

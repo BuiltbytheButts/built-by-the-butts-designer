@@ -57,7 +57,7 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 - With borders on, diamond field width = finished width − (2 × border width).
 - Borders are drawn as a separate overlay around the source-identical frozen renderer.
 - v3.0.14 extends that overlay to an outside-to-inside band schedule mirrored on both long edges; total border width is the sum of all bands.
-- v3.0.15 treats borders as replacements for complete laminated rows. Required width per edge is `(finished width - selected rows × module width) / 2`.
+- v3.0.51 treats top and bottom borders as mirrored replacements: each border step removes one complete laminated row from both edges. Required width per edge remains `(finished width - selected rows × module width) / 2`, but selected rows can only decrease in pairs.
 - v3.0.16 makes the border schedule the input: available diamond width is `finished width - 2 × scheduled border width`, and the nearest complete laminated-row count is derived from that space.
 - v3.0.17 uses `floor(available diamond width / module width)` so partial laminated rows are never treated as buildable rows.
 - v3.0.18 adds a border-specific compositor that lays out exactly `laminated rows × crosscuts` inside the calculated inner field while continuing to call the frozen `drawEndGrainCell` geometry.

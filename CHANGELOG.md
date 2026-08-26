@@ -1,3 +1,9 @@
+## v3.0.51 — Mirrored Border Row-Pair Replacement
+- Corrected Top & Bottom Borders so laminate rows are removed as mirrored pairs: one complete row from each edge.
+- A 10.000 in board with a 1.750 in module and entered 0.500 in border now retains four rows and requires 1.500 in per edge.
+- Wider borders remove additional row pairs and report the exact remaining width needed to reach the next paired boundary.
+- Updated material, renderer, warning, legacy-project, and manufacturing regressions while preserving frozen laminate and Edge Rip geometry.
+
 ## v3.0.50 — Sample Build Step 9 Photo
 - Replaced the Sample Build step 9 placeholder with the supplied original diamond-field dry-fit photo.
 - Step 9 now shows the ordered crosscuts rotated into the complete diamond layout before final glue-up.

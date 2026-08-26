@@ -1,3 +1,9 @@
+# v3.0.51 Mirrored Border Row-Pair Replacement
+- PASS — mirrored borders remove one complete laminated row from both edges at each threshold.
+- PASS — 10.000 in board, 1.750 in module, and 0.500 in entered border produces four rows and requires 1.500 in per edge.
+- PASS — wider border schedules retain paired row counts, warn by the correct remaining width, and align when matched.
+- PASS — material quantities, legacy migration, border rendering, syntax, geometry, manufacturing, version/cache, and frozen-renderer regressions.
+
 # v3.0.50 Sample Build Step 9 Photo
 - PASS — the supplied original diamond-field dry-fit photo appears beneath Sample Build step 9.
 - PASS — Sample Build contains twenty original photos and only the final finishing placeholder remains.

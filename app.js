@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.50';
+const VERSION = '3.0.51';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -156,11 +156,14 @@ function borderEngineering() {
   const automaticRows = automaticLaminatedRows();
   const availableDiamondWidth = Math.max(0, number(state.boardWidth) - 2 * requestedWidth);
   const idealRows = availableDiamondWidth / Math.max(0.125, moduleWidth());
-  const selectedRows = state.includeBorders
-    ? Math.max(0, Math.floor(idealRows + 1e-12))
-    : automaticRows;
-  const diamondFieldWidth = selectedRows * Math.max(0.125, moduleWidth());
-  const requiredWidth = state.includeBorders ? Math.max(0, (number(state.boardWidth) - diamondFieldWidth) / 2) : 0;
+  const rowPlan = DiamondManufacturing.mirroredBorderRowPlan({
+    boardWidth: state.boardWidth,
+    moduleWidth: moduleWidth(),
+    requestedWidth,
+    automaticRows,
+    bordersEnabled: state.includeBorders
+  });
+  const { selectedRows, diamondFieldWidth, requiredWidth, removedRowsPerEdge } = rowPlan;
   const maximumWidth = Math.max(0, number(state.boardWidth) / 2 - 0.0625);
   const effectiveWidth = state.includeBorders ? Math.min(requestedWidth, maximumWidth) : 0;
   const difference = requestedWidth - requiredWidth;
@@ -169,7 +172,7 @@ function borderEngineering() {
     : 0;
   const rowsFit = diamondFieldWidth <= number(state.boardWidth) + 0.0005;
   const scheduleMatches = Math.abs(difference) <= 0.0005;
-  return { bands, automaticRows, availableDiamondWidth, idealRows, selectedRows, requestedWidth, requiredWidth, difference, effectiveWidth, maximumWidth, diamondFieldWidth, borderVolume, rowsFit, scheduleMatches, valid: !state.includeBorders || (rowsFit && scheduleMatches) };
+  return { bands, automaticRows, availableDiamondWidth, idealRows, selectedRows, removedRowsPerEdge, requestedWidth, requiredWidth, difference, effectiveWidth, maximumWidth, diamondFieldWidth, borderVolume, rowsFit, scheduleMatches, valid: !state.includeBorders || (rowsFit && scheduleMatches) };
 }
 
 function materialQuantity() {
