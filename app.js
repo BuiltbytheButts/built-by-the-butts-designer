@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.39';
+const VERSION = '3.0.40';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -95,6 +95,12 @@ function syncCustomWoods() {
 
 function activeStrips() {
   return state.strips.filter(strip => strip.width > 0);
+}
+
+function stripOffsetLabel(index, count) {
+  const pairNumber = Math.min(index, count - index - 1) + 1;
+  if (count % 2 === 1 && index === Math.floor(count / 2)) return `${pairNumber}C`;
+  return `${pairNumber}${index < count / 2 ? 'A' : 'B'}`;
 }
 
 function moduleWidth() {
@@ -516,7 +522,7 @@ function buildStripEditor() {
     row.className = `strip-row${highlightedStripIndices.includes(index) ? ' new-strip' : ''}`;
     row.innerHTML = `
       <span class="swatch" data-wood-swatch="${strip.wood}" style="background:${WOODS[strip.wood]?.color || '#999'}"></span>
-      <label>Strip ${index + 1}<input data-strip-width="${index}" type="number" min="0.03125" max="3" step="0.03125" value="${number(strip.width).toFixed(4)}"></label>
+      <label>Strip ${stripOffsetLabel(index, state.strips.length)}<input data-strip-width="${index}" type="number" min="0.03125" max="3" step="0.03125" value="${number(strip.width).toFixed(4)}"></label>
       <label>Wood<select data-strip-wood="${index}">${woodOptions(strip.wood)}</select></label>
       <div class="strip-meta">Recommended rough rip: ~${recommendedRoughRip(strip.width).toFixed(4)} in</div>`;
     holder.append(row);
@@ -555,11 +561,10 @@ function buildInlineStripPairControls() {
   for (let gap = rows.length; gap >= 0; gap -= 1) {
     const offset = Math.min(gap, rows.length - gap);
     const control = document.createElement('div');
-    const isOutside = offset === 0;
-    const isCenter = rows.length % 2 === 0 && gap === rows.length / 2;
     control.className = 'strip-insertion-control';
     control.dataset.pairOffset = String(offset);
-    control.innerHTML = `<button type="button" data-add-strip-pair="${offset}" aria-label="${isOutside ? 'Add one strip at each outside edge' : isCenter ? `Add two strips between Strips ${gap} and ${gap + 1}` : `Add a mirrored strip pair at this position`}">${isOutside ? '+ Outside pair' : isCenter ? '+ Center pair' : '+ Mirrored pair'}</button>`;
+    const pairName = `${offset + 1}A/${offset + 1}B`;
+    control.innerHTML = `<button type="button" data-add-strip-pair="${offset}" aria-label="Add mirrored strip pair ${pairName} at this position">+ Add ${pairName}</button>`;
     holder.insertBefore(control, rows[gap] || null);
   }
   holder.querySelectorAll('.strip-insertion-control').forEach(control => {
@@ -694,14 +699,14 @@ function buildGuideVisuals(crosscuts, border, lamination) {
   let stripX = 40;
   const stripBlocks = strips.map((strip, index) => {
     const width = 340 * number(strip.width) / total;
-    const block = `<rect x="${stripX.toFixed(2)}" y="58" width="${width.toFixed(2)}" height="74" fill="${guideWood(strip.wood)}"/><text x="${(stripX + width / 2).toFixed(2)}" y="150" text-anchor="middle">${index + 1}</text>`;
+    const block = `<rect x="${stripX.toFixed(2)}" y="58" width="${width.toFixed(2)}" height="74" fill="${guideWood(strip.wood)}"/><text x="${(stripX + width / 2).toFixed(2)}" y="150" text-anchor="middle">${stripOffsetLabel(index, strips.length)}</text>`;
     stripX += width;
     return block;
   }).join('');
   let squareStripX = 145;
   const squareStripBlocks = strips.map((strip, index) => {
     const width = 130 * number(strip.width) / total;
-    const block = `<rect x="${squareStripX.toFixed(2)}" y="30" width="${width.toFixed(2)}" height="130" fill="${guideWood(strip.wood)}"/><text x="${(squareStripX + width / 2).toFixed(2)}" y="177" text-anchor="middle">${index + 1}</text>`;
+    const block = `<rect x="${squareStripX.toFixed(2)}" y="30" width="${width.toFixed(2)}" height="130" fill="${guideWood(strip.wood)}"/><text x="${(squareStripX + width / 2).toFixed(2)}" y="177" text-anchor="middle">${stripOffsetLabel(index, strips.length)}</text>`;
     squareStripX += width;
     return block;
   }).join('');
@@ -773,9 +778,9 @@ function buildGuideVisuals(crosscuts, border, lamination) {
   const cutGap = masterHeight / shownCutCount;
   const topCrosscutLines = Array.from({ length: shownCutCount - 1 }, (_, index) => `<line x1="${masterX}" y1="${(masterY + (index + 1) * cutGap).toFixed(2)}" x2="${masterX + masterWidth}" y2="${(masterY + (index + 1) * cutGap).toFixed(2)}" class="guide-center-cut"/>`).join('');
   const steps = [
-    { title: 'Prepare the lumber', text: 'Mill the selected lumber square and straight, and make sure to include extra allowance for planing and sanding.', svg: guideSvg(`${strips.map((strip, i) => `<rect x="${43 + i * 55}" y="58" width="46" height="46" rx="3" fill="${guideWood(strip.wood)}"/><text x="${66 + i * 55}" y="124" text-anchor="middle">${i + 1}</text>`).join('')}<text x="210" y="28" text-anchor="middle">Allow extra material for planing and sanding</text>`, 'Selected lumber milled square with extra planing and sanding allowance') },
+    { title: 'Prepare the lumber', text: 'Mill the selected lumber square and straight, and make sure to include extra allowance for planing and sanding.', svg: guideSvg(`${strips.map((strip, i) => `<rect x="${43 + i * 55}" y="58" width="46" height="46" rx="3" fill="${guideWood(strip.wood)}"/><text x="${66 + i * 55}" y="124" text-anchor="middle">${stripOffsetLabel(i, strips.length)}</text>`).join('')}<text x="210" y="28" text-anchor="middle">Allow extra material for planing and sanding</text>`, 'Selected lumber milled square with extra planing and sanding allowance') },
     { title: 'Rip the laminate strips', text: `Rough-rip every strip about 1/16 in wider than its finished design width. Joint and plane consistently; the assembled blank must finish at least ${lamination.recommended.toFixed(3)} in before the 45° cuts.`, svg: guideSvg(`<rect x="48" y="62" width="324" height="66" fill="${guideWood(strips[0]?.wood)}"/>${[1,2,3,4,5].map(i => `<line x1="${48 + i * 54}" y1="48" x2="${48 + i * 54}" y2="142" class="guide-cut"/>`).join('')}<text x="210" y="32" text-anchor="middle">Rip oversize → finish to schedule</text>`, 'Rip lines through rough lumber') },
-    { title: 'Dry-fit the strip order', text: 'Arrange the pieces in the exact numbered order shown below. Confirm the wood colors and symmetry before applying glue.', svg: guideSvg(`${squareStripBlocks}<rect x="145" y="30" width="130" height="130" fill="none" stroke="#222" stroke-width="2"/><text x="210" y="18" text-anchor="middle">Square laminate · ${total.toFixed(4)} in module</text>`, 'Color-coded square laminate strip order') },
+    { title: 'Dry-fit the strip order', text: 'Arrange the pieces in the exact A/B pair order shown below. Confirm the wood colors and symmetry before applying glue.', svg: guideSvg(`${squareStripBlocks}<rect x="145" y="30" width="130" height="130" fill="none" stroke="#222" stroke-width="2"/><text x="210" y="18" text-anchor="middle">Square laminate · ${total.toFixed(4)} in module</text>`, 'Color-coded square laminate strip order') },
     { title: 'Glue and flatten the laminated blank', text: `Apply glue evenly, clamp across the full blank, then flatten it. The finished blank must be a ${lamination.recommended.toFixed(3)} × ${lamination.recommended.toFixed(3)} in square before continuing.`, svg: guideSvg(`${squareStripBlocks}${guideArrow(112,95,148,95,'clamp')}${guideArrow(308,95,272,95,'clamp')}<rect x="145" y="30" width="130" height="130" fill="none" stroke="#222" stroke-width="2"/><path d="M145 19 H275 M134 30 V160" class="guide-dimension"/><text x="210" y="16" text-anchor="middle">${lamination.recommended.toFixed(3)} in</text><text x="123" y="99" text-anchor="middle" transform="rotate(-90 123 99)">${lamination.recommended.toFixed(3)} in</text>`, `Clamped ${lamination.recommended.toFixed(3)} inch square laminated blank`) },
     { title: 'Make the four 45° cuts', text: 'Mark the center of all four edges. Connect each center to the center of the next edge with a dotted line, then complete all four 45° cuts before beginning any Edge Rip operation.', svg: guideSvg(`${squareStripBlocks}<rect x="145" y="30" width="130" height="130" fill="none" stroke="#222" stroke-width="2"/><path d="M210 30 L275 95 L210 160 L145 95 Z" class="guide-center-cut" fill="none"/><circle cx="210" cy="30" r="4" class="guide-center-point"/><circle cx="275" cy="95" r="4" class="guide-center-point"/><circle cx="210" cy="160" r="4" class="guide-center-point"/><circle cx="145" cy="95" r="4" class="guide-center-point"/><text x="252" y="55">CUT</text><text x="250" y="139">CUT</text><text x="153" y="139">CUT</text><text x="151" y="55">CUT</text>`, 'Square laminate with four dotted 45-degree cuts') },
     ...edgeRipSteps,
@@ -824,7 +829,8 @@ function renderWorkshopPlan() {
   const border = borderEngineering();
   const lamination = laminationRequirement();
   const materials = materialQuantity();
-  const stripRows = activeStrips().map((strip, index) => `<tr><td>${index + 1}</td><td>${WOODS[strip.wood]?.name || strip.wood}</td><td>${number(strip.width).toFixed(4)} in</td><td>${recommendedRoughRip(strip.width).toFixed(4)} in</td><td>1 per laminated blank</td></tr>`).join('');
+  const active = activeStrips();
+  const stripRows = active.map((strip, index) => `<tr><td>${stripOffsetLabel(index, active.length)}</td><td>${WOODS[strip.wood]?.name || strip.wood}</td><td>${number(strip.width).toFixed(4)} in</td><td>${recommendedRoughRip(strip.width).toFixed(4)} in</td><td>1 per laminated blank</td></tr>`).join('');
   const borderRows = state.includeBorders
     ? border.bands.map((band, index) => `<tr><td>${index + 1}</td><td>${WOODS[band.wood]?.name || band.wood}</td><td>${band.width.toFixed(4)} in</td><td>${number(state.boardLength).toFixed(3)} in</td><td>2</td></tr>`).join('')
     : '<tr><td colspan="5">No borders selected</td></tr>';

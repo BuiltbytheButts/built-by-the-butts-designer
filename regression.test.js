@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.39/g) || []).length === 5, 'All asset cache keys must be v3.0.39');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.40/g) || []).length === 5, 'All asset cache keys must be v3.0.40');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
   assert(controlOrder.every((position, index) => position >= 0 && (!index || position > controlOrder[index - 1])), 'Left-panel control sections are not in the approved order');
@@ -58,7 +58,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.39', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.40', 'Wrong visible version');
   assert(await page.locator('#sampleBuildLink').isVisible(), 'Sample Build link is missing');
   assert(await page.locator('#sampleBuildLink').getAttribute('target') === '_blank', 'Sample Build is not independent of the active designer view');
   assert(await page.locator('#laminationMinimumMetric').count() === 0, 'Minimum/rounding explanation still occupies the top metric card');
@@ -106,7 +106,10 @@ function functionSource(source, name) {
   });
   assert(await page.locator('#stripPairPosition').count() === 0, 'Rejected strip-position selector is still present');
   assert(await page.locator('.strip-insertion-control').count() === 9, 'Eight strips should show an inline control at all nine gaps');
+  const offsetLabels = await page.locator('[data-strip-width]').evaluateAll(inputs => inputs.map(input => input.parentElement.textContent.trim()));
+  assert(JSON.stringify(offsetLabels) === JSON.stringify(['Strip 1A','Strip 2A','Strip 3A','Strip 4A','Strip 4B','Strip 3B','Strip 2B','Strip 1B']), 'Mirrored strip offsets are not labeled outside-in');
   const mirroredPairButton = page.locator('[data-add-strip-pair="2"]').first();
+  assert((await mirroredPairButton.textContent()).trim() === '+ Add 3A/3B', 'Inline pair control does not identify the new A/B offsets');
   await mirroredPairButton.locator('xpath=..').dispatchEvent('mouseenter');
   assert(await page.locator('.strip-insertion-control.pair-location-active').count() === 2, 'Matching insertion gap is not highlighted');
   await mirroredPairButton.click();
@@ -114,6 +117,8 @@ function functionSource(source, name) {
   assert(await page.locator('.strip-row.new-strip').count() === 2, 'Both newly inserted strips were not highlighted');
   const insertedWidths = await page.evaluate(() => [state.strips[2].width, state.strips[7].width]);
   assert(insertedWidths.every(width => width === 0.125), 'New strips were not inserted at the two selected gaps');
+  const insertedLabels = await page.locator('[data-strip-width]').evaluateAll(inputs => inputs.map(input => input.parentElement.textContent.trim()));
+  assert(insertedLabels[2] === 'Strip 3A' && insertedLabels[7] === 'Strip 3B', 'New mirrored strips did not receive matching A/B labels');
   await page.evaluate(() => restore(JSON.stringify(defaultState())));
   assert(await page.locator('#wastePercent').inputValue() === '40', 'Edge Rip design should default to 40% waste');
   assert((await page.locator('#wasteRecommendation').textContent()).includes('40% (Edge Rip selected)'), '40% Edge Rip recommendation is missing');

@@ -1,3 +1,9 @@
+## v3.0.40 — A/B Mirrored Strip Labels
+- Labels symmetrical strip pairs outside-in as 1A/1B, 2A/2B, and so on.
+- Inline + controls identify the exact A/B pair that will be created.
+- Carries the same A/B labels into preparation diagrams, dry-fit diagrams, and the printed strip schedule.
+- Preserved all approved calculations, waste behavior, wood library, geometry, and rendering.
+
 ## v3.0.39 — Inline Strip Pairs and Conditional Waste
 - Replaced the rejected strip-position selector with compact + controls directly between strip rows.
 - Hovering or focusing a + control highlights its matching mirrored insertion location.

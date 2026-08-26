@@ -1,3 +1,10 @@
+# v3.0.40 A/B Mirrored Strip Labels
+- PASS — eight strips label outside-in as 1A through 4A and mirror back from 4B through 1B.
+- PASS — inline additions show the new A/B pair name before insertion.
+- PASS — both inserted strips receive the expected matching A/B labels.
+- PASS — A/B labels propagate to diagrams and the printable strip schedule.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, waste, custom-wood, and frozen-renderer regressions.
+
 # v3.0.39 Inline Strip Pairs and Conditional Waste
 - PASS — every strip gap has an inline + control and mirrored gaps highlight together.
 - PASS — selected mirrored gaps receive one new strip each and both new rows highlight.
