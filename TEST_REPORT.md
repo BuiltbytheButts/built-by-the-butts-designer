@@ -1,3 +1,57 @@
+# v3.0.50 Sample Build Step 9 Photo
+- PASS — the supplied original diamond-field dry-fit photo appears beneath Sample Build step 9.
+- PASS — Sample Build contains twenty original photos and only the final finishing placeholder remains.
+- PASS — the Step 9 photo loads successfully in the browser.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, waste, strip-pair, custom-wood, and frozen-renderer regressions.
+
+# v3.0.49 Sample Build Step 8 Photo
+- PASS — the supplied original crosscut sequence photo appears beneath Sample Build step 8.
+- PASS — Step 8 identifies that every crosscut must remain in order before rotation and dry fitting.
+- PASS — the Step 8 photo loads successfully in the browser.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, waste, strip-pair, custom-wood, and frozen-renderer regressions.
+
+# v3.0.48 Sample Build Step 7 Photos
+- PASS — both supplied original master-blank photos appear beneath Sample Build step 7.
+- PASS — Sample Build contains nineteen original photos and all packaged assets exist.
+- PASS — both Step 7 photos load successfully in the browser.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, waste, strip-pair, custom-wood, and frozen-renderer regressions.
+
+# v3.0.47 Sample Build Step 6 Photos
+- PASS — all three supplied original replacement glue-up photos appear beneath Sample Build step 6.
+- PASS — Sample Build contains eighteen original photos and all packaged assets exist.
+- PASS — all three Step 6 photos load successfully in the browser.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, waste, strip-pair, custom-wood, and frozen-renderer regressions.
+
+# v3.0.46 Sample Build Step 5 Photos
+- PASS — all three supplied original Edge Rip photos appear beneath Sample Build step 5.
+- PASS — Sample Build contains sixteen original photos and all packaged assets exist.
+- PASS — all three Step 5 photos load successfully in the browser.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, waste, strip-pair, custom-wood, and frozen-renderer regressions.
+
+# v3.0.45 Sample Build Step 4 Photos
+- PASS — all three supplied original 45-degree preparation photos appear beneath Sample Build step 4.
+- PASS — Sample Build contains fourteen original photos and all fourteen packaged assets exist.
+- PASS — all three Step 4 photos load successfully in the browser.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, waste, strip-pair, custom-wood, and frozen-renderer regressions.
+
+# v3.0.44 Sample Build Step 3 Photos
+- PASS — all three supplied original glue-up photos appear beneath Sample Build step 3.
+- PASS — Sample Build contains eleven original photos and all eleven packaged assets exist.
+- PASS — all three Step 3 photos load successfully in the browser.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, waste, strip-pair, custom-wood, and frozen-renderer regressions.
+
+# v3.0.43 Sample Build Step 2 Photos
+- PASS — both supplied original strip-preparation photos appear together beneath Sample Build step 2.
+- PASS — Sample Build contains eight original photos and all eight packaged assets exist.
+- PASS — both Step 2 photos load successfully in the browser.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, waste, strip-pair, custom-wood, and frozen-renderer regressions.
+
+# v3.0.42 Sample Build Step 1 Photos
+- PASS — both supplied original lumber photos appear together beneath Sample Build step 1.
+- PASS — Sample Build contains six original photos and all six packaged assets exist.
+- PASS — the two-photo gallery adapts for desktop, narrow screens, and printing.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, waste, strip-pair, custom-wood, and frozen-renderer regressions.
+
 # v3.0.41 Direct A/B Pair Removal
 - PASS — obsolete Outside Pair and Center Pair removal controls are absent.
 - PASS — each A/B strip row identifies the exact mirrored pair that will be removed.

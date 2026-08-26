@@ -38,16 +38,26 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.41/g) || []).length === 5, 'All asset cache keys must be v3.0.41');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.50/g) || []).length === 5, 'All asset cache keys must be v3.0.50');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
   assert(controlOrder.every((position, index) => position >= 0 && (!index || position > controlOrder[index - 1])), 'Left-panel control sections are not in the approved order');
   const sampleHtml = fs.readFileSync(path.join(root, 'sample-build.html'), 'utf8');
   assert(sampleHtml.includes('Independent Sample Build'), 'Independent Sample Build page is missing');
   assert((sampleHtml.match(/class=.step /g) || []).length === 10, 'Sample Build must contain ten ordered steps');
-  assert((sampleHtml.match(/<img /g) || []).length === 4, 'Sample Build must contain the four available original workshop photos');
-  for (const asset of ['edge-rip-cut-face.png','maple-walnut-glue-up.png','bordered-master-blank.png','master-blank-top-view.png']) assert(fs.existsSync(path.join(root,'assets','sample-build',asset)), 'Sample photo missing: ' + asset);
+  assert((sampleHtml.match(/<img /g) || []).length === 20, 'Sample Build must contain the twenty available original workshop photos');
+  assert((sampleHtml.match(/photo-placeholder/g) || []).length === 1, 'Only the final finishing-photo placeholder should remain');
+  assert(sampleHtml.includes('rough-lumber-selection.png') && sampleHtml.includes('milled-lumber-stock.png'), 'Step 1 does not contain both supplied lumber photos');
+  assert(sampleHtml.includes('strip-stack-measurement.png') && sampleHtml.includes('strip-order-dry-fit.png'), 'Step 2 does not contain both supplied strip photos');
+  assert(sampleHtml.includes('laminated-assembly-measurement.png') && sampleHtml.includes('laminated-blank-glue-up.png') && sampleHtml.includes('squared-blank-measurement.png'), 'Step 3 does not contain all three supplied glue-up photos');
+  assert(sampleHtml.includes('marked-45-profile.png') && sampleHtml.includes('cut-section-measurement.png') && sampleHtml.includes('completed-45-sections.png'), 'Step 4 does not contain all three supplied 45-degree photos');
+  assert(sampleHtml.includes('edge-rip-before-cut.png') && sampleHtml.includes('edge-rip-cut-face.png') && sampleHtml.includes('matched-edge-rip-pair.png'), 'Step 5 does not contain all three supplied Edge Rip photos');
+  assert(sampleHtml.includes('maple-walnut-glue-up.png') && sampleHtml.includes('replacement-strip-glue-up.png') && sampleHtml.includes('replacement-glue-up-alignment.png'), 'Step 6 does not contain all three supplied replacement glue-up photos');
+  assert(sampleHtml.includes('master-blank-width-check.png') && sampleHtml.includes('bordered-master-blank.png'), 'Step 7 does not contain both supplied master-blank photos');
+  assert(sampleHtml.includes('Crosscut the master blank and keep every piece in order'), 'Step 8 does not describe the supplied ordered crosscut sequence');
+  assert(sampleHtml.includes('crosscut-diamond-dry-fit.png'), 'Step 9 does not contain the supplied diamond-field dry-fit photo');
+  for (const asset of ['rough-lumber-selection.png','milled-lumber-stock.png','strip-stack-measurement.png','strip-order-dry-fit.png','laminated-assembly-measurement.png','laminated-blank-glue-up.png','squared-blank-measurement.png','marked-45-profile.png','cut-section-measurement.png','completed-45-sections.png','edge-rip-before-cut.png','edge-rip-cut-face.png','matched-edge-rip-pair.png','maple-walnut-glue-up.png','replacement-strip-glue-up.png','replacement-glue-up-alignment.png','master-blank-width-check.png','bordered-master-blank.png','master-blank-top-view.png','crosscut-diamond-dry-fit.png']) assert(fs.existsSync(path.join(root,'assets','sample-build',asset)), 'Sample photo missing: ' + asset);
 
   const browser = await chromium.launch({
     headless: true,
@@ -58,7 +68,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.41', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.50', 'Wrong visible version');
   assert(await page.locator('#sampleBuildLink').isVisible(), 'Sample Build link is missing');
   assert(await page.locator('#sampleBuildLink').getAttribute('target') === '_blank', 'Sample Build is not independent of the active designer view');
   assert(await page.locator('#laminationMinimumMetric').count() === 0, 'Minimum/rounding explanation still occupies the top metric card');
@@ -302,6 +312,29 @@ function functionSource(source, name) {
   assert(await page.locator('[data-border-width]').count() === 1, 'Legacy single border did not migrate to one band');
   assert(await page.locator('[data-border-width]').inputValue() === '0.7500', 'Legacy border width migration failed');
   assert(await page.locator('[data-border-wood]').inputValue() === 'padauk', 'Legacy border wood migration failed');
+  const samplePage = await browser.newPage();
+  const sampleErrors = [];
+  samplePage.on('pageerror', error => sampleErrors.push(error.message));
+  await samplePage.goto(pathToFileURL(path.join(root, 'sample-build.html')).href);
+  assert(await samplePage.locator('.step').first().locator('img').count() === 2, 'Sample Build step 1 does not display both supplied photos');
+  assert(await samplePage.locator('.step').first().locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 1 photos failed to load');
+  assert(await samplePage.locator('.step').nth(1).locator('img').count() === 2, 'Sample Build step 2 does not display both supplied photos');
+  assert(await samplePage.locator('.step').nth(1).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 2 photos failed to load');
+  assert(await samplePage.locator('.step').nth(2).locator('img').count() === 3, 'Sample Build step 3 does not display all three supplied photos');
+  assert(await samplePage.locator('.step').nth(2).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 3 photos failed to load');
+  assert(await samplePage.locator('.step').nth(3).locator('img').count() === 3, 'Sample Build step 4 does not display all three supplied photos');
+  assert(await samplePage.locator('.step').nth(3).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 4 photos failed to load');
+  assert(await samplePage.locator('.step').nth(4).locator('img').count() === 3, 'Sample Build step 5 does not display all three supplied photos');
+  assert(await samplePage.locator('.step').nth(4).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 5 photos failed to load');
+  assert(await samplePage.locator('.step').nth(5).locator('img').count() === 3, 'Sample Build step 6 does not display all three supplied photos');
+  assert(await samplePage.locator('.step').nth(5).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 6 photos failed to load');
+  assert(await samplePage.locator('.step').nth(6).locator('img').count() === 2, 'Sample Build step 7 does not display both supplied photos');
+  assert(await samplePage.locator('.step').nth(6).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 7 photos failed to load');
+  assert(await samplePage.locator('.step').nth(7).locator('img').count() === 1, 'Sample Build step 8 does not display the supplied crosscut sequence photo');
+  assert(await samplePage.locator('.step').nth(7).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'The Step 8 photo failed to load');
+  assert(await samplePage.locator('.step').nth(8).locator('img').count() === 1, 'Sample Build step 9 does not display the supplied dry-fit photo');
+  assert(await samplePage.locator('.step').nth(8).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'The Step 9 photo failed to load');
+  assert(sampleErrors.length === 0, `Sample Build browser errors: ${sampleErrors.join('; ')}`);
   assert(errors.length === 0, `Browser errors: ${errors.join('; ')}`);
   await browser.close();
   console.log('VERSION/CACHE PASS');

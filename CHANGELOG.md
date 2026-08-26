@@ -1,3 +1,56 @@
+## v3.0.50 — Sample Build Step 9 Photo
+- Replaced the Sample Build step 9 placeholder with the supplied original diamond-field dry-fit photo.
+- Step 9 now shows the ordered crosscuts rotated into the complete diamond layout before final glue-up.
+- Only the final glue-up and finishing-photo placeholder remains.
+- Preserved all approved Designer calculations, controls, geometry, and rendering.
+
+## v3.0.49 — Sample Build Step 8 Photo
+- Replaced the earlier Sample Build step 8 photo with the newly supplied original crosscut sequence.
+- Updated step 8 to show the completed crosscuts being kept in order before rotation and dry fitting.
+- Preserved all approved Designer calculations, controls, geometry, and rendering.
+
+## v3.0.48 — Sample Build Step 7 Photos
+- Expanded Sample Build step 7 to a two-photo master-blank sequence.
+- Shows the full-width check followed by the patterned end view with both borders attached before crosscutting.
+- Replaced the earlier Step 7 border asset with the newly supplied original.
+- Preserved all approved Designer calculations, controls, geometry, and rendering.
+
+## v3.0.47 — Sample Build Step 6 Photos
+- Expanded Sample Build step 6 from one original photo to a three-photo replacement glue-up sequence.
+- Shows the end fit, full-length clamping, and clamped end-alignment check.
+- Replaced the earlier Step 6 asset with the newly supplied original.
+- Preserved all approved Designer calculations, controls, geometry, and rendering.
+
+## v3.0.46 — Sample Build Step 5 Photos
+- Expanded Sample Build step 5 from one original photo to a three-photo Edge Rip sequence.
+- Shows the pre-cut orientation, completed cut face, and matched-pair comparison.
+- Replaced the earlier cut-face asset with the newly supplied original.
+- Preserved all approved Designer calculations, controls, geometry, and rendering.
+
+## v3.0.45 — Sample Build Step 4 Photos
+- Added three supplied original workshop photos beneath Sample Build step 4.
+- Shows the marked 45-degree profile, dimension check, and organized completed sections.
+- Updated the Sample Build photo count and packaged-asset validation.
+- Preserved all approved Designer calculations, controls, geometry, and rendering.
+
+## v3.0.44 — Sample Build Step 3 Photos
+- Added three supplied original workshop photos beneath Sample Build step 3.
+- Shows the laminated assembly measurement, clamped glue-up, and squared-blank verification.
+- Added a responsive and print-ready three-photo layout.
+- Preserved all approved Designer calculations, controls, geometry, and rendering.
+
+## v3.0.43 — Sample Build Step 2 Photos
+- Added two supplied original workshop photos beneath Sample Build step 2.
+- Shows the combined strip-stack measurement check and the complete dry-fit species order.
+- Updated the Sample Build photo count and packaged-asset validation.
+- Preserved all approved Designer calculations, controls, geometry, and rendering.
+
+## v3.0.42 — Sample Build Step 1 Photos
+- Added two supplied original workshop photos beneath Sample Build step 1.
+- Shows the selected rough lumber followed by the milled stock prepared for the strip schedule.
+- Updated the Sample Build photo count and responsive/print gallery layout.
+- Preserved all approved Designer calculations, controls, geometry, and rendering.
+
 ## v3.0.41 — Direct A/B Pair Removal
 - Removed the general Outside Pair and Center Pair deletion buttons.
 - Added a pair-specific Remove 1A/1B, Remove 2A/2B, and equivalent action beside every strip row.
