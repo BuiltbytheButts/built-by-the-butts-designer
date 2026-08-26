@@ -1,3 +1,11 @@
+# v3.0.39 Inline Strip Pairs and Conditional Waste
+- PASS — every strip gap has an inline + control and mirrored gaps highlight together.
+- PASS — selected mirrored gaps receive one new strip each and both new rows highlight.
+- PASS — waste defaults to 35% without Edge Rip and 40% with Edge Rip.
+- PASS — manual waste values survive Edge Rip changes and show a below-recommendation warning when applicable.
+- PASS — Use recommended restores conditional automatic waste.
+- PASS — syntax, geometry, manufacturing, material, version/cache, browser, border, print, custom-wood, and frozen-renderer regressions.
+
 # v3.0.38 Kerf, Wood Cost, and Strip-Pair Placement
 - PASS — blade thickness guidance is visible beside Blade kerf.
 - PASS — Estimated Wood Cost appears by itself.

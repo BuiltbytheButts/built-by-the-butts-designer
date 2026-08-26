@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.38';
+const VERSION = '3.0.39';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -52,7 +52,8 @@ const defaultState = () => ({
   borderBands: [{ width: 0.5, wood: 'maple' }],
   customWoods: {},
   nextCustomWoodId: 1,
-  wastePercent: 15,
+  wastePercent: 40,
+  wasteIsManual: false,
   woodPrices: Object.fromEntries(Object.keys(WOODS).map(key => [key, 0])),
   bladeKerf: 0.125,
   edgeInset: 0.5,
@@ -64,6 +65,7 @@ let state = defaultState();
 let history = [];
 let future = [];
 let toastTimer = 0;
+let highlightedStripIndices = [];
 
 const $ = id => document.getElementById(id);
 const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
@@ -105,6 +107,14 @@ function recommendedRoughRip(width) {
 
 function recommendedRoughCrosscut() {
   return round(number(state.finishedThickness) + ROUGH_CROSSCUT_EXTRA, 3);
+}
+
+function recommendedWastePercent() {
+  return number(state.edgeInset) > 0 ? 40 : 35;
+}
+
+function applyAutomaticWasteRecommendation() {
+  if (!state.wasteIsManual) state.wastePercent = recommendedWastePercent();
 }
 
 function laminationRequirement() {
@@ -503,7 +513,7 @@ function buildStripEditor() {
   holder.innerHTML = '';
   state.strips.forEach((strip, index) => {
     const row = document.createElement('div');
-    row.className = 'strip-row';
+    row.className = `strip-row${highlightedStripIndices.includes(index) ? ' new-strip' : ''}`;
     row.innerHTML = `
       <span class="swatch" data-wood-swatch="${strip.wood}" style="background:${WOODS[strip.wood]?.color || '#999'}"></span>
       <label>Strip ${index + 1}<input data-strip-width="${index}" type="number" min="0.03125" max="3" step="0.03125" value="${number(strip.width).toFixed(4)}"></label>
@@ -535,47 +545,33 @@ function buildStripEditor() {
       commit();
     });
   });
-  buildStripPairControls();
+  buildInlineStripPairControls();
 }
 
-function stripPairDescription(offset, count = state.strips.length) {
-  const maximum = Math.floor(count / 2);
-  const safeOffset = clamp(Math.round(number(offset)), 0, maximum);
-  if (safeOffset === 0) return `Adds one new strip before Strip 1 and one after Strip ${count}.`;
-  if (count % 2 === 0 && safeOffset === maximum) return `Adds two adjacent strips at the center, between Strips ${safeOffset} and ${safeOffset + 1}.`;
-  return `Adds one strip between Strips ${safeOffset}–${safeOffset + 1}, and one between Strips ${count - safeOffset}–${count - safeOffset + 1}.`;
-}
-
-function stripPairOptionLabel(offset, count = state.strips.length) {
-  const maximum = Math.floor(count / 2);
-  if (offset === 0) return 'Outside edges';
-  if (count % 2 === 0 && offset === maximum) return `Center — between Strips ${offset}–${offset + 1}`;
-  return `Between ${offset}–${offset + 1} and ${count - offset}–${count - offset + 1}`;
-}
-
-function renderStripPairTargets() {
+function buildInlineStripPairControls() {
   const holder = $('stripEditor');
-  holder.querySelectorAll('.strip-insertion-target').forEach(marker => marker.remove());
   const rows = [...holder.querySelectorAll('.strip-row')];
   if (!rows.length) return;
-  const offset = clamp(Math.round(number($('stripPairPosition').value)), 0, Math.floor(rows.length / 2));
-  const gaps = [...new Set([offset, rows.length - offset])].sort((a, b) => b - a);
-  gaps.forEach(gap => {
-    const marker = document.createElement('div');
-    marker.className = 'strip-insertion-target';
-    marker.textContent = gaps.length === 1 ? 'Add 2 new strips here' : 'Add 1 new strip here';
-    holder.insertBefore(marker, rows[gap] || null);
+  for (let gap = rows.length; gap >= 0; gap -= 1) {
+    const offset = Math.min(gap, rows.length - gap);
+    const control = document.createElement('div');
+    const isOutside = offset === 0;
+    const isCenter = rows.length % 2 === 0 && gap === rows.length / 2;
+    control.className = 'strip-insertion-control';
+    control.dataset.pairOffset = String(offset);
+    control.innerHTML = `<button type="button" data-add-strip-pair="${offset}" aria-label="${isOutside ? 'Add one strip at each outside edge' : isCenter ? `Add two strips between Strips ${gap} and ${gap + 1}` : `Add a mirrored strip pair at this position`}">${isOutside ? '+ Outside pair' : isCenter ? '+ Center pair' : '+ Mirrored pair'}</button>`;
+    holder.insertBefore(control, rows[gap] || null);
+  }
+  holder.querySelectorAll('.strip-insertion-control').forEach(control => {
+    const highlight = active => {
+      holder.querySelectorAll(`[data-pair-offset="${control.dataset.pairOffset}"]`).forEach(match => match.classList.toggle('pair-location-active', active));
+    };
+    control.addEventListener('mouseenter', () => highlight(true));
+    control.addEventListener('mouseleave', () => highlight(false));
+    control.querySelector('button').addEventListener('focus', () => highlight(true));
+    control.querySelector('button').addEventListener('blur', () => highlight(false));
+    control.querySelector('button').addEventListener('click', event => addStripPair(event.currentTarget.dataset.addStripPair));
   });
-  $('stripPairHelp').textContent = stripPairDescription(offset, rows.length);
-}
-
-function buildStripPairControls() {
-  const select = $('stripPairPosition');
-  const maximum = Math.floor(state.strips.length / 2);
-  const previous = select.value === '' ? maximum : clamp(Math.round(number(select.value)), 0, maximum);
-  select.innerHTML = Array.from({ length: maximum + 1 }, (_, offset) => `<option value="${offset}">${stripPairOptionLabel(offset)}</option>`).join('');
-  select.value = String(previous);
-  renderStripPairTargets();
 }
 
 function addStripPair(offset) {
@@ -585,7 +581,12 @@ function addStripPair(offset) {
   const rightGap = count - leftGap;
   state.strips.splice(rightGap, 0, pair[1]);
   state.strips.splice(leftGap, 0, pair[0]);
-  buildStripEditor(); render(); commit();
+  highlightedStripIndices = [leftGap, rightGap + 1];
+  render(); commit();
+  setTimeout(() => {
+    highlightedStripIndices = [];
+    document.querySelectorAll('.strip-row.new-strip').forEach(row => row.classList.remove('new-strip'));
+  }, 1600);
 }
 
 function removeStripPair(location) {
@@ -643,6 +644,11 @@ function renderMetrics() {
 
 function renderMaterial() {
   const plan = materialQuantity();
+  const recommendedWaste = recommendedWastePercent();
+  $('wasteRecommendation').textContent = `Recommended minimum for this design: ${recommendedWaste}% (${number(state.edgeInset) > 0 ? 'Edge Rip selected' : 'no Edge Rip'}).`;
+  $('useRecommendedWasteBtn').hidden = !state.wasteIsManual && Math.abs(number(state.wastePercent) - recommendedWaste) < 1e-9;
+  $('wasteWarning').hidden = number(state.wastePercent) >= recommendedWaste;
+  $('wasteWarning').textContent = `Waste allowance is below the recommended ${recommendedWaste}% for this design.`;
   $('materialTableBody').innerHTML = plan.rows.map(row => {
     const parts = [];
     if (row.components.diamondLaminate) parts.push('Diamond laminate');
@@ -845,7 +851,7 @@ function renderWorkshopPlan() {
     <section><h2>Crosscut Engineering</h2><table><tbody><tr><th>Calculated crosscuts</th><td>${crosscuts.crosscutCount}${crosscuts.isBalanced ? ' — balanced' : ' — unbalanced warning'}</td></tr><tr><th>Recommended rough crosscut</th><td>${crosscuts.roughCrosscut.toFixed(3)} in</td></tr><tr><th>Blade kerf</th><td>${crosscuts.bladeKerf.toFixed(3)} in</td></tr><tr><th>Required master blank</th><td>${crosscuts.requiredBlankLength.toFixed(3)} in</td></tr><tr><th>Projected finished run</th><td>${crosscuts.achievableLength.toFixed(3)} in</td></tr></tbody></table></section>
     ${edgeRipSection}
     <section><h2>Border Schedule</h2><p>Required total per edge: <strong>${state.includeBorders ? `${border.requiredWidth.toFixed(4)} in` : 'Not applicable'}</strong>${state.includeBorders && !border.scheduleMatches ? ` · Current schedule needs adjustment by ${Math.abs(border.difference).toFixed(4)} in per edge.` : ''}</p><table><thead><tr><th>Band</th><th>Species</th><th>Width</th><th>Finished length</th><th>Quantity</th></tr></thead><tbody>${borderRows}</tbody></table></section>
-    <section><h2>Material Quantity (Estimate)</h2><p>Waste allowance: ${materials.wastePercent.toFixed(1)}% · Estimated purchase: ${materials.totalPurchaseBoardFeet.toFixed(3)} bd ft · Estimated cost: $${materials.totalEstimatedCost.toFixed(2)}</p><table><thead><tr><th>Species</th><th>Cu in</th><th>Net BF</th><th>Buy BF</th><th>$/BF</th><th>Cost</th></tr></thead><tbody>${materialRows}</tbody></table><p class="print-note">Actual material use varies with stock selection, milling, defects, and individual shop practices.</p></section>
+    <section><h2>Material Quantity (Estimate)</h2><p>Waste allowance: ${materials.wastePercent.toFixed(1)}% · Estimated purchase: ${materials.totalPurchaseBoardFeet.toFixed(3)} bd ft · Estimated Wood Cost: $${materials.totalEstimatedCost.toFixed(2)}</p><table><thead><tr><th>Species</th><th>Cu in</th><th>Net BF</th><th>Buy BF</th><th>$/BF</th><th>Cost</th></tr></thead><tbody>${materialRows}</tbody></table><p class="print-note">Actual material use varies with stock selection, milling, defects, and individual shop practices.</p></section>
     <section><h2>Illustrated Build Procedure</h2><p class="print-note">Diagrams are generated from this design. Wood colors are a guide; actual boards vary.</p><div class="guide-key">${materialKey}</div><div class="guide-steps">${illustratedSteps}</div></section>
     <section><h2>Workshop Sequence — Quick Checklist</h2><ol><li>Review the design and keep the finished-board reference available.</li><li>Mill stock and rough-rip the laminate strips according to the strip schedule.</li><li>Dry-fit the strip order and confirm the species and symmetry.</li><li>Glue, flatten, and mill the blank to ${lamination.recommended.toFixed(3)} × ${lamination.recommended.toFixed(3)} in.</li><li>Mark all four adjacent-edge-center lines and complete the four 45° cuts.</li>${edgeRipChecklist}<li>Dry-fit the 45° cut sections in two rows and check the joints.</li>${masterBlankStep}<li>From the top view, run ${crosscuts.crosscutCount} dotted cut lines across the completed blank at approximately ${crosscuts.roughCrosscut.toFixed(3)} in spacing, using a ${crosscuts.bladeKerf.toFixed(3)} in kerf.</li><li>Lay out all ${crosscuts.crosscutCount} assigned crosscuts, alternating their rotation to form the diamonds.</li><li>Flatten, trim, and finish to ${number(state.boardLength).toFixed(3)} × ${number(state.boardWidth).toFixed(3)} × ${number(state.finishedThickness).toFixed(3)} in.</li></ol></section>`;
 }
@@ -892,6 +898,10 @@ function commit() {
 function restore(serialized) {
   const parsed = JSON.parse(serialized);
   state = { ...defaultState(), ...parsed, version: VERSION };
+  state.wasteIsManual = Object.prototype.hasOwnProperty.call(parsed, 'wasteIsManual')
+    ? Boolean(parsed.wasteIsManual)
+    : Object.prototype.hasOwnProperty.call(parsed, 'wastePercent');
+  applyAutomaticWasteRecommendation();
   state.customWoods = Object.fromEntries(Object.entries(parsed.customWoods || {})
     .filter(([key]) => /^custom-\d+$/.test(key))
     .map(([key, wood]) => [key, { name: sanitizeWoodName(wood?.name), color: validWoodColor(wood?.color) }]));
@@ -946,7 +956,18 @@ function bindEvents() {
   bindNumberInput('boardWidth', 'boardWidth');
   bindNumberInput('finishedThickness', 'finishedThickness');
   bindNumberInput('bladeKerf', 'bladeKerf');
-  bindNumberInput('wastePercent', 'wastePercent');
+  $('wastePercent').addEventListener('input', event => {
+    state.wastePercent = Math.max(0, number(event.target.value));
+    state.wasteIsManual = true;
+    renderMaterial();
+  });
+  $('wastePercent').addEventListener('change', commit);
+  $('useRecommendedWasteBtn').addEventListener('click', () => {
+    state.wasteIsManual = false;
+    applyAutomaticWasteRecommendation();
+    $('wastePercent').value = state.wastePercent;
+    renderMaterial(); commit();
+  });
 
   $('includeBorders').addEventListener('change', event => { state.includeBorders = event.target.checked; render(); commit(); });
   $('addBorderBandBtn').addEventListener('click', () => {
@@ -966,7 +987,12 @@ function bindEvents() {
     nameInput?.focus(); nameInput?.select();
   });
 
-  $('edgeInset').addEventListener('input', event => { state.edgeInset = number(event.target.value); renderPreview(); renderMetrics(); renderMaterial(); });
+  $('edgeInset').addEventListener('input', event => {
+    state.edgeInset = number(event.target.value);
+    applyAutomaticWasteRecommendation();
+    $('wastePercent').value = state.wastePercent;
+    renderPreview(); renderMetrics(); renderMaterial();
+  });
   $('edgeInset').addEventListener('change', commit);
   $('edgeWood').addEventListener('change', event => { state.edgeWood = event.target.value; renderPreview(); renderMaterial(); commit(); });
 
@@ -974,13 +1000,13 @@ function bindEvents() {
     const button = event.target.closest('[data-inset]');
     if (!button) return;
     state.edgeInset = number(button.dataset.inset);
+    applyAutomaticWasteRecommendation();
     $('edgeInset').value = state.edgeInset;
+    $('wastePercent').value = state.wastePercent;
     renderPreview(); renderMetrics(); renderMaterial(); commit();
   });
 
   $('resetStripsBtn').addEventListener('click', () => { state.strips = defaultState().strips; render(); commit(); });
-  $('stripPairPosition').addEventListener('change', renderStripPairTargets);
-  $('addStripPairBtn').addEventListener('click', () => addStripPair($('stripPairPosition').value));
   $('removeOuterPairBtn').addEventListener('click', () => removeStripPair('outer'));
   $('removeInnerPairBtn').addEventListener('click', () => removeStripPair('inner'));
 

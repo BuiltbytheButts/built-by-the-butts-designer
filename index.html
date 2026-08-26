@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
   <title>Diamond End Grain Designer</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.38" />
+  <link rel="stylesheet" href="styles.css?v=3.0.39" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.38</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.39</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -39,11 +39,7 @@
       <section>
         <div class="section-heading-row"><h2>Strip Schedule</h2><button id="resetStripsBtn" class="text-button" type="button">Reset</button></div>
         <p class="help">These are finished design widths. Rough-rip guidance is shown as a recommendation only.</p>
-        <div class="strip-pair-controls">
-          <label>Insert symmetrical pair<select id="stripPairPosition"></select></label>
-          <button id="addStripPairBtn" class="secondary compact" type="button">+ Add Pair</button>
-        </div>
-        <p id="stripPairHelp" class="strip-pair-help"></p>
+        <p class="strip-pair-help">Use any + line below to add a strip there and another at the matching position.</p>
         <div id="stripEditor"></div>
         <div class="strip-toolbar strip-remove-toolbar">
           <button id="removeOuterPairBtn" class="secondary compact" type="button">− Outside Pair</button>
@@ -88,6 +84,8 @@
         <p class="help">Enter your supplier's USD price per board foot for each species. Purchase quantities include rough-crosscut, kerf, and waste allowances.</p>
         <p class="help">Actual material used will vary with stock selection, milling, defects, and individual shop practices.</p>
         <label>Waste allowance (%)<input id="wastePercent" type="number" min="0" max="100" step="1" /></label>
+        <div class="waste-recommendation"><span id="wasteRecommendation"></span><button id="useRecommendedWasteBtn" class="text-button" type="button">Use recommended</button></div>
+        <p id="wasteWarning" class="crosscut-warning" role="alert" hidden></p>
         <div class="two-col">
           <div class="engineering-card"><span>Total net material</span><strong id="materialNetMetric"></strong></div>
           <div class="engineering-card"><span>Estimated purchase</span><strong id="materialPurchaseMetric"></strong></div>
@@ -135,9 +133,9 @@
   <article id="printPlan" class="print-plan" aria-label="Printable workshop plan"></article>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="geometry.js?v=3.0.38"></script>
-  <script src="manufacturing.js?v=3.0.38"></script>
-  <script src="material.js?v=3.0.38"></script>
-  <script src="app.js?v=3.0.38"></script>
+  <script src="geometry.js?v=3.0.39"></script>
+  <script src="manufacturing.js?v=3.0.39"></script>
+  <script src="material.js?v=3.0.39"></script>
+  <script src="app.js?v=3.0.39"></script>
 </body>
 </html>

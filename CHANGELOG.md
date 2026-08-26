@@ -1,3 +1,12 @@
+## v3.0.39 — Inline Strip Pairs and Conditional Waste
+- Replaced the rejected strip-position selector with compact + controls directly between strip rows.
+- Hovering or focusing a + control highlights its matching mirrored insertion location.
+- Newly added mirrored strips briefly highlight after insertion.
+- New designs recommend 35% waste without Edge Rip and 40% with Edge Rip.
+- Automatic waste follows Edge Rip changes until the user enters a manual value; manual values are preserved and warned when below the recommendation.
+- Added a Use recommended action to return to conditional automatic waste.
+- Preserved all approved calculations, wood-library behavior, geometry, and rendering.
+
 ## v3.0.38 — Clear Kerf, Wood Cost, and Strip-Pair Placement
 - Added “enter your blade’s thickness” beside Blade kerf.
 - Renamed Estimated material cost to Estimated Wood Cost with no additional qualifier.

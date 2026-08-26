@@ -38,8 +38,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.38/g) || []).length === 5, 'All asset cache keys must be v3.0.38');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.39/g) || []).length === 5, 'All asset cache keys must be v3.0.39');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
   assert(controlOrder.every((position, index) => position >= 0 && (!index || position > controlOrder[index - 1])), 'Left-panel control sections are not in the approved order');
@@ -58,7 +58,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.38', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.39', 'Wrong visible version');
   assert(await page.locator('#sampleBuildLink').isVisible(), 'Sample Build link is missing');
   assert(await page.locator('#sampleBuildLink').getAttribute('target') === '_blank', 'Sample Build is not independent of the active designer view');
   assert(await page.locator('#laminationMinimumMetric').count() === 0, 'Minimum/rounding explanation still occupies the top metric card');
@@ -104,16 +104,30 @@ function functionSource(source, name) {
     state.strips = Array.from({ length: 8 }, (_, index) => ({ width: 0.2 + index * 0.01, wood: 'maple' }));
     render();
   });
-  assert(await page.locator('#stripPairPosition option').count() === 5, 'Eight strips should offer five symmetrical insertion positions');
-  assert(await page.locator('#stripPairPosition option').nth(2).textContent() === 'Between 2–3 and 6–7', 'Symmetrical strip position is not clearly identified');
-  await page.locator('#stripPairPosition').selectOption('2');
-  assert(await page.locator('.strip-insertion-target').count() === 2, 'Both selected insertion gaps are not highlighted');
-  assert((await page.locator('#stripPairHelp').textContent()).includes('between Strips 2–3, and one between Strips 6–7'), 'Exact pair placement explanation is missing');
-  await page.locator('#addStripPairBtn').click();
+  assert(await page.locator('#stripPairPosition').count() === 0, 'Rejected strip-position selector is still present');
+  assert(await page.locator('.strip-insertion-control').count() === 9, 'Eight strips should show an inline control at all nine gaps');
+  const mirroredPairButton = page.locator('[data-add-strip-pair="2"]').first();
+  await mirroredPairButton.locator('xpath=..').dispatchEvent('mouseenter');
+  assert(await page.locator('.strip-insertion-control.pair-location-active').count() === 2, 'Matching insertion gap is not highlighted');
+  await mirroredPairButton.click();
   assert(await page.locator('[data-strip-width]').count() === 10, 'Selected symmetrical pair was not added');
+  assert(await page.locator('.strip-row.new-strip').count() === 2, 'Both newly inserted strips were not highlighted');
   const insertedWidths = await page.evaluate(() => [state.strips[2].width, state.strips[7].width]);
   assert(insertedWidths.every(width => width === 0.125), 'New strips were not inserted at the two selected gaps');
   await page.evaluate(() => restore(JSON.stringify(defaultState())));
+  assert(await page.locator('#wastePercent').inputValue() === '40', 'Edge Rip design should default to 40% waste');
+  assert((await page.locator('#wasteRecommendation').textContent()).includes('40% (Edge Rip selected)'), '40% Edge Rip recommendation is missing');
+  await page.locator('#edgeInset').fill('0');
+  await page.locator('#edgeInset').dispatchEvent('input');
+  assert(await page.locator('#wastePercent').inputValue() === '35', 'No-Edge-Rip design should automatically use 35% waste');
+  await page.locator('#wastePercent').fill('36');
+  await page.locator('#wastePercent').dispatchEvent('input');
+  await page.locator('#edgeInset').fill('0.5');
+  await page.locator('#edgeInset').dispatchEvent('input');
+  assert(await page.locator('#wastePercent').inputValue() === '36', 'Manual waste entry was overwritten by Edge Rip');
+  assert(await page.locator('#wasteWarning').isVisible(), 'Below-recommendation waste warning is missing');
+  await page.locator('#useRecommendedWasteBtn').click();
+  assert(await page.locator('#wastePercent').inputValue() === '40', 'Use recommended did not restore the conditional value');
   assert(await page.locator('#printPlanBtn').isVisible(), 'Print Workshop Plan action is missing');
   const planText = await page.locator('#printPlan').textContent();
   for (const heading of ['Finished Design', 'Lamination Engineering', 'Crosscut Engineering', 'Edge Rip', 'Border Schedule', 'Material Quantity (Estimate)', 'Illustrated Build Procedure', 'Workshop Sequence — Quick Checklist']) {
@@ -161,7 +175,7 @@ function functionSource(source, name) {
   assert(await page.locator('#materialNetMetric').textContent() === '2.255 bd ft', 'Default net board-foot total is incorrect');
   assert(await page.locator('#materialTableBody tr').count() === 3, 'Default species were not combined into three rows');
   const purchaseBeforeWasteChange = Number((await page.locator('#materialPurchaseMetric').textContent()).split(' ')[0]);
-  await page.locator('#wastePercent').fill('25');
+  await page.locator('#wastePercent').fill('50');
   await page.locator('#wastePercent').dispatchEvent('input');
   const purchaseAfterWasteChange = Number((await page.locator('#materialPurchaseMetric').textContent()).split(' ')[0]);
   assert(purchaseAfterWasteChange > purchaseBeforeWasteChange, 'Waste allowance did not increase purchase board feet');
