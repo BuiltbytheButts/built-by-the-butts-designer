@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.53';
+const VERSION = '3.0.54';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -947,12 +947,13 @@ function updateHistoryButtons() {
   $('redoBtn').disabled = future.length === 0;
 }
 
-function toast(message) {
+function toast(message, kind = 'success', duration = 5000) {
   const el = $('toast');
   el.textContent = message;
+  el.className = kind;
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+  toastTimer = setTimeout(() => el.classList.remove('show'), duration);
 }
 
 function download(name, type, text) {
@@ -1044,18 +1045,31 @@ function bindEvents() {
     updateHistoryButtons();
   });
 
-  $('saveProjectBtn').addEventListener('click', () => download('diamond-end-grain-design-v3.json', 'application/json', JSON.stringify(state, null, 2)));
+  $('saveProjectBtn').addEventListener('click', () => {
+    const fileName = 'diamond-end-grain-design-v3.json';
+    download(fileName, 'application/json', JSON.stringify(state, null, 2));
+    toast(`Project saved to Downloads: ${fileName}`);
+  });
+  $('openProjectBtn').addEventListener('click', () => {
+    $('openProjectInput').value = '';
+    $('openProjectInput').click();
+  });
   $('openProjectInput').addEventListener('change', async event => {
     const file = event.target.files[0];
     if (!file) return;
     try {
+      const beforeOpen = snapshot();
       restore(await file.text());
+      const matchesCurrentDesign = snapshot() === beforeOpen;
       history = [snapshot()];
       future = [];
       commit();
-      toast('Project opened');
-    } catch {
-      alert('That project file could not be opened.');
+      toast(matchesCurrentDesign
+        ? `Project opened: ${file.name}. It matches the design already on screen.`
+        : `Project opened: ${file.name}`);
+    } catch (error) {
+      console.error('Project open failed', error);
+      toast('That project file could not be opened. Choose a Diamond End Grain Designer JSON file.', 'error', 7000);
     }
     event.target.value = '';
   });

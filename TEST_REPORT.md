@@ -1,3 +1,11 @@
+# v3.0.54 Save/Open Confirmation and Restore
+- PASS — the exact user-downloaded v3.0.53 JSON restores 15.250 × 10.000 in, all eight strips, the border band, and the custom wood without browser errors.
+- PASS — reopening the same file clearly reports that it matches the design already on screen.
+- PASS — Save Project downloads valid v3.0.54 JSON and shows its filename and Downloads location.
+- PASS — Open Project uses a dedicated button, resets after each selection, and can reopen the same file repeatedly.
+- PASS — invalid-file errors remain visible for seven seconds; successful save/open confirmations remain visible for five seconds.
+- PASS — syntax, geometry, manufacturing, material, version/cache, Sample Build, border, print, and frozen geometry/renderer regressions.
+
 # v3.0.53 User Guide and FAQ
 - PASS — the Designer Help menu exposes independent User Guide and FAQ links without crowding the header with two more buttons.
 - PASS — User Guide contains the quick start, every control group, top results, warnings, materials, project tools, build references, workflow, and glossary.

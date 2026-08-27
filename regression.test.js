@@ -29,17 +29,22 @@ function functionSource(source, name) {
 
 (async () => {
   const root = __dirname;
-  const baselineApp = fs.readFileSync('C:/Users/built/AppData/Local/Temp/app (26).js', 'utf8');
   const releaseApp = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
-  assert(hash(path.join(root, 'geometry.js')) === hash('C:/Users/built/AppData/Local/Temp/geometry (5).js'), 'Frozen geometry.js changed');
-  for (const name of ['edgeCutGeometry', 'drawEndGrainCell', 'renderBoard']) {
-    assert(functionSource(releaseApp, name) === functionSource(baselineApp, name), `Frozen ${name} changed`);
+  const frozenFunctionHashes = {
+    edgeCutGeometry: '4596bd31f6dfcef581b5e52730bb73be95d4adac1820c05aeefbb94115a6115d',
+    drawEndGrainCell: '7780a699fa123b814b71e59fac895fd11839da9ce248c724df251747a657881e',
+    renderBoard: 'a7f6e362a986c45e17b154ace989417f689748213b5cdf4a447bcfd95c7aabcc'
+  };
+  assert(hash(path.join(root, 'geometry.js')) === '808a73619d0961591cdfe2d7f666792fb9f17d3f6f7479168c198d6a3516e12b', 'Frozen geometry.js changed');
+  for (const [name, expectedHash] of Object.entries(frozenFunctionHashes)) {
+    const actualHash = crypto.createHash('sha256').update(functionSource(releaseApp, name)).digest('hex');
+    assert(actualHash === expectedHash, `Frozen ${name} changed`);
   }
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.53/g) || []).length === 5, 'All asset cache keys must be v3.0.53');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.54/g) || []).length === 5, 'All asset cache keys must be v3.0.54');
   assert(html.includes('id="helpMenu"') && html.includes('user-guide.html') && html.includes('faq.html'), 'Designer Help menu is missing the User Guide or FAQ');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
@@ -65,9 +70,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Material Quantity and Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.53') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.53 page');
+  assert(userGuideHtml.includes('Designer v3.0.54') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.54 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 35, 'FAQ must contain the 35 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.53') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.53 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.54') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.54 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -78,7 +83,50 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.53', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.54', 'Wrong visible version');
+  assert(await page.locator('#openProjectBtn').isVisible(), 'Open Project is not a visible button');
+  const [projectDownload] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#saveProjectBtn').click()
+  ]);
+  assert(projectDownload.suggestedFilename() === 'diamond-end-grain-design-v3.json', 'Save Project produced the wrong filename');
+  assert((await page.locator('#toast').textContent()).includes('Project saved to Downloads'), 'Save Project confirmation is missing');
+
+  const openProject = JSON.parse(await page.evaluate(() => snapshot()));
+  openProject.boardLength = 15.25;
+  openProject.boardWidth = 10;
+  const openProjectFile = {
+    name: 'diamond-end-grain-design-v3.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(openProject))
+  };
+  const [firstChooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.locator('#openProjectBtn').click()
+  ]);
+  await firstChooser.setFiles(openProjectFile);
+  await page.waitForFunction(() => document.querySelector('#boardLength').value === '15.25');
+  assert(await page.locator('#boardWidth').inputValue() === '10', 'Open Project did not restore the saved dimensions');
+  assert((await page.locator('#toast').textContent()).includes('Project opened: diamond-end-grain-design-v3.json'), 'Open Project confirmation is missing the filename');
+  assert(await page.locator('#openProjectInput').evaluate(input => input.files.length) === 0, 'Open Project file input was not reset');
+
+  const [sameProjectChooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.locator('#openProjectBtn').click()
+  ]);
+  await sameProjectChooser.setFiles(openProjectFile);
+  await page.waitForFunction(() => document.querySelector('#toast').textContent.includes('matches the design already on screen'));
+  assert((await page.locator('#toast').textContent()).includes('matches the design already on screen'), 'Opening the current design does not explain the lack of visual change');
+
+  const [invalidProjectChooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.locator('#openProjectBtn').click()
+  ]);
+  await invalidProjectChooser.setFiles({ name: 'not-a-project.json', mimeType: 'application/json', buffer: Buffer.from('{not valid json') });
+  await page.waitForFunction(() => document.querySelector('#toast').classList.contains('error'));
+  assert((await page.locator('#toast').textContent()).includes('could not be opened'), 'Invalid project error is not visible');
+  assert(await page.locator('#boardLength').inputValue() === '15.25', 'Invalid project changed the active design');
+  await page.evaluate(() => restore(JSON.stringify(defaultState())));
   assert(await page.locator('#helpMenu').isVisible(), 'Help menu is missing');
   await page.locator('#helpMenu summary').click();
   assert(await page.locator('#userGuideLink').isVisible() && await page.locator('#faqLink').isVisible(), 'Help menu links did not open');

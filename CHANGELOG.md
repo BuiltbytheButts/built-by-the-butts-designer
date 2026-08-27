@@ -1,3 +1,11 @@
+## v3.0.54 — Clear Save/Open confirmation
+
+- Replaced the hidden-label file picker with a dedicated Open Project button.
+- Save Project now confirms the downloaded JSON filename and location.
+- Open Project now confirms the selected filename and explicitly says when it matches the design already on screen.
+- Moved Save/Open feedback beneath the header, increased its visibility, and kept it on screen longer.
+- Added automated save, file-picker, restore, repeat-open, and confirmation tests.
+
 ## v3.0.53 — User Guide and FAQ
 - Added an independent printable User Guide covering setup, controls, results, warnings, materials, project tools, references, workflow, and terminology.
 - Added an interactive FAQ with 35 practical answers across design, crosscuts, borders, Edge Rip, materials, files, and troubleshooting.
