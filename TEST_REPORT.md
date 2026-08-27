@@ -1,3 +1,13 @@
+# v3.0.58 Sample Build Photo Sequencing
+
+- PASS — Step 2 displays the full strip layout before the combined stack measurement.
+- PASS — Step 3 displays the clamped laminated-blank glue-up before the two measurement photos.
+- PASS — Step 6 displays both clamped glue-up views before the former first replacement-piece photo.
+- PASS — all twenty embedded photos load, remain clickable, and retain their original captions and filenames.
+- PASS — Step 10 retains the single finishing-photo placeholder for the user’s forthcoming oiled-board photos.
+- PASS — syntax, geometry, manufacturing, material, version/cache, and browser regression checks completed for v3.0.58.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/original-renderer function hashes are unchanged.
+
 # v3.0.57 Starting-Crosscut Glue-Up Views
 
 - PASS — As cut and Turned 180° produce visibly different diamond placement from the same complete crosscuts.

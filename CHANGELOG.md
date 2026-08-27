@@ -1,3 +1,12 @@
+## v3.0.58 — Sample Build photo sequencing
+
+- Step 2 now shows the full strip layout before the combined strip-stack measurement.
+- Step 3 now begins with the clamped laminated-blank glue-up, followed by the assembly and squared-blank measurements.
+- Step 6 moves the former first replacement-piece photo to the final position after the two clamped glue-up photos.
+- Captions remain attached to their original workshop photos, and the enlarged-photo viewer follows the revised order.
+- Step 10 remains reserved for the future final glue-up, oil, and finished-board photos.
+- All Designer calculations, geometry, rendering, and the approved Starting Crosscut views remain unchanged.
+
 ## v3.0.57 — Starting-crosscut glue-up views
 
 - Added **Starting crosscut: As cut / Turned 180°** directly above the board preview.

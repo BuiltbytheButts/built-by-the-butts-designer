@@ -43,8 +43,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.57/g) || []).length === 5, 'All asset cache keys must be v3.0.57');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.58/g) || []).length === 5, 'All asset cache keys must be v3.0.58');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
   assert(html.includes('Starting crosscut') && (html.match(/data-glue-up-phase=/g) || []).length === 2, 'Starting-crosscut glue-up control is missing');
   assert(html.includes('id="helpMenu"') && html.includes('user-guide.html') && html.includes('faq.html'), 'Designer Help menu is missing the User Guide or FAQ');
@@ -52,6 +52,7 @@ function functionSource(source, name) {
   const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
   assert(controlOrder.every((position, index) => position >= 0 && (!index || position > controlOrder[index - 1])), 'Left-panel control sections are not in the approved order');
   const sampleHtml = fs.readFileSync(path.join(root, 'sample-build.html'), 'utf8');
+  const sampleTemplateHtml = fs.readFileSync(path.join(root, 'sample-build.template.html'), 'utf8');
   assert(sampleHtml.includes('Independent Sample Build'), 'Independent Sample Build page is missing');
   assert(!/href="sample-build\.css/.test(sampleHtml), 'Sample Build still depends on an external stylesheet');
   assert(!/src="assets\/sample-build\//.test(sampleHtml), 'Sample Build still depends on external photo paths');
@@ -65,6 +66,12 @@ function functionSource(source, name) {
   assert(sampleHtml.includes('marked-45-profile.png') && sampleHtml.includes('cut-section-measurement.png') && sampleHtml.includes('completed-45-sections.png'), 'Step 4 does not contain all three supplied 45-degree photos');
   assert(sampleHtml.includes('edge-rip-before-cut.png') && sampleHtml.includes('edge-rip-cut-face.png') && sampleHtml.includes('matched-edge-rip-pair.png'), 'Step 5 does not contain all three supplied Edge Rip photos');
   assert(sampleHtml.includes('maple-walnut-glue-up.png') && sampleHtml.includes('replacement-strip-glue-up.png') && sampleHtml.includes('replacement-glue-up-alignment.png'), 'Step 6 does not contain all three supplied replacement glue-up photos');
+  assert(sampleHtml.indexOf('strip-order-dry-fit.png') < sampleHtml.indexOf('strip-stack-measurement.png'), 'Step 2 must show the layout before the measurement');
+  assert(sampleHtml.indexOf('laminated-blank-glue-up.png') < sampleHtml.indexOf('laminated-assembly-measurement.png') && sampleHtml.indexOf('laminated-assembly-measurement.png') < sampleHtml.indexOf('squared-blank-measurement.png'), 'Step 3 photo order is incorrect');
+  assert(sampleHtml.indexOf('replacement-strip-glue-up.png') < sampleHtml.indexOf('replacement-glue-up-alignment.png') && sampleHtml.indexOf('replacement-glue-up-alignment.png') < sampleHtml.indexOf('maple-walnut-glue-up.png'), 'Step 6 former first photo must appear last');
+  assert(sampleTemplateHtml.indexOf('strip-order-dry-fit.png') < sampleTemplateHtml.indexOf('strip-stack-measurement.png'), 'Step 2 template photo order is incorrect');
+  assert(sampleTemplateHtml.indexOf('laminated-blank-glue-up.png') < sampleTemplateHtml.indexOf('laminated-assembly-measurement.png') && sampleTemplateHtml.indexOf('laminated-assembly-measurement.png') < sampleTemplateHtml.indexOf('squared-blank-measurement.png'), 'Step 3 template photo order is incorrect');
+  assert(sampleTemplateHtml.indexOf('replacement-strip-glue-up.png') < sampleTemplateHtml.indexOf('replacement-glue-up-alignment.png') && sampleTemplateHtml.indexOf('replacement-glue-up-alignment.png') < sampleTemplateHtml.indexOf('maple-walnut-glue-up.png'), 'Step 6 template photo order is incorrect');
   assert(sampleHtml.includes('master-blank-width-check.png') && sampleHtml.includes('bordered-master-blank.png'), 'Step 7 does not contain both supplied master-blank photos');
   assert(sampleHtml.includes('Crosscut the master blank and keep every piece in order'), 'Step 8 does not describe the supplied ordered crosscut sequence');
   assert(sampleHtml.includes('crosscut-diamond-dry-fit.png'), 'Step 9 does not contain the supplied diamond-field dry-fit photo');
@@ -72,9 +79,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Material Quantity and Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.57') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.57 page');
+  assert(userGuideHtml.includes('Designer v3.0.58') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.58 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 36, 'FAQ must contain the 36 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.57') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.57 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.58') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.58 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -85,7 +92,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.57', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.58', 'Wrong visible version');
   assert(await page.locator('#openProjectBtn').isVisible(), 'Open Project is not a visible button');
   const [projectDownload] = await Promise.all([
     page.waitForEvent('download'),
@@ -496,14 +503,17 @@ function functionSource(source, name) {
   assert(await samplePage.locator('.step').first().locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 1 photos failed to load');
   assert(await samplePage.locator('.step').nth(1).locator('img').count() === 2, 'Sample Build step 2 does not display both supplied photos');
   assert(await samplePage.locator('.step').nth(1).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 2 photos failed to load');
+  assert(JSON.stringify(await samplePage.locator('.step').nth(1).locator('img').evaluateAll(images => images.map(image => image.dataset.photoFile))) === JSON.stringify(['strip-order-dry-fit.png', 'strip-stack-measurement.png']), 'Step 2 browser photo order is incorrect');
   assert(await samplePage.locator('.step').nth(2).locator('img').count() === 3, 'Sample Build step 3 does not display all three supplied photos');
   assert(await samplePage.locator('.step').nth(2).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 3 photos failed to load');
+  assert(JSON.stringify(await samplePage.locator('.step').nth(2).locator('img').evaluateAll(images => images.map(image => image.dataset.photoFile))) === JSON.stringify(['laminated-blank-glue-up.png', 'laminated-assembly-measurement.png', 'squared-blank-measurement.png']), 'Step 3 browser photo order is incorrect');
   assert(await samplePage.locator('.step').nth(3).locator('img').count() === 3, 'Sample Build step 4 does not display all three supplied photos');
   assert(await samplePage.locator('.step').nth(3).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 4 photos failed to load');
   assert(await samplePage.locator('.step').nth(4).locator('img').count() === 3, 'Sample Build step 5 does not display all three supplied photos');
   assert(await samplePage.locator('.step').nth(4).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 5 photos failed to load');
   assert(await samplePage.locator('.step').nth(5).locator('img').count() === 3, 'Sample Build step 6 does not display all three supplied photos');
   assert(await samplePage.locator('.step').nth(5).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 6 photos failed to load');
+  assert(JSON.stringify(await samplePage.locator('.step').nth(5).locator('img').evaluateAll(images => images.map(image => image.dataset.photoFile))) === JSON.stringify(['replacement-strip-glue-up.png', 'replacement-glue-up-alignment.png', 'maple-walnut-glue-up.png']), 'Step 6 browser photo order is incorrect');
   assert(await samplePage.locator('.step').nth(6).locator('img').count() === 2, 'Sample Build step 7 does not display both supplied photos');
   assert(await samplePage.locator('.step').nth(6).locator('img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), 'One or more Step 7 photos failed to load');
   assert(await samplePage.locator('.step').nth(7).locator('img').count() === 1, 'Sample Build step 8 does not display the supplied crosscut sequence photo');
