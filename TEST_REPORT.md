@@ -1,3 +1,13 @@
+# v3.0.61 Complete Sample Build Photo Guide
+
+- PASS — the original Designer target appears before Step 1 and opens in the enlarged-photo viewer.
+- PASS — Step 10 contains both supplied finished-board photos in the approved perspective-then-top-view order.
+- PASS — all twenty-three self-contained images load, remain clickable, and retain captions and descriptive alternate text.
+- PASS — the Sample Build contains all ten numbered steps and no unfinished photo placeholder.
+- PASS — screen and print layouts keep the opening reference and both finished-board photos legible.
+- PASS — syntax, geometry, manufacturing, material, version/cache, and browser regression checks completed for v3.0.61.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/original-renderer function hashes are unchanged.
+
 # v3.0.60 Illustrated-Guide Label Cleanup
 
 - PASS — Steps 3, 4, and 5 display the ten-strip 1A–5A / 5B–1B order on two separate centered lines.

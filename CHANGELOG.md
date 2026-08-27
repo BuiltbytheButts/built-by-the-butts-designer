@@ -1,3 +1,11 @@
+## v3.0.61 — Complete Sample Build photo guide
+
+- Added the original Designer image at the beginning of the Independent Sample Build as the visual build target.
+- Replaced the Step 10 placeholder with two finished-board photos: a low-angle view and a direct top view.
+- Updated the self-contained enlarged-photo viewer to include the opening reference image, for twenty-three clickable images in sequence.
+- Updated the screen and print layouts so the opening target and finished result remain easy to compare.
+- All calculations and frozen v3.0.7 laminate, Edge Rip, and renderer geometry remain unchanged.
+
 ## v3.0.60 — Illustrated-guide label cleanup
 
 - Replaced the overlapping individual strip labels beneath Steps 3, 4, and 5 with two centered A-side/B-side order lines.
