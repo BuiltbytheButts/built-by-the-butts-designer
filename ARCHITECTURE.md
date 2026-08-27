@@ -78,6 +78,15 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 - Estimated cost is calculated only from the v3.0.20 purchase board-foot result.
 - A species has one price regardless of how many design components use it.
 
+## v3.0.59 rough-stock cost invariant
+- `material.js` remains the pure source for wood quantities, but the visible estimate is now a cut-plan stock requirement rather than finished-board volume.
+- Every physical strip is counted at its recommended rough-rip width across every retained laminated row, the full required pre-45° lamination size, and the complete kerf-inclusive master-blank length.
+- The original full laminate remains counted when Edge Rip is selected; the replacement triangles add separate stock using the exact cut-area fraction from the selected depth.
+- Every entered border band is counted twice, once for each long edge, with rough-rip allowance and the same required blank length and lamination size.
+- The selected waste percentage is applied after all rough laminate, Edge Rip, and border requirements are combined by species.
+- Finished cubic inches and net board feet are not shown because they do not represent the lumber a woodworker must prepare or buy.
+- Estimated Wood Cost is the resulting purchase board feet multiplied by each species price.
+
 ## v3.0.23 print invariant
 - The print plan is derived from current state and existing validated calculation functions immediately before `window.print()`.
 - Print markup contains no independent engineering formulas.

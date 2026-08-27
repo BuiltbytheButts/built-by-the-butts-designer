@@ -43,13 +43,14 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.58/g) || []).length === 5, 'All asset cache keys must be v3.0.58');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.59/g) || []).length === 5, 'All asset cache keys must be v3.0.59');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
   assert(html.includes('Starting crosscut') && (html.match(/data-glue-up-phase=/g) || []).length === 2, 'Starting-crosscut glue-up control is missing');
   assert(html.includes('id="helpMenu"') && html.includes('user-guide.html') && html.includes('faq.html'), 'Designer Help menu is missing the User Guide or FAQ');
-  assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
-  const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
+  assert(html.includes('Estimated Wood Cost') && html.includes('Estimated rough lumber'), 'Rough-lumber cost estimate is missing');
+  assert(!html.includes('materialNetMetric') && !html.includes('materialVolumeHelp') && !html.includes('materialGapWarning'), 'Finished/net material volume remains visible');
+  const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Estimated Wood Cost', 'Wood Library'].map(label => html.indexOf(label));
   assert(controlOrder.every((position, index) => position >= 0 && (!index || position > controlOrder[index - 1])), 'Left-panel control sections are not in the approved order');
   const sampleHtml = fs.readFileSync(path.join(root, 'sample-build.html'), 'utf8');
   const sampleTemplateHtml = fs.readFileSync(path.join(root, 'sample-build.template.html'), 'utf8');
@@ -78,10 +79,10 @@ function functionSource(source, name) {
   for (const asset of ['rough-lumber-selection.png','milled-lumber-stock.png','strip-stack-measurement.png','strip-order-dry-fit.png','laminated-assembly-measurement.png','laminated-blank-glue-up.png','squared-blank-measurement.png','marked-45-profile.png','cut-section-measurement.png','completed-45-sections.png','edge-rip-before-cut.png','edge-rip-cut-face.png','matched-edge-rip-pair.png','maple-walnut-glue-up.png','replacement-strip-glue-up.png','replacement-glue-up-alignment.png','master-blank-width-check.png','bordered-master-blank.png','master-blank-top-view.png','crosscut-diamond-dry-fit.png']) assert(fs.existsSync(path.join(root,'assets','sample-build',asset)), 'Sample photo missing: ' + asset);
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
-  for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Material Quantity and Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.58') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.58 page');
+  for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
+  assert(userGuideHtml.includes('Designer v3.0.59') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.59 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 36, 'FAQ must contain the 36 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.58') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.58 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.59') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.59 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -92,7 +93,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.58', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.59', 'Wrong visible version');
   assert(await page.locator('#openProjectBtn').isVisible(), 'Open Project is not a visible button');
   const [projectDownload] = await Promise.all([
     page.waitForEvent('download'),
@@ -152,7 +153,7 @@ function functionSource(source, name) {
     dimensions: await page.locator('#boardSizeMetric').textContent(),
     crosscuts: await page.locator('#crosscutMetric').textContent(),
     rows: await page.locator('#laminatedRowMetric').textContent(),
-    material: await page.locator('#materialNetMetric').textContent(),
+    material: await page.locator('#materialPurchaseMetric').textContent(),
     svg: await page.locator('#boardSvg').innerHTML()
   };
   await page.locator('.glue-up-phase-control [data-glue-up-phase="1"]').click();
@@ -160,7 +161,7 @@ function functionSource(source, name) {
     dimensions: await page.locator('#boardSizeMetric').textContent(),
     crosscuts: await page.locator('#crosscutMetric').textContent(),
     rows: await page.locator('#laminatedRowMetric').textContent(),
-    material: await page.locator('#materialNetMetric').textContent(),
+    material: await page.locator('#materialPurchaseMetric').textContent(),
     svg: await page.locator('#boardSvg').innerHTML()
   };
   assert(await page.evaluate(() => state.glueUpPhase) === 1, 'Turned-first glue-up choice did not reach project state');
@@ -255,7 +256,7 @@ function functionSource(source, name) {
   assert(await page.locator('#wastePercent').inputValue() === '40', 'Use recommended did not restore the conditional value');
   assert(await page.locator('#printPlanBtn').isVisible(), 'Print Workshop Plan action is missing');
   const planText = await page.locator('#printPlan').textContent();
-  for (const heading of ['Finished Design', 'Lamination Engineering', 'Crosscut Engineering', 'Edge Rip', 'Border Schedule', 'Material Quantity (Estimate)', 'Illustrated Build Procedure', 'Workshop Sequence — Quick Checklist']) {
+  for (const heading of ['Finished Design', 'Lamination Engineering', 'Crosscut Engineering', 'Edge Rip', 'Border Schedule', 'Estimated Wood Cost', 'Illustrated Build Procedure', 'Workshop Sequence — Quick Checklist']) {
     assert(planText.includes(heading), `Printable plan is missing ${heading}`);
   }
   assert((await page.locator('#printPlan').textContent()).includes('Actual Board Dimensions: 18.000 × 10.500 × 1.500 in'), 'Printable plan does not reflect the actual buildable dimensions');
@@ -298,7 +299,8 @@ function functionSource(source, name) {
   await page.locator('#printPlanBtn').click();
   assert(await page.evaluate(() => window.__printCalled), 'Print Workshop Plan did not invoke printing');
   assert(await page.locator('#wastePercent').isEditable(), 'Waste allowance is not editable');
-  assert((await page.locator('#materialVolumeHelp').textContent()).includes('actual buildable board'), 'Material estimate is not identified with the actual board');
+  assert(await page.locator('#materialNetMetric').count() === 0, 'Finished/net board-foot metric is still visible');
+  assert(!(await page.locator('#materialTableBody').textContent()).includes('Net BF'), 'Material table still reports net board feet');
   assert(await page.locator('#materialTableBody tr').count() === 3, 'Default species were not combined into three rows');
   const purchaseBeforeWasteChange = Number((await page.locator('#materialPurchaseMetric').textContent()).split(' ')[0]);
   await page.locator('#wastePercent').fill('50');
@@ -311,8 +313,8 @@ function functionSource(source, name) {
   const walnutRow = walnutPrice.locator('xpath=ancestor::tr');
   await walnutPrice.fill('10');
   await walnutPrice.dispatchEvent('input');
-  const walnutBuyBf = Number(await walnutRow.locator('td').nth(3).textContent());
-  assert(await walnutRow.locator('td').nth(5).textContent() === `$${(walnutBuyBf * 10).toFixed(2)}`, 'Walnut species cost is incorrect');
+  const walnutBuyBf = Number(await walnutRow.locator('td').nth(2).textContent());
+  assert(await walnutRow.locator('td').nth(4).textContent() === `$${(walnutBuyBf * 10).toFixed(2)}`, 'Walnut species cost is incorrect');
   assert(await page.locator('#materialCostMetric').textContent() === `$${(walnutBuyBf * 10).toFixed(2)}`, 'Total material cost is incorrect');
 
   await page.locator('#boardLength').fill('18');
@@ -328,7 +330,9 @@ function functionSource(source, name) {
   assert(await page.locator('#actualBoardMetricCard').evaluate(card => card.classList.contains('metric-has-warning')), 'Actual board warning styling is missing');
   const actualNoBorder = await page.evaluate(() => ({ actual: actualBoardDimensions(), material: materialQuantity() }));
   assert(actualNoBorder.actual.length === 18 && actualNoBorder.actual.width === 12, 'Actual board helper returned the wrong no-border dimensions');
-  assert(Math.abs(actualNoBorder.material.designedVolume - 324) < 0.01, 'Material estimate does not use the 18 × 12 × 1.5 actual board');
+  assert(actualNoBorder.material.laminatedRows === 8, 'Material estimate does not count all eight complete laminated rows');
+  assert(Math.abs(actualNoBorder.material.requiredBlankLength - 20.875) < 0.001, 'Material estimate does not use the full kerf-inclusive master blank');
+  assert(actualNoBorder.material.totalPurchaseBoardFeet > 0, 'Rough-lumber estimate is empty');
   const unborderedFrameAspect = await page.locator('#boardSvg > rect').first().evaluate(rect => (Number(rect.getAttribute('width')) - 6) / (Number(rect.getAttribute('height')) - 6));
   assert(Math.abs(unborderedFrameAspect - 1.5) < 0.001, 'Unbordered preview frame does not use the actual 18 × 12 aspect');
   await page.locator('#boardWidth').fill('12');
@@ -388,7 +392,7 @@ function functionSource(source, name) {
   assert(await page.locator('#borderWarning').isVisible(), 'Mismatched dynamic border schedule should warn');
   assert(await page.locator('#boardSizeMetric').textContent() === '18.000 × 11.375 in', 'Entered borders were not included at their full physical width');
   assert(await page.locator('#actualBoardWarning').isVisible(), 'Mismatched border schedule should warn in Actual Board Dimensions');
-  assert(await page.locator('#materialGapWarning').isHidden(), 'Actual board material volume should reconcile even when it differs from the request');
+  assert(Number((await page.locator('#materialPurchaseMetric').textContent()).split(' ')[0]) > 0, 'Mismatched borders removed the rough-lumber estimate');
   await page.locator('[data-border-width]').nth(0).fill('3.625');
   await page.locator('[data-border-width]').nth(0).dispatchEvent('input');
   assert(await page.locator('#borderDifferenceMetric').textContent() === 'Matched ✓', 'Matching border schedule was not recognized');
@@ -396,7 +400,7 @@ function functionSource(source, name) {
   assert(await page.locator('#boardSizeMetric').textContent() === '18.000 × 13.000 in', 'Matched borders did not produce the requested actual width');
   assert(await page.locator('#actualBoardWarning').isVisible(), 'Length mismatch warning was lost when only the border width matched');
   assert((await page.locator('#actualBoardWarning').textContent()).includes('Requested 18.625 × 13.000 in'), 'Length mismatch warning does not preserve the requested dimensions');
-  assert(await page.locator('#materialGapWarning').isHidden(), 'Matched border schedule should reconcile material volume');
+  assert(Number((await page.locator('#materialPurchaseMetric').textContent()).split(' ')[0]) > 0, 'Matched borders removed the rough-lumber estimate');
   for (let i = 0; i < 2; i += 1) await page.locator('#addBorderBandBtn').click();
   for (let i = 0; i < 4; i += 1) await page.locator('[data-border-wood]').nth(i).selectOption('padauk');
   assert(await page.locator('[data-border-width]').count() === 4, 'Four same-color physical bands were not kept as four entries');
@@ -423,7 +427,13 @@ function functionSource(source, name) {
       { width: 0.1875, wood: 'padauk' },
       { width: 0.1875, wood: 'maple' },
       { width: 0.25, wood: 'cherry' }
-    ]
+    ],
+    edgeInset: 0.5,
+    edgeWood: 'walnut',
+    bladeKerf: 0.125,
+    wastePercent: 40,
+    wasteIsManual: true,
+    woodPrices: { maple: 8, padauk: 20, walnut: 28, cherry: 8 }
   })));
   assert(Math.abs(await page.evaluate(() => moduleWidth()) - 2.025) < 1e-9, 'Recreation fixture no longer has the reported 2.025 in strip total');
   assert(Math.abs(await page.evaluate(() => previewGrid().module) - 1.5) < 1e-9, 'Preview cell pitch is not finished thickness');
@@ -433,6 +443,12 @@ function functionSource(source, name) {
   assert(await page.locator('#diamondFieldMetric').textContent() === '18.000 × 9.000 in', 'Recreation diamond field is not six 1.500 in rows');
   assert(await page.locator('#requiredBorderMetric').textContent() === '1.9375 in per edge', 'Recreation required border width is incorrect');
   assert(await page.locator('#borderDifferenceMetric').textContent() === '0.6250 in still needed per edge', 'Recreation border completion warning is incorrect');
+  assert(await page.locator('#materialPurchaseMetric').textContent() === '7.941 bd ft', 'Validation build rough-lumber estimate changed');
+  assert(await page.locator('#materialCostMetric').textContent() === '$131.56', 'Validation build cost estimate changed');
+  const validationMaterial = await page.evaluate(() => materialQuantity());
+  assert(validationMaterial.rows.find(row => row.species === 'walnut').components.edgeRip > 0, 'Validation estimate omits Edge Rip replacement stock');
+  assert(validationMaterial.rows.find(row => row.species === 'cherry').components.borders > 0, 'Validation estimate omits border stock');
+  assert((await page.locator('#materialTableBody').textContent()).includes('Rough laminate strips') && (await page.locator('#materialTableBody').textContent()).includes('Edge Rip') && (await page.locator('#materialTableBody').textContent()).includes('Borders'), 'Material table does not disclose all rough-stock components');
   await page.evaluate(() => renderWorkshopPlan());
   const borderedPlanText = await page.locator('#printPlan').textContent();
   assert(borderedPlanText.includes('Glue the borders before crosscutting'), 'Border-before-crosscut step is missing');
@@ -447,7 +463,7 @@ function functionSource(source, name) {
     dimensions: await page.locator('#boardSizeMetric').textContent(),
     crosscuts: await page.locator('#crosscutMetric').textContent(),
     rows: await page.locator('#laminatedRowMetric').textContent(),
-    material: await page.locator('#materialNetMetric').textContent(),
+    material: await page.locator('#materialPurchaseMetric').textContent(),
     points: await page.locator('.bordered-diamond-cell').first().locator('.laminate-band').first().getAttribute('points')
   };
   await page.locator('.glue-up-phase-control [data-glue-up-phase="1"]').click();
@@ -455,7 +471,7 @@ function functionSource(source, name) {
     dimensions: await page.locator('#boardSizeMetric').textContent(),
     crosscuts: await page.locator('#crosscutMetric').textContent(),
     rows: await page.locator('#laminatedRowMetric').textContent(),
-    material: await page.locator('#materialNetMetric').textContent(),
+    material: await page.locator('#materialPurchaseMetric').textContent(),
     points: await page.locator('.bordered-diamond-cell').first().locator('.laminate-band').first().getAttribute('points')
   };
   assert(await page.locator('.bordered-diamond-field').getAttribute('data-glue-up-phase') === '1', 'Bordered preview did not adopt the selected starting crosscut');

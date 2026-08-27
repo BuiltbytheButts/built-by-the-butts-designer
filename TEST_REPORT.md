@@ -1,3 +1,14 @@
+# v3.0.59 Rough-Stock Wood Cost Validation
+
+- PASS — every physical strip is counted at rough-rip width for every retained laminated row.
+- PASS — the estimator uses the required pre-45° square size and full kerf-inclusive master-blank length.
+- PASS — Edge Rip replacement and both physical copies of every border band are included and combined by species.
+- PASS — waste and price changes recalculate rough board feet and Estimated Wood Cost without changing geometry.
+- PASS — the supplied validation build estimates 7.941 bd ft / $131.56 versus 9.292 bd ft / $144.69 purchased with usable leftovers.
+- PASS — finished cubic inches and net board feet are absent from the Designer and printable guide.
+- PASS — syntax, geometry, manufacturing, material, version/cache, and browser regression checks completed for v3.0.59.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/original-renderer function hashes are unchanged.
+
 # v3.0.58 Sample Build Photo Sequencing
 
 - PASS — Step 2 displays the full strip layout before the combined stack measurement.

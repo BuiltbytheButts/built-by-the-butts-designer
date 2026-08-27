@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.58';
+const VERSION = '3.0.59';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -209,14 +209,16 @@ function actualBoardDimensions() {
 function materialQuantity() {
   const border = borderEngineering();
   const crosscuts = crosscutEngineering();
-  const actual = actualBoardDimensions();
+  const lamination = laminationRequirement();
   return DiamondMaterial.materialQuantityPlan({
-    boardLength: actual.length, boardWidth: actual.width,
     finishedThickness: state.finishedThickness,
-    diamondFieldWidth: state.includeBorders ? border.diamondFieldWidth : actual.width,
     moduleWidth: moduleWidth(), strips: activeStrips(),
     includeBorders: state.includeBorders, borderBands: border.bands,
     edgeInset: state.edgeInset, edgeWood: state.edgeWood,
+    laminatedRows: border.selectedRows,
+    requiredLaminationSize: lamination.recommended,
+    stripRoughAllowance: ROUGH_RIP_EXTRA,
+    borderRoughAllowance: ROUGH_RIP_EXTRA,
     crosscutCount: crosscuts.crosscutCount, roughCrosscut: crosscuts.roughCrosscut,
     bladeKerf: state.bladeKerf, wastePercent: state.wastePercent,
     prices: state.woodPrices
@@ -811,17 +813,13 @@ function renderMaterial() {
   $('wasteWarning').textContent = `Waste allowance is below the recommended ${recommendedWaste}% for this design.`;
   $('materialTableBody').innerHTML = plan.rows.map(row => {
     const parts = [];
-    if (row.components.diamondLaminate) parts.push('Diamond laminate');
+    if (row.components.laminatedStrips) parts.push('Rough laminate strips');
     if (row.components.edgeRip) parts.push('Edge Rip');
     if (row.components.borders) parts.push('Borders');
-    return `<tr><td><strong>${WOODS[row.species]?.name || row.species}</strong><small>${parts.join(' + ')}</small></td><td>${row.finishedCubicInches.toFixed(2)}</td><td>${row.netBoardFeet.toFixed(3)}</td><td>${row.purchaseBoardFeet.toFixed(3)}</td><td><input class="price-input" data-wood-price="${row.species}" type="number" min="0" step="0.01" value="${row.pricePerBoardFoot.toFixed(2)}" aria-label="${WOODS[row.species]?.name || row.species} price per board foot"></td><td data-species-cost="${row.species}">$${row.estimatedCost.toFixed(2)}</td></tr>`;
+    return `<tr><td><strong>${WOODS[row.species]?.name || row.species}</strong></td><td><small>${parts.join(' + ')}</small></td><td>${row.purchaseBoardFeet.toFixed(3)}</td><td><input class="price-input" data-wood-price="${row.species}" type="number" min="0" step="0.01" value="${row.pricePerBoardFoot.toFixed(2)}" aria-label="${WOODS[row.species]?.name || row.species} price per board foot"></td><td data-species-cost="${row.species}">$${row.estimatedCost.toFixed(2)}</td></tr>`;
   }).join('');
-  $('materialNetMetric').textContent = `${plan.totalNetBoardFeet.toFixed(3)} bd ft`;
   $('materialPurchaseMetric').textContent = `${plan.totalPurchaseBoardFeet.toFixed(3)} bd ft`;
   $('materialCostMetric').textContent = `$${plan.totalEstimatedCost.toFixed(2)}`;
-  $('materialVolumeHelp').textContent = `${plan.designedVolume.toFixed(2)} cu in in the actual buildable board.`;
-  $('materialGapWarning').hidden = plan.unfilledVolume <= 0.01;
-  $('materialGapWarning').textContent = `${plan.unfilledVolume.toFixed(2)} cu in remains unfilled within the actual buildable dimensions.`;
   document.querySelectorAll('[data-wood-price]').forEach(input => {
     input.addEventListener('input', event => {
       state.woodPrices[event.target.dataset.woodPrice] = Math.max(0, number(event.target.value));
@@ -996,7 +994,13 @@ function renderWorkshopPlan() {
   const borderRows = state.includeBorders
     ? border.bands.map((band, index) => `<tr><td>${index + 1}</td><td>${WOODS[band.wood]?.name || band.wood}</td><td>${band.width.toFixed(4)} in</td><td>${actual.length.toFixed(3)} in</td><td>2</td></tr>`).join('')
     : '<tr><td colspan="5">No borders selected</td></tr>';
-  const materialRows = materials.rows.map(row => `<tr><td>${WOODS[row.species]?.name || row.species}</td><td>${row.finishedCubicInches.toFixed(2)}</td><td>${row.netBoardFeet.toFixed(3)}</td><td>${row.purchaseBoardFeet.toFixed(3)}</td><td>$${row.pricePerBoardFoot.toFixed(2)}</td><td>$${row.estimatedCost.toFixed(2)}</td></tr>`).join('');
+  const materialRows = materials.rows.map(row => {
+    const parts = [];
+    if (row.components.laminatedStrips) parts.push('Rough laminate strips');
+    if (row.components.edgeRip) parts.push('Edge Rip');
+    if (row.components.borders) parts.push('Borders');
+    return `<tr><td>${WOODS[row.species]?.name || row.species}</td><td>${parts.join(' + ')}</td><td>${row.purchaseBoardFeet.toFixed(3)}</td><td>$${row.pricePerBoardFoot.toFixed(2)}</td><td>$${row.estimatedCost.toFixed(2)}</td></tr>`;
+  }).join('');
   const masterBlankStep = state.includeBorders
     ? `<li>Glue the complete entered ${border.requestedWidth.toFixed(4)} in border schedule to both long edges of the master blank before crosscutting.</li>`
     : '<li>Join the dry-fitted sections into the full-width master blank; no border preparation is required.</li>';
@@ -1023,7 +1027,7 @@ function renderWorkshopPlan() {
     <section><h2>Crosscut Engineering</h2><table><tbody><tr><th>Calculated crosscuts</th><td>${crosscuts.crosscutCount}${crosscuts.isBalanced ? ' — balanced' : ' — unbalanced warning'}</td></tr><tr><th>Recommended rough crosscut</th><td>${crosscuts.roughCrosscut.toFixed(3)} in</td></tr><tr><th>Blade kerf</th><td>${crosscuts.bladeKerf.toFixed(3)} in</td></tr><tr><th>Required master blank</th><td>${crosscuts.requiredBlankLength.toFixed(3)} in</td></tr><tr><th>Projected finished run</th><td>${crosscuts.achievableLength.toFixed(3)} in</td></tr></tbody></table></section>
     ${edgeRipSection}
     <section><h2>Border Schedule</h2><p>Entered total per edge: <strong>${state.includeBorders ? `${border.requestedWidth.toFixed(4)} in` : 'Not applicable'}</strong>${state.includeBorders ? ` · Requested board width would require ${border.requiredWidth.toFixed(4)} in per edge.` : ''}${state.includeBorders && !border.scheduleMatches ? ` · The actual board therefore differs by ${Math.abs(border.difference * 2).toFixed(4)} in overall width.` : ''}</p><table><thead><tr><th>Band</th><th>Species</th><th>Width</th><th>Finished length</th><th>Quantity</th></tr></thead><tbody>${borderRows}</tbody></table></section>
-    <section><h2>Material Quantity (Estimate)</h2><p>Waste allowance: ${materials.wastePercent.toFixed(1)}% · Estimated purchase: ${materials.totalPurchaseBoardFeet.toFixed(3)} bd ft · Estimated Wood Cost: $${materials.totalEstimatedCost.toFixed(2)}</p><table><thead><tr><th>Species</th><th>Cu in</th><th>Net BF</th><th>Buy BF</th><th>$/BF</th><th>Cost</th></tr></thead><tbody>${materialRows}</tbody></table><p class="print-note">Actual material use varies with stock selection, milling, defects, and individual shop practices.</p></section>
+    <section><h2>Estimated Wood Cost</h2><p>Waste allowance: ${materials.wastePercent.toFixed(1)}% · Estimated rough lumber: ${materials.totalPurchaseBoardFeet.toFixed(3)} bd ft · Estimated Wood Cost: $${materials.totalEstimatedCost.toFixed(2)}</p><table><thead><tr><th>Species</th><th>Includes</th><th>Est. Buy BF</th><th>$/BF</th><th>Cost</th></tr></thead><tbody>${materialRows}</tbody></table><p class="print-note">This rough-stock estimate counts the complete pre-45° laminated blanks, rough-rip allowance, required master-blank length and crosscut kerf, borders, Edge Rip replacement stock, and the selected waste allowance. Actual purchases still vary with available board sizes and defects.</p></section>
     <section><h2>Illustrated Build Procedure</h2><p class="print-note">Diagrams are generated from this design. Wood colors are a guide; actual boards vary.</p><div class="guide-key">${materialKey}</div><div class="guide-steps">${illustratedSteps}</div></section>
     <section><h2>Workshop Sequence — Quick Checklist</h2><ol><li>Review the design and keep the finished-board reference available.</li><li>Mill stock and rough-rip the laminate strips according to the strip schedule.</li><li>Dry-fit the strip order and confirm the species and symmetry.</li><li>Glue, flatten, and mill the blank to ${lamination.recommended.toFixed(3)} × ${lamination.recommended.toFixed(3)} in.</li><li>Mark all four adjacent-edge-center lines and complete the four 45° cuts.</li>${edgeRipChecklist}<li>Dry-fit the 45° cut sections in two rows and check the joints.</li>${masterBlankStep}<li>From the top view, run ${crosscuts.crosscutCount} dotted cut lines across the completed blank at approximately ${crosscuts.roughCrosscut.toFixed(3)} in spacing, using a ${crosscuts.bladeKerf.toFixed(3)} in kerf.</li><li>Lay out all ${crosscuts.crosscutCount} assigned crosscuts. ${glueUpChecklist}</li><li>Flatten, make only the cleanup cuts needed to square the board, and finish to the actual ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in dimensions.</li></ol></section>`;
 }

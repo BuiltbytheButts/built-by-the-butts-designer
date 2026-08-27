@@ -1,3 +1,13 @@
+## v3.0.59 — Rough-stock wood cost validation
+
+- Replaced the finished-design-volume estimate with a physical rough-stock cut-plan estimate.
+- Every rough-ripped strip is now counted for every retained laminated row across the required pre-45° lamination size and the complete kerf-inclusive master-blank length.
+- Edge Rip retains the original laminate requirement and adds its replacement wood; every border band is counted on both long edges.
+- Rough-rip allowance and the selected waste percentage are included before species prices are applied.
+- Removed finished cubic inches and net board feet from the Designer and printout so only actionable estimated rough lumber and wood cost remain.
+- The supplied real build validates at 7.941 bd ft / $131.56 versus 9.292 bd ft / $144.69 purchased, leaving 1.351 bd ft / $13.13 consistent with the user's usable leftovers.
+- Frozen v3.0.7 laminate geometry, Edge Rip geometry, and original renderer remain source-identical.
+
 ## v3.0.58 — Sample Build photo sequencing
 
 - Step 2 now shows the full strip layout before the combined strip-stack measurement.

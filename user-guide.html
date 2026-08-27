@@ -29,7 +29,7 @@
   <main>
     <section class="intro">
       <div><h2>Start with the board size you want</h2><p>Enter the requested finished dimensions, then build the strip and border schedules. The Designer reports the actual board that complete crosscuts, complete laminated rows, and the entered borders will produce—without silently trimming away a good laminated row.</p></div>
-      <aside class="version-card"><span>Guide applies to</span><strong>Designer v3.0.58</strong><span>Calculations remain estimates until confirmed against your stock, machines, and shop practices.</span></aside>
+      <aside class="version-card"><span>Guide applies to</span><strong>Designer v3.0.59</strong><span>Calculations remain estimates until confirmed against your stock, machines, and shop practices.</span></aside>
     </section>
 
     <nav class="toc" aria-label="Table of contents">
@@ -89,12 +89,14 @@
     </section>
 
     <section id="materials" class="section">
-      <h2>Material Quantity and Estimated Wood Cost</h2>
-      <p>The material table separates the patterned laminate, Edge Rip replacement, and borders, then combines shared species. It reports finished cubic inches, net board feet, and estimated purchase board feet.</p>
+      <h2>Estimated Wood Cost</h2>
+      <p>The table estimates the rough lumber needed to execute the cut plan, then combines shared species into one purchasing row. It does not show finished-board volume.</p>
       <ul>
-        <li><strong>Net board feet</strong> represents the designed wood volume before the waste percentage.</li>
-        <li><strong>Estimated purchase</strong> includes rough-crosscut length, blade kerf, and the selected waste allowance.</li>
-        <li><strong>Estimated Wood Cost</strong> multiplies estimated purchase board feet by the price you enter for each species.</li>
+        <li><strong>Rough laminate strips</strong> counts every physical strip in every retained laminated row at its rough-rip width, required pre-45° size, and full master-blank length.</li>
+        <li><strong>Edge Rip</strong> adds the replacement wood while retaining the original laminate that must first be built and cut.</li>
+        <li><strong>Borders</strong> counts every entered band on both long edges.</li>
+        <li><strong>Estimated rough lumber</strong> includes blade kerf and the selected waste allowance.</li>
+        <li><strong>Estimated Wood Cost</strong> multiplies estimated rough board feet by the price you enter for each species.</li>
         <li>The estimate covers wood only. Glue, sandpaper, finish, blades, and other shop supplies are not included.</li>
       </ul>
       <p>Actual use will vary with board defects, grain selection, milling losses, machine setup, and individual shop practices.</p>
@@ -150,6 +152,6 @@
     </section>
   </main>
 
-  <footer><p>Built By The Butts · Diamond End Grain Designer User Guide · v3.0.58</p><a href="index.html">Return to the Designer</a></footer>
+  <footer><p>Built By The Butts · Diamond End Grain Designer User Guide · v3.0.59</p><a href="index.html">Return to the Designer</a></footer>
 </body>
 </html>
