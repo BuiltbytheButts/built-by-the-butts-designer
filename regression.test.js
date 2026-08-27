@@ -43,8 +43,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.59/g) || []).length === 5, 'All asset cache keys must be v3.0.59');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.60/g) || []).length === 5, 'All asset cache keys must be v3.0.60');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
   assert(html.includes('Starting crosscut') && (html.match(/data-glue-up-phase=/g) || []).length === 2, 'Starting-crosscut glue-up control is missing');
   assert(html.includes('id="helpMenu"') && html.includes('user-guide.html') && html.includes('faq.html'), 'Designer Help menu is missing the User Guide or FAQ');
@@ -80,9 +80,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.59') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.59 page');
+  assert(userGuideHtml.includes('Designer v3.0.60') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.60 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 36, 'FAQ must contain the 36 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.59') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.59 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.60') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.60 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -93,7 +93,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.59', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.60', 'Wrong visible version');
   assert(await page.locator('#openProjectBtn').isVisible(), 'Open Project is not a visible button');
   const [projectDownload] = await Promise.all([
     page.waitForEvent('download'),
@@ -451,6 +451,44 @@ function functionSource(source, name) {
   assert((await page.locator('#materialTableBody').textContent()).includes('Rough laminate strips') && (await page.locator('#materialTableBody').textContent()).includes('Edge Rip') && (await page.locator('#materialTableBody').textContent()).includes('Borders'), 'Material table does not disclose all rough-stock components');
   await page.evaluate(() => renderWorkshopPlan());
   const borderedPlanText = await page.locator('#printPlan').textContent();
+  const expectedStripOrder = [
+    'A side: 1A · 2A · 3A · 4A',
+    'B side: 4B · 3B · 2B · 1B'
+  ];
+  for (const stepIndex of [2, 3, 4]) {
+    const orderLabels = await page.locator('#printPlan .guide-step').nth(stepIndex).locator('.guide-strip-order').allTextContents();
+    assert(JSON.stringify(orderLabels) === JSON.stringify(expectedStripOrder), `Step ${stepIndex + 1} strip-order labels are not split into clean A/B lines`);
+    const orderBoxes = await page.locator('#printPlan .guide-step').nth(stepIndex).locator('.guide-strip-order').evaluateAll(labels => labels.map(label => {
+      const box = label.getBBox();
+      return { x: box.x, y: box.y, width: box.width, height: box.height };
+    }));
+    assert(orderBoxes.every(box => box.x >= 0 && box.x + box.width <= 420), `Step ${stepIndex + 1} strip-order labels overflow the diagram`);
+    assert(orderBoxes[0].y + orderBoxes[0].height <= orderBoxes[1].y, `Step ${stepIndex + 1} strip-order label lines overlap`);
+  }
+  assert(!(await page.locator('#printPlan .guide-step').nth(3).locator('svg').textContent()).includes('clamp'), 'Step 4 retains overlapping clamp labels');
+  const guideLayoutSnapshot = await page.evaluate(() => snapshot());
+  await page.evaluate(() => {
+    state.strips = [
+      { width: 0.25, wood: 'maple' },
+      { width: 0.125, wood: 'cherry' },
+      { width: 0.125, wood: 'padauk' },
+      { width: 0.125, wood: 'cherry' },
+      { width: 0.21875, wood: 'walnut' },
+      { width: 0.21875, wood: 'walnut' },
+      { width: 0.125, wood: 'cherry' },
+      { width: 0.125, wood: 'padauk' },
+      { width: 0.125, wood: 'cherry' },
+      { width: 0.25, wood: 'maple' }
+    ];
+    renderWorkshopPlan();
+  });
+  const tenStripOrder = await page.locator('#printPlan .guide-step').nth(2).locator('.guide-strip-order').allTextContents();
+  assert(JSON.stringify(tenStripOrder) === JSON.stringify([
+    'A side: 1A · 2A · 3A · 4A · 5A',
+    'B side: 5B · 4B · 3B · 2B · 1B'
+  ]), 'Ten-strip project does not retain the exact non-overlapping 1A–5A / 5B–1B order');
+  await page.evaluate(serialized => restore(serialized), guideLayoutSnapshot);
+  await page.evaluate(() => renderWorkshopPlan());
   assert(borderedPlanText.includes('Glue the borders before crosscutting'), 'Border-before-crosscut step is missing');
   assert(borderedPlanText.indexOf('Glue the borders before crosscutting') < borderedPlanText.indexOf('Mark the crosscuts from the top view'), 'Borders are not glued before crosscutting in the guide');
   const guideCrosscutCount = await page.evaluate(() => crosscutEngineering().crosscutCount);

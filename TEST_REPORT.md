@@ -1,3 +1,11 @@
+# v3.0.60 Illustrated-Guide Label Cleanup
+
+- PASS — Steps 3, 4, and 5 display the ten-strip 1A–5A / 5B–1B order on two separate centered lines.
+- PASS — both strip-order lines remain within the SVG view box and do not overlap vertically.
+- PASS — Step 4 no longer contains clamp text competing with the vertical square dimension.
+- PASS — syntax, geometry, manufacturing, material, version/cache, and browser regression checks completed for v3.0.60.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/original-renderer function hashes are unchanged.
+
 # v3.0.59 Rough-Stock Wood Cost Validation
 
 - PASS — every physical strip is counted at rough-rip width for every retained laminated row.

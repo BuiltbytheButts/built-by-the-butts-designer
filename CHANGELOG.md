@@ -1,3 +1,11 @@
+## v3.0.60 — Illustrated-guide label cleanup
+
+- Replaced the overlapping individual strip labels beneath Steps 3, 4, and 5 with two centered A-side/B-side order lines.
+- Removed the redundant clamp labels from Step 4 so they no longer collide with the vertical 2.125 in dimension.
+- The exact numbered strip order remains visible, while the laminated-square and four-cut diagrams remain unchanged.
+- Added print-layout regression checks for label order, diagram bounds, and vertical separation.
+- All board calculations and frozen v3.0.7 laminate, Edge Rip, and renderer geometry remain unchanged.
+
 ## v3.0.59 — Rough-stock wood cost validation
 
 - Replaced the finished-design-volume estimate with a physical rough-stock cut-plan estimate.
