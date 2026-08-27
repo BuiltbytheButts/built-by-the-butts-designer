@@ -1,3 +1,13 @@
+## v3.0.56 — Honest actual board dimensions
+
+- Renamed the top result to **Actual Board Dimensions**.
+- The length and width inputs are now explicitly identified as requested dimensions.
+- Actual length comes from the calculated whole-crosscut count; actual width comes from complete laminated rows plus every entered border band.
+- A compact warning appears inside the result card whenever the actual board differs from the requested size.
+- The preview, material estimate, printable summary, border schedule, and illustrated finishing step all use the same actual buildable dimensions.
+- No complete laminated row is silently trimmed to force the requested width; the woodworker may adjust rows, borders, or the requested size.
+- Frozen v3.0.7 laminate geometry, Edge Rip geometry, and the base renderer remain unchanged.
+
 ## v3.0.55 — Finished-cell sizing correction
 
 - Corrected preview and border-row sizing to use finished thickness as the physical square-cell pitch.

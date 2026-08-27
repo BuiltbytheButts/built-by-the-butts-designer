@@ -1,3 +1,13 @@
+# v3.0.56 Actual Board Dimensions
+
+- PASS — requested dimensions remain editable and are clearly labeled as requested.
+- PASS — 18.000 × 13.000 in requested at 1.500 in thickness produces 12 whole crosscuts × 8 whole rows and reports 18.000 × 12.000 in actual.
+- PASS — a compact warning appears when requested and actual dimensions differ and clears when they match.
+- PASS — entered borders contribute their full physical width to the actual board instead of being resized or silently trimmed.
+- PASS — preview, material quantity, printed summary, border schedule, and illustrated guide agree with the actual buildable dimensions.
+- PASS — version/cache, syntax, geometry, manufacturing, material, and browser regression checks completed for v3.0.56.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/base-renderer function hashes are unchanged.
+
 # v3.0.55 Finished-Cell Sizing Correction
 - PASS — the reported 18.000 × 12.875 × 1.500 in recreation uses six retained rows and displays three complete diamonds between the borders.
 - PASS — the fixture intentionally totals 2.025 in across its finished strip schedule, while the preview correctly uses the independent 1.500 in finished cell pitch.

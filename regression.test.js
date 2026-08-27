@@ -43,8 +43,9 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.55/g) || []).length === 5, 'All asset cache keys must be v3.0.55');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.56/g) || []).length === 5, 'All asset cache keys must be v3.0.56');
+  assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
   assert(html.includes('id="helpMenu"') && html.includes('user-guide.html') && html.includes('faq.html'), 'Designer Help menu is missing the User Guide or FAQ');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
@@ -70,9 +71,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Material Quantity and Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.55') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.55 page');
+  assert(userGuideHtml.includes('Designer v3.0.56') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.56 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 35, 'FAQ must contain the 35 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.55') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.55 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.56') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.56 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -83,7 +84,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.55', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.56', 'Wrong visible version');
   assert(await page.locator('#openProjectBtn').isVisible(), 'Open Project is not a visible button');
   const [projectDownload] = await Promise.all([
     page.waitForEvent('download'),
@@ -219,7 +220,8 @@ function functionSource(source, name) {
   for (const heading of ['Finished Design', 'Lamination Engineering', 'Crosscut Engineering', 'Edge Rip', 'Border Schedule', 'Material Quantity (Estimate)', 'Illustrated Build Procedure', 'Workshop Sequence — Quick Checklist']) {
     assert(planText.includes(heading), `Printable plan is missing ${heading}`);
   }
-  assert((await page.locator('#printPlan').textContent()).includes('18.625 × 11.625 × 1.500 in'), 'Printable plan does not reflect current dimensions');
+  assert((await page.locator('#printPlan').textContent()).includes('Actual Board Dimensions: 18.000 × 10.500 × 1.500 in'), 'Printable plan does not reflect the actual buildable dimensions');
+  assert((await page.locator('#printPlan').textContent()).includes('Requested 18.625 × 11.625 × 1.500 in'), 'Printable plan does not disclose the requested dimensions');
   assert(await page.locator('#printPlan .print-board-reference').count() === 1, 'Finished board reference is missing from the printout');
   assert(await page.locator('#printPlan .print-board-reference polygon[fill^="#"]').count() > 0, 'Finished board reference does not contain printable solid wood colors');
   assert((await page.locator('#printPlan .print-board-section').textContent()).includes('Keep this image available throughout the build'), 'Finished board reference guidance is missing');
@@ -258,7 +260,7 @@ function functionSource(source, name) {
   await page.locator('#printPlanBtn').click();
   assert(await page.evaluate(() => window.__printCalled), 'Print Workshop Plan did not invoke printing');
   assert(await page.locator('#wastePercent').isEditable(), 'Waste allowance is not editable');
-  assert(await page.locator('#materialNetMetric').textContent() === '2.255 bd ft', 'Default net board-foot total is incorrect');
+  assert((await page.locator('#materialVolumeHelp').textContent()).includes('actual buildable board'), 'Material estimate is not identified with the actual board');
   assert(await page.locator('#materialTableBody tr').count() === 3, 'Default species were not combined into three rows');
   const purchaseBeforeWasteChange = Number((await page.locator('#materialPurchaseMetric').textContent()).split(' ')[0]);
   await page.locator('#wastePercent').fill('50');
@@ -277,9 +279,24 @@ function functionSource(source, name) {
 
   await page.locator('#boardLength').fill('18');
   await page.locator('#boardLength').dispatchEvent('input');
+  await page.locator('#boardWidth').fill('13');
+  await page.locator('#boardWidth').dispatchEvent('input');
   assert(await page.locator('#crosscutCountMetric').textContent() === '12 crosscuts', '12-crosscut balanced case failed');
   assert(await page.locator('#crosscutWarning').isHidden(), 'Balanced warning should be hidden');
   assert(await page.evaluate(() => previewGrid().lengthSliceCount) === 12, 'Preview is not driven by 12 calculated crosscuts');
+  assert(await page.locator('#boardSizeMetric').textContent() === '18.000 × 12.000 in', 'Actual board did not keep eight complete 1.500 in laminated rows');
+  assert(await page.locator('#actualBoardWarning').isVisible(), 'Requested-versus-actual warning is missing');
+  assert((await page.locator('#actualBoardWarning').textContent()).includes('Requested 18.000 × 13.000 in'), 'Actual board warning does not disclose the requested size');
+  assert(await page.locator('#actualBoardMetricCard').evaluate(card => card.classList.contains('metric-has-warning')), 'Actual board warning styling is missing');
+  const actualNoBorder = await page.evaluate(() => ({ actual: actualBoardDimensions(), material: materialQuantity() }));
+  assert(actualNoBorder.actual.length === 18 && actualNoBorder.actual.width === 12, 'Actual board helper returned the wrong no-border dimensions');
+  assert(Math.abs(actualNoBorder.material.designedVolume - 324) < 0.01, 'Material estimate does not use the 18 × 12 × 1.5 actual board');
+  const unborderedFrameAspect = await page.locator('#boardSvg > rect').first().evaluate(rect => (Number(rect.getAttribute('width')) - 6) / (Number(rect.getAttribute('height')) - 6));
+  assert(Math.abs(unborderedFrameAspect - 1.5) < 0.001, 'Unbordered preview frame does not use the actual 18 × 12 aspect');
+  await page.locator('#boardWidth').fill('12');
+  await page.locator('#boardWidth').dispatchEvent('input');
+  assert(await page.locator('#boardSizeMetric').textContent() === '18.000 × 12.000 in', 'Matching request changed the actual board');
+  assert(await page.locator('#actualBoardWarning').isHidden(), 'Actual board warning did not clear when requested and actual sizes matched');
 
   await page.locator('#boardLength').fill('19.5');
   await page.locator('#boardLength').dispatchEvent('input');
@@ -307,7 +324,7 @@ function functionSource(source, name) {
     ]
   })));
   assert(await page.locator('#laminatedRowMetric').textContent() === '4', 'A border must remove one complete laminated row from each edge');
-  assert(await page.locator('#diamondFieldMetric').textContent() === '15.250 × 6.000 in', 'Finished-thickness border-row field is incorrect');
+  assert(await page.locator('#diamondFieldMetric').textContent() === '15.000 × 6.000 in', 'Finished-thickness border-row field is incorrect');
   assert(await page.locator('#requiredBorderMetric').textContent() === '2.0000 in per edge', 'Paired border replacement must use the 1.500 in finished cell pitch');
   assert(await page.locator('#borderDifferenceMetric').textContent() === '1.5000 in still needed per edge', 'Paired border completion warning is incorrect');
   await page.evaluate(() => restore(JSON.stringify({})));
@@ -327,15 +344,20 @@ function functionSource(source, name) {
   await page.locator('[data-border-width]').nth(1).dispatchEvent('input');
   await page.locator('[data-border-wood]').nth(1).selectOption('walnut');
   assert(await page.locator('#laminatedRowMetric').textContent() === '2', 'Only mirrored pairs of complete finished-thickness rows should be removed');
-  assert(await page.locator('#diamondFieldMetric').textContent() === '18.625 × 3.000 in', 'Paired whole-row diamond field is incorrect');
+  assert(await page.locator('#diamondFieldMetric').textContent() === '18.000 × 3.000 in', 'Paired whole-row diamond field is incorrect');
   assert(await page.locator('#requiredBorderMetric').textContent() === '5.0000 in per edge', 'Paired replacement-border calculation is incorrect');
   assert(await page.locator('#borderDifferenceMetric').textContent() === '0.8125 in still needed per edge', 'Paired whole-row completion warning is incorrect');
   assert(await page.locator('#borderWarning').isVisible(), 'Mismatched dynamic border schedule should warn');
-  assert(await page.locator('#materialGapWarning').isVisible(), 'Unfilled border schedule should block purchase totals');
+  assert(await page.locator('#boardSizeMetric').textContent() === '18.000 × 11.375 in', 'Entered borders were not included at their full physical width');
+  assert(await page.locator('#actualBoardWarning').isVisible(), 'Mismatched border schedule should warn in Actual Board Dimensions');
+  assert(await page.locator('#materialGapWarning').isHidden(), 'Actual board material volume should reconcile even when it differs from the request');
   await page.locator('[data-border-width]').nth(0).fill('3.625');
   await page.locator('[data-border-width]').nth(0).dispatchEvent('input');
   assert(await page.locator('#borderDifferenceMetric').textContent() === 'Matched ✓', 'Matching border schedule was not recognized');
   assert(await page.locator('#borderWarning').isHidden(), 'Matched border schedule should not warn');
+  assert(await page.locator('#boardSizeMetric').textContent() === '18.000 × 13.000 in', 'Matched borders did not produce the requested actual width');
+  assert(await page.locator('#actualBoardWarning').isVisible(), 'Length mismatch warning was lost when only the border width matched');
+  assert((await page.locator('#actualBoardWarning').textContent()).includes('Requested 18.625 × 13.000 in'), 'Length mismatch warning does not preserve the requested dimensions');
   assert(await page.locator('#materialGapWarning').isHidden(), 'Matched border schedule should reconcile material volume');
   for (let i = 0; i < 2; i += 1) await page.locator('#addBorderBandBtn').click();
   for (let i = 0; i < 4; i += 1) await page.locator('[data-border-wood]').nth(i).selectOption('padauk');

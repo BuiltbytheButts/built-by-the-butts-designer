@@ -1,15 +1,17 @@
-# Diamond End Grain Designer v3.0.55
+# Diamond End Grain Designer v3.0.56
 
 Clean-architecture foundation rebuild for Built By The Butts.
 
 ## Core rules
-- Finished board setup uses length, width, and thickness only.
+- Finished board setup uses requested length, requested width, and finished thickness only.
+- Actual Board Dimensions report the physical result from complete crosscuts, complete laminated rows, and entered borders; a warning appears when that result differs from the requested size.
+- The Designer never silently trims a complete laminated row to force the requested width.
 - Strip schedule is the source of pattern geometry.
 - No rows/columns sizing mode exists in state, UI, or renderer.
 - Rough machining values are recommendations, not user-entered allowances.
 - Crosscut Engineering reports the actual calculated whole-crosscut count.
 - Odd counts drive the preview unchanged and display an unbalanced-pattern warning.
-- Optional all-end-grain borders run along the two long edges inside the finished dimensions.
+- Optional all-end-grain borders run along the two long edges and contribute their full entered widths to the Actual Board Dimensions.
 - Add or remove any number of border bands; every band has its own width and species.
 - Border bands mirror across the two long edges; turning borders off restores the full-diamond field.
 - Laminated rows are calculated automatically from the finished width and entered border-band widths.
