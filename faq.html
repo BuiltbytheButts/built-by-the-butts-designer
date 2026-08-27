@@ -25,7 +25,7 @@
   </header>
 
   <main>
-    <section class="intro"><h2>Frequently asked questions</h2><p>Click a question to open its answer. These answers describe Designer v3.0.61 and the approved manufacturing behavior.</p><p>For a start-to-finish explanation of every control, see the <a href="user-guide.html">User Guide</a>.</p></section>
+    <section class="intro"><h2>Frequently asked questions</h2><p>Click a question to open its answer. These answers describe Designer v3.0.62 and the approved manufacturing behavior.</p><p>For a start-to-finish explanation of every control, see the <a href="user-guide.html">User Guide</a>.</p></section>
     <nav class="toc" aria-label="FAQ categories"><a href="#design">Design &amp; Preview</a><a href="#crosscuts">Crosscuts</a><a href="#borders">Borders</a><a href="#edge-rip">Edge Rip</a><a href="#materials">Materials &amp; Cost</a><a href="#files">Files &amp; Guides</a><a href="#troubleshooting">Troubleshooting</a></nav>
 
     <section id="design" class="group">
@@ -37,6 +37,7 @@
       <details class="faq"><summary>Why does Starting Crosscut change the number of full diamonds I see?</summary><div class="answer"><p>It changes which piece receives the first 180-degree turn in the alternating glue-up. One choice can center a full diamond near an end, while the other can place partial diamonds at both ends and one fewer full diamond through the center. It is the same collection of crosscuts in a different physical orientation; dimensions and material quantities do not change.</p></div></details>
       <details class="faq"><summary>Are the wood colors exact?</summary><div class="answer"><p>No. Colors help identify species and follow the pattern. Actual wood varies by tree, board, grain, age, sanding, lighting, and finish. Custom woods can be added with a name and approximate preview color.</p></div></details>
       <details class="faq"><summary>What does “Required Lamination Size Before 45° Cuts” mean?</summary><div class="answer"><p>It is the practical square size of the laminated blank before the first 45-degree cuts. The mathematical minimum is finished thickness × √2. The Designer rounds <strong>up</strong> to the nearest 1/8 inch so the blank is not undersized.</p></div></details>
+      <details class="faq"><summary>Why must the finished strip total match finished thickness?</summary><div class="answer"><p>The individual strip widths become the finished wood bands across one complete pattern module. Their combined finished width must equal the requested finished board thickness. If the strips total 1.375 inches while finished thickness is 1.500 inches, the physical blank cannot produce the 1.500-inch crosscuts assumed by the length calculation. The Designer therefore shows both totals and warns until they match.</p></div></details>
     </section>
 
     <section id="crosscuts" class="group">
@@ -95,6 +96,6 @@
     <div class="callout"><strong>Still unsure?</strong>Keep the finished-board preview, printed illustrated guide, and real-photo Sample Build together. Use the project's calculated dimensions and counts, and use the photos to confirm order and orientation.</div>
   </main>
 
-  <footer><p>Built By The Butts · Diamond End Grain Designer FAQ · v3.0.61</p><a href="index.html">Return to the Designer</a></footer>
+  <footer><p>Built By The Butts · Diamond End Grain Designer FAQ · v3.0.62</p><a href="index.html">Return to the Designer</a></footer>
 </body>
 </html>

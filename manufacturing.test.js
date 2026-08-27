@@ -32,6 +32,19 @@ assertEq(plan.crosscutCount,14);
 assertEq(plan.isBalanced,true);
 console.log('ACTUAL-CROSSCUT ENGINEERING PASS');
 
+(function testFinishedStripTotalMustMatchThickness() {
+  let strips = M.stripScheduleThicknessPlan({ stripWidths: [0.5, 0.125, 0.125, 0.125, 0.125, 0.5], finishedThickness: 1.5 });
+  assertClose(strips.total, 1.5);
+  assertClose(strips.difference, 0);
+  assertEq(strips.matches, true);
+
+  strips = M.stripScheduleThicknessPlan({ stripWidths: [0.5, 0.125, 0.125, 0.125, 0.5], finishedThickness: 1.5 });
+  assertClose(strips.total, 1.375);
+  assertClose(strips.difference, -0.125);
+  assertEq(strips.matches, false);
+})();
+console.log('STRIP-TOTAL THICKNESS VALIDATION PASS');
+
 (function testDerivedMasterBlankLength() {
   const plan = M.finishedDimensionCrosscutPlan({
     targetLength: 18,

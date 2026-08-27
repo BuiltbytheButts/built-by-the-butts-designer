@@ -1,3 +1,11 @@
+## v3.0.62 — Length trace and finished-strip-total validation
+
+- Expanded Calculated crosscut result to show the complete master-blank formula: rough crosscuts plus the kerfs between adjacent pieces.
+- Added a Finished strip total result directly above the Strip Schedule.
+- Added visible Strip Schedule and top Finished thickness warnings whenever the finished strip widths do not total the requested finished thickness.
+- Added the same strip-total warning to the printable workshop plan and documented the requirement in the User Guide and FAQ.
+- The length engine still uses the actual nearest whole crosscut count and editable blade kerf; frozen v3.0.7 laminate, Edge Rip, and renderer geometry remain unchanged.
+
 ## v3.0.61 — Complete Sample Build photo guide
 
 - Added the original Designer image at the beginning of the Independent Sample Build as the visual build target.

@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.61';
+const VERSION = '3.0.62';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -106,6 +106,13 @@ function stripOffsetLabel(index, count) {
 
 function moduleWidth() {
   return activeStrips().reduce((sum, strip) => sum + number(strip.width), 0);
+}
+
+function stripScheduleEngineering() {
+  return DiamondManufacturing.stripScheduleThicknessPlan({
+    stripWidths: activeStrips().map(strip => strip.width),
+    finishedThickness: state.finishedThickness
+  });
 }
 
 function finishedCellPitch() {
@@ -761,7 +768,7 @@ function renderEngineering() {
   $('roughCrosscutHelp').textContent = `Finished target ${x.finishedThickness.toFixed(3)} in + approx. 1/8 in cleanup guidance.`;
 
   $('crosscutCountMetric').textContent = `${x.crosscutCount} crosscuts`;
-  $('crosscutCountHelp').textContent = `Approx. ${x.achievableLength.toFixed(3)} in finished; requires approx. ${x.requiredBlankLength.toFixed(3)} in rough blank.`;
+  $('crosscutCountHelp').textContent = `${x.crosscutCount} × ${x.roughCrosscut.toFixed(3)} in rough crosscuts + ${Math.max(0, x.crosscutCount - 1)} × ${x.bladeKerf.toFixed(3)} in kerf = ${x.requiredBlankLength.toFixed(3)} in rough blank; yields approx. ${x.achievableLength.toFixed(3)} in finished.`;
   const warning = $('crosscutWarning');
   warning.hidden = x.isBalanced;
   warning.textContent = `⚠ ${x.crosscutCount} crosscuts produces an unbalanced pattern. Adjust finished length or finished thickness to produce an even crosscut count.`;
@@ -770,6 +777,7 @@ function renderEngineering() {
 function renderMetrics() {
   const x = crosscutEngineering();
   const lamination = laminationRequirement();
+  const stripPlan = stripScheduleEngineering();
   const actual = actualBoardDimensions();
   $('moduleWidthMetric').textContent = `${lamination.recommended.toFixed(3)} in`;
   $('crosscutMetric').textContent = x.crosscutCount ? String(x.crosscutCount) : '—';
@@ -782,6 +790,23 @@ function renderMetrics() {
     : `⚠ Requested ${actual.requestedLength.toFixed(3)} × ${actual.requestedWidth.toFixed(3)} in. Adjust rows, borders, or requested size.`;
   $('actualBoardMetricCard').classList.toggle('metric-has-warning', !actual.matchesRequested);
   $('thicknessMetric').textContent = `${number(state.finishedThickness).toFixed(3)} in`;
+  $('stripTotalMetric').textContent = `${stripPlan.total.toFixed(4)} in`;
+  $('stripTotalHelp').textContent = stripPlan.matches
+    ? `Required ${stripPlan.required.toFixed(4)} in — matched ✓`
+    : `Required ${stripPlan.required.toFixed(4)} in`;
+  const stripDifference = Math.abs(stripPlan.difference);
+  const stripWarning = $('stripTotalWarning');
+  stripWarning.hidden = stripPlan.matches;
+  stripWarning.textContent = stripPlan.matches
+    ? ''
+    : `⚠ Strip schedule is ${stripDifference.toFixed(4)} in ${stripPlan.difference < 0 ? 'short' : 'over'}. ${stripPlan.difference < 0 ? 'Add' : 'Remove'} ${stripDifference.toFixed(4)} in total, or change the finished thickness to ${stripPlan.total.toFixed(4)} in.`;
+  $('stripTotalCard').classList.toggle('engineering-has-warning', !stripPlan.matches);
+  const thicknessWarning = $('thicknessWarning');
+  thicknessWarning.hidden = stripPlan.matches;
+  thicknessWarning.textContent = stripPlan.matches
+    ? ''
+    : `⚠ Strips total ${stripPlan.total.toFixed(4)} in — ${stripDifference.toFixed(4)} in ${stripPlan.difference < 0 ? 'short' : 'over'}. Crosscut calculations assume ${stripPlan.required.toFixed(4)} in.`;
+  $('thicknessMetricCard').classList.toggle('metric-has-warning', !stripPlan.matches);
   $('edgeInsetLabel').textContent = `${number(state.edgeInset).toFixed(3)} in`;
   document.querySelectorAll('[data-inset]').forEach(button => button.classList.toggle('active', Math.abs(number(button.dataset.inset) - number(state.edgeInset)) < 1e-9));
   const border = borderEngineering();
@@ -991,6 +1016,7 @@ function renderWorkshopPlan() {
   const border = borderEngineering();
   const actual = actualBoardDimensions();
   const lamination = laminationRequirement();
+  const stripPlan = stripScheduleEngineering();
   const materials = materialQuantity();
   const active = activeStrips();
   const stripRows = active.map((strip, index) => `<tr><td>${stripOffsetLabel(index, active.length)}</td><td>${WOODS[strip.wood]?.name || strip.wood}</td><td>${number(strip.width).toFixed(4)} in</td><td>${recommendedRoughRip(strip.width).toFixed(4)} in</td><td>1 per laminated blank</td></tr>`).join('');
@@ -1024,9 +1050,9 @@ function renderWorkshopPlan() {
     : 'Keep Crosscut 1 as cut, turn Crosscut 2 180°, and continue alternating.';
   $('printPlan').innerHTML = `
     <header><p class="print-eyebrow">Built By The Butts</p><h1>Diamond End Grain Workshop Plan</h1><p>Designer v${VERSION}</p></header>
-    <section class="print-summary"><h2>Finished Design</h2><p><strong>Actual Board Dimensions: ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in</strong></p>${actual.matchesRequested ? '' : `<p class="print-dimension-warning"><strong>Warning:</strong> Requested ${actual.requestedLength.toFixed(3)} × ${actual.requestedWidth.toFixed(3)} × ${actual.thickness.toFixed(3)} in. The actual dimensions use complete crosscuts, complete laminated rows, and the entered borders.</p>`}<p>${crosscuts.crosscutCount} crosscuts · ${border.selectedRows} laminated rows · ${state.includeBorders ? `${border.bands.length} border band${border.bands.length === 1 ? '' : 's'} per edge` : 'No borders'} · ${glueUpLabel}</p></section>
+    <section class="print-summary"><h2>Finished Design</h2><p><strong>Actual Board Dimensions: ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in</strong></p>${actual.matchesRequested ? '' : `<p class="print-dimension-warning"><strong>Warning:</strong> Requested ${actual.requestedLength.toFixed(3)} × ${actual.requestedWidth.toFixed(3)} × ${actual.thickness.toFixed(3)} in. The actual dimensions use complete crosscuts, complete laminated rows, and the entered borders.</p>`}${stripPlan.matches ? '' : `<p class="print-dimension-warning"><strong>Strip-total warning:</strong> Finished strip widths total ${stripPlan.total.toFixed(4)} in, but the requested finished thickness is ${stripPlan.required.toFixed(4)} in. Adjust the strip schedule by ${Math.abs(stripPlan.difference).toFixed(4)} in before building.</p>`}<p>${crosscuts.crosscutCount} crosscuts · ${border.selectedRows} laminated rows · ${state.includeBorders ? `${border.bands.length} border band${border.bands.length === 1 ? '' : 's'} per edge` : 'No borders'} · ${glueUpLabel}</p></section>
     <section class="print-board-section"><h2>Finished Board Reference</h2><p class="print-note">Keep this image available throughout the build to confirm wood placement, borders, and orientation.</p>${boardReference}</section>
-    <section><h2>Lamination Engineering</h2><p>Required size before 45° cuts: <strong>${lamination.recommended.toFixed(3)} in</strong> (mathematical minimum ${lamination.minimum.toFixed(3)} in).</p><table><thead><tr><th>Strip</th><th>Species</th><th>Finished width</th><th>Rough rip</th><th>Quantity</th></tr></thead><tbody>${stripRows}</tbody></table></section>
+    <section><h2>Lamination Engineering</h2><p>Required size before 45° cuts: <strong>${lamination.recommended.toFixed(3)} in</strong> (mathematical minimum ${lamination.minimum.toFixed(3)} in). Finished strip total: <strong>${stripPlan.total.toFixed(4)} in</strong> of ${stripPlan.required.toFixed(4)} in required${stripPlan.matches ? ' — matched' : ' — adjustment required'}.</p><table><thead><tr><th>Strip</th><th>Species</th><th>Finished width</th><th>Rough rip</th><th>Quantity</th></tr></thead><tbody>${stripRows}</tbody></table></section>
     <section><h2>Crosscut Engineering</h2><table><tbody><tr><th>Calculated crosscuts</th><td>${crosscuts.crosscutCount}${crosscuts.isBalanced ? ' — balanced' : ' — unbalanced warning'}</td></tr><tr><th>Recommended rough crosscut</th><td>${crosscuts.roughCrosscut.toFixed(3)} in</td></tr><tr><th>Blade kerf</th><td>${crosscuts.bladeKerf.toFixed(3)} in</td></tr><tr><th>Required master blank</th><td>${crosscuts.requiredBlankLength.toFixed(3)} in</td></tr><tr><th>Projected finished run</th><td>${crosscuts.achievableLength.toFixed(3)} in</td></tr></tbody></table></section>
     ${edgeRipSection}
     <section><h2>Border Schedule</h2><p>Entered total per edge: <strong>${state.includeBorders ? `${border.requestedWidth.toFixed(4)} in` : 'Not applicable'}</strong>${state.includeBorders ? ` · Requested board width would require ${border.requiredWidth.toFixed(4)} in per edge.` : ''}${state.includeBorders && !border.scheduleMatches ? ` · The actual board therefore differs by ${Math.abs(border.difference * 2).toFixed(4)} in overall width.` : ''}</p><table><thead><tr><th>Band</th><th>Species</th><th>Width</th><th>Finished length</th><th>Quantity</th></tr></thead><tbody>${borderRows}</tbody></table></section>

@@ -1,3 +1,12 @@
+# v3.0.62 Length Trace and Finished-Strip-Total Validation
+
+- PASS — 24.000 in requested length at 1.500 in finished thickness produces 16 crosscuts and a 24.000 in projected finished run.
+- PASS — 16 rough crosscuts at 1.625 in plus 15 blade kerfs at 0.125 in produces a 27.875 in required rough master blank.
+- PASS — a 1.3750 in finished strip total against a 1.5000 in requested thickness shows a 0.1250 in shortage in the Strip Schedule, top Finished thickness result, and printable plan.
+- PASS — matching the finished strip total to finished thickness clears both screen warnings.
+- PASS — syntax, geometry, manufacturing, material, version/cache, and browser regression checks completed for v3.0.62.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/original-renderer function hashes are unchanged.
+
 # v3.0.61 Complete Sample Build Photo Guide
 
 - PASS — the original Designer target appears before Step 1 and opens in the enlarged-photo viewer.

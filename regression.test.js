@@ -43,9 +43,10 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.61/g) || []).length === 5, 'All asset cache keys must be v3.0.61');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.62/g) || []).length === 5, 'All asset cache keys must be v3.0.62');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
+  assert(html.includes('id="stripTotalMetric"') && html.includes('id="stripTotalWarning"') && html.includes('id="thicknessWarning"'), 'Finished-strip-total validation is missing');
   assert(html.includes('Starting crosscut') && (html.match(/data-glue-up-phase=/g) || []).length === 2, 'Starting-crosscut glue-up control is missing');
   assert(html.includes('id="helpMenu"') && html.includes('user-guide.html') && html.includes('faq.html'), 'Designer Help menu is missing the User Guide or FAQ');
   assert(html.includes('Estimated Wood Cost') && html.includes('Estimated rough lumber'), 'Rough-lumber cost estimate is missing');
@@ -84,9 +85,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.61') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.61 page');
-  assert((faqHtml.match(/class="faq"/g) || []).length === 36, 'FAQ must contain the 36 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.61') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.61 page');
+  assert(userGuideHtml.includes('Designer v3.0.62') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Finished strip total') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.62 page');
+  assert((faqHtml.match(/class="faq"/g) || []).length === 37, 'FAQ must contain the 37 approved questions');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.62') && faqHtml.includes('Why must the finished strip total match finished thickness?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.62 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -97,7 +98,32 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.61', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.62', 'Wrong visible version');
+  assert(await page.locator('#stripTotalMetric').textContent() === '1.5000 in', 'Default finished strip total is incorrect');
+  assert(await page.locator('#stripTotalWarning').isHidden(), 'Matched default strip total should not warn');
+  assert(await page.locator('#thicknessWarning').isHidden(), 'Matched default finished thickness should not warn');
+  await page.evaluate(() => {
+    state.boardLength = 24;
+    state.finishedThickness = 1.5;
+    state.strips = [
+      { width: 0.4375, wood: 'cherry' },
+      { width: 0.125, wood: 'maple' },
+      { width: 0.125, wood: 'walnut' },
+      { width: 0.125, wood: 'walnut' },
+      { width: 0.125, wood: 'maple' },
+      { width: 0.4375, wood: 'cherry' }
+    ];
+    render();
+  });
+  assert(await page.locator('#crosscutCountMetric').textContent() === '16 crosscuts', '24 × 1.5 length trace did not produce 16 crosscuts');
+  assert((await page.locator('#crosscutCountHelp').textContent()).includes('16 × 1.625 in rough crosscuts + 15 × 0.125 in kerf = 27.875 in rough blank'), 'Crosscut result does not disclose the master-blank formula');
+  assert(await page.locator('#stripTotalMetric').textContent() === '1.3750 in', 'Short finished strip total is not shown');
+  assert(await page.locator('#stripTotalWarning').isVisible(), 'Short finished strip total does not warn in the Strip Schedule');
+  assert((await page.locator('#stripTotalWarning').textContent()).includes('0.1250 in short'), 'Strip Schedule warning does not disclose the shortage');
+  assert(await page.locator('#thicknessWarning').isVisible(), 'Short finished strip total does not warn in the top thickness result');
+  assert(await page.locator('#thicknessMetricCard').evaluate(card => card.classList.contains('metric-has-warning')), 'Finished thickness warning styling is missing');
+  assert((await page.locator('#printPlan').textContent()).includes('Strip-total warning') && (await page.locator('#printPlan').textContent()).includes('1.3750 in'), 'Printable plan does not disclose the strip-total mismatch');
+  await page.evaluate(() => restore(JSON.stringify(defaultState())));
   assert(await page.locator('#openProjectBtn').isVisible(), 'Open Project is not a visible button');
   const [projectDownload] = await Promise.all([
     page.waitForEvent('download'),
@@ -605,7 +631,7 @@ function functionSource(source, name) {
   faqPage.on('pageerror', error => faqErrors.push(error.message));
   await faqPage.goto(pathToFileURL(path.join(root, 'faq.html')).href);
   assert((await faqPage.locator('h1').textContent()).includes('FAQ'), 'FAQ heading is missing');
-  assert(await faqPage.locator('details.faq').count() === 36, 'FAQ does not display all 36 questions');
+  assert(await faqPage.locator('details.faq').count() === 37, 'FAQ does not display all 37 questions');
   await faqPage.locator('details.faq summary').first().click();
   assert(await faqPage.locator('details.faq').first().getAttribute('open') !== null, 'FAQ question did not expand');
   assert(sampleErrors.length === 0, `Sample Build browser errors: ${sampleErrors.join('; ')}`);

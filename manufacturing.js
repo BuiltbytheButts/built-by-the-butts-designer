@@ -60,6 +60,19 @@
     };
   }
 
+  function stripScheduleThicknessPlan({ stripWidths, finishedThickness }) {
+    const required = Math.max(0, Number(finishedThickness) || 0);
+    const widths = Array.isArray(stripWidths) ? stripWidths : [];
+    const total = widths.reduce((sum, width) => sum + Math.max(0, Number(width) || 0), 0);
+    const difference = total - required;
+    return {
+      required,
+      total,
+      difference,
+      matches: Math.abs(difference) <= 0.0005
+    };
+  }
+
   function mirroredBorderRowPlan({
     boardWidth,
     moduleWidth,
@@ -104,6 +117,7 @@
     SHOP_INCREMENT,
     requiredLaminationSize,
     finishedDimensionCrosscutPlan,
+    stripScheduleThicknessPlan,
     mirroredBorderRowPlan
   });
 });
