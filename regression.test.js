@@ -43,9 +43,10 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.56/g) || []).length === 5, 'All asset cache keys must be v3.0.56');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.57/g) || []).length === 5, 'All asset cache keys must be v3.0.57');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
+  assert(html.includes('Starting crosscut') && (html.match(/data-glue-up-phase=/g) || []).length === 2, 'Starting-crosscut glue-up control is missing');
   assert(html.includes('id="helpMenu"') && html.includes('user-guide.html') && html.includes('faq.html'), 'Designer Help menu is missing the User Guide or FAQ');
   assert(html.includes('Material Quantity (Estimate)'), 'Estimate qualifier is missing from Material Quantity');
   const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Material Quantity (Estimate)', 'Wood Library'].map(label => html.indexOf(label));
@@ -71,9 +72,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Material Quantity and Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.56') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.56 page');
-  assert((faqHtml.match(/class="faq"/g) || []).length === 35, 'FAQ must contain the 35 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.56') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.56 page');
+  assert(userGuideHtml.includes('Designer v3.0.57') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.57 page');
+  assert((faqHtml.match(/class="faq"/g) || []).length === 36, 'FAQ must contain the 36 approved questions');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.57') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.57 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -84,7 +85,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.56', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.57', 'Wrong visible version');
   assert(await page.locator('#openProjectBtn').isVisible(), 'Open Project is not a visible button');
   const [projectDownload] = await Promise.all([
     page.waitForEvent('download'),
@@ -138,6 +139,36 @@ function functionSource(source, name) {
   assert(await page.locator('#bladeKerf').isEditable(), 'Blade kerf is not editable');
   assert((await page.locator('#bladeKerf').locator('xpath=ancestor::label').textContent()).includes('enter your blade’s thickness'), 'Blade-thickness note is missing');
   assert(await page.locator('#materialCostMetric').locator('xpath=preceding-sibling::span').textContent() === 'Estimated Wood Cost', 'Estimated Wood Cost label is incorrect');
+  assert(await page.locator('.glue-up-phase-control [data-glue-up-phase]').count() === 2, 'Both starting-crosscut choices are not visible');
+  assert(await page.locator('.glue-up-phase-control [data-glue-up-phase="0"]').getAttribute('aria-pressed') === 'true', 'As-cut view is not the backward-compatible default');
+  const asCutBaseline = {
+    dimensions: await page.locator('#boardSizeMetric').textContent(),
+    crosscuts: await page.locator('#crosscutMetric').textContent(),
+    rows: await page.locator('#laminatedRowMetric').textContent(),
+    material: await page.locator('#materialNetMetric').textContent(),
+    svg: await page.locator('#boardSvg').innerHTML()
+  };
+  await page.locator('.glue-up-phase-control [data-glue-up-phase="1"]').click();
+  const turnedView = {
+    dimensions: await page.locator('#boardSizeMetric').textContent(),
+    crosscuts: await page.locator('#crosscutMetric').textContent(),
+    rows: await page.locator('#laminatedRowMetric').textContent(),
+    material: await page.locator('#materialNetMetric').textContent(),
+    svg: await page.locator('#boardSvg').innerHTML()
+  };
+  assert(await page.evaluate(() => state.glueUpPhase) === 1, 'Turned-first glue-up choice did not reach project state');
+  assert(await page.locator('.glue-up-phase-control [data-glue-up-phase="1"]').getAttribute('aria-pressed') === 'true', 'Turned-first glue-up button is not selected');
+  assert(asCutBaseline.svg !== turnedView.svg, 'Starting-crosscut choice did not change the board pattern');
+  assert(JSON.stringify({ ...asCutBaseline, svg: null }) === JSON.stringify({ ...turnedView, svg: null }), 'Starting-crosscut choice changed a manufacturing result');
+  assert(await page.locator('#boardSvg g[data-glue-up-phase="1"]').getAttribute('transform') === null, 'Alternate view translates the completed board and can create a blank edge');
+  await page.evaluate(() => renderWorkshopPlan());
+  assert((await page.locator('#printPlan').textContent()).includes('Crosscut 1 turned 180°'), 'Printable reference does not identify the selected glue-up start');
+  assert((await page.locator('#printPlan').textContent()).includes('Turn Crosscut 1 180°, keep Crosscut 2 as cut'), 'Printable glue-up instructions do not follow the selected view');
+  const turnedSnapshot = await page.evaluate(() => snapshot());
+  await page.evaluate(serialized => restore(serialized), turnedSnapshot);
+  assert(await page.locator('.glue-up-phase-control [data-glue-up-phase="1"]').getAttribute('aria-pressed') === 'true', 'Starting-crosscut choice did not survive project restore');
+  await page.locator('.glue-up-phase-control [data-glue-up-phase="0"]').click();
+  assert(await page.evaluate(() => state.glueUpPhase) === 0, 'As-cut glue-up choice could not be restored');
   assert(await page.locator('#edgeWood option').count() === 24, 'Expanded built-in wood library must contain 24 species');
   await page.locator('#addCustomWoodBtn').click();
   assert(await page.locator('[data-custom-name]').count() === 1, 'Custom wood editor was not added');
@@ -405,6 +436,25 @@ function functionSource(source, name) {
   assert(await page.locator('.bordered-diamond-cell').count() === 72, 'Six rows by twelve crosscuts should render 72 complete cells');
   assert(await page.locator('[data-row="0"]').count() === 12 && await page.locator('[data-row="5"]').count() === 12, 'First or last recreation row is missing');
   assert(/^translate\([^)]*\) scale\([^ ,)]+\)$/.test(await page.locator('.bordered-diamond-cell').first().getAttribute('transform')), 'Recreation cells are not uniformly scaled squares');
+  const borderedBaseline = {
+    dimensions: await page.locator('#boardSizeMetric').textContent(),
+    crosscuts: await page.locator('#crosscutMetric').textContent(),
+    rows: await page.locator('#laminatedRowMetric').textContent(),
+    material: await page.locator('#materialNetMetric').textContent(),
+    points: await page.locator('.bordered-diamond-cell').first().locator('.laminate-band').first().getAttribute('points')
+  };
+  await page.locator('.glue-up-phase-control [data-glue-up-phase="1"]').click();
+  const borderedTurned = {
+    dimensions: await page.locator('#boardSizeMetric').textContent(),
+    crosscuts: await page.locator('#crosscutMetric').textContent(),
+    rows: await page.locator('#laminatedRowMetric').textContent(),
+    material: await page.locator('#materialNetMetric').textContent(),
+    points: await page.locator('.bordered-diamond-cell').first().locator('.laminate-band').first().getAttribute('points')
+  };
+  assert(await page.locator('.bordered-diamond-field').getAttribute('data-glue-up-phase') === '1', 'Bordered preview did not adopt the selected starting crosscut');
+  assert(borderedBaseline.points !== borderedTurned.points, 'Bordered diamond placement did not change between glue-up views');
+  assert(JSON.stringify({ ...borderedBaseline, points: null }) === JSON.stringify({ ...borderedTurned, points: null }), 'Bordered starting-crosscut choice changed a manufacturing result');
+  await page.locator('.glue-up-phase-control [data-glue-up-phase="0"]').click();
   const lengthFit = await page.evaluate(() => {
     const field = document.querySelector('.bordered-diamond-field');
     return {
@@ -482,7 +532,7 @@ function functionSource(source, name) {
   faqPage.on('pageerror', error => faqErrors.push(error.message));
   await faqPage.goto(pathToFileURL(path.join(root, 'faq.html')).href);
   assert((await faqPage.locator('h1').textContent()).includes('FAQ'), 'FAQ heading is missing');
-  assert(await faqPage.locator('details.faq').count() === 35, 'FAQ does not display all 35 questions');
+  assert(await faqPage.locator('details.faq').count() === 36, 'FAQ does not display all 36 questions');
   await faqPage.locator('details.faq summary').first().click();
   assert(await faqPage.locator('details.faq').first().getAttribute('open') !== null, 'FAQ question did not expand');
   assert(sampleErrors.length === 0, `Sample Build browser errors: ${sampleErrors.join('; ')}`);

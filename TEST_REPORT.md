@@ -1,3 +1,13 @@
+# v3.0.57 Starting-Crosscut Glue-Up Views
+
+- PASS — As cut and Turned 180° produce visibly different diamond placement from the same complete crosscuts.
+- PASS — the alternate view redraws every crosscut in place with no blank, translated, or clipped board edge.
+- PASS — actual dimensions, crosscut count, laminated rows, borders, material quantities, and pricing are invariant between both views.
+- PASS — the selected view survives project save/open and appears in the printable reference and glue-up instructions.
+- PASS — bordered and unbordered previews both honor the selected starting crosscut.
+- PASS — syntax, geometry, manufacturing, material, version/cache, and browser regression checks completed for v3.0.57.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/original-renderer function hashes are unchanged.
+
 # v3.0.56 Actual Board Dimensions
 
 - PASS — requested dimensions remain editable and are clearly labeled as requested.

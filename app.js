@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.56';
+const VERSION = '3.0.57';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -48,6 +48,7 @@ const defaultState = () => ({
   boardLength: 18.625,
   boardWidth: 11.625,
   finishedThickness: 1.5,
+  glueUpPhase: 0,
   includeBorders: false,
   borderBands: [{ width: 0.5, wood: 'maple' }],
   customWoods: {},
@@ -347,6 +348,58 @@ function renderBoard() {
   svg.append(field);
 }
 
+function renderAlternateGlueUpBoard() {
+  const svg = $('boardSvg');
+  svg.innerHTML = '';
+  addWoodPatterns(svg);
+
+  const boardW = 1116;
+  const boardH = 676;
+  const boardAspect = Math.max(0.15, number(state.boardLength) / Math.max(0.15, number(state.boardWidth)));
+  let fieldW = boardW;
+  let fieldH = fieldW / boardAspect;
+  if (fieldH > boardH) {
+    fieldH = boardH;
+    fieldW = fieldH * boardAspect;
+  }
+  const fieldX = 600 - fieldW / 2;
+  const fieldY = 380 - fieldH / 2;
+
+  svg.append(svgEl('rect', { x: fieldX - 3, y: fieldY - 3, width: fieldW + 6, height: fieldH + 6, rx: 8, fill: '#f6f0e9', stroke: '#917e70', 'stroke-width': '3' }));
+
+  const grid = previewGrid();
+  const cellW = fieldW / grid.lengthSliceCount;
+  const cellH = fieldH / grid.widthModuleCount;
+  const cell = Math.max(cellW, cellH);
+  const renderCols = Math.ceil(fieldW / cell) + 2;
+  const renderRows = Math.ceil(fieldH / cell) + 2;
+  const startX = fieldX - cell;
+  const startY = fieldY - cell;
+
+  const clipId = 'board-field-clip';
+  const defs = svgEl('defs');
+  const clip = svgEl('clipPath', { id: clipId });
+  clip.append(svgEl('rect', { x: fieldX, y: fieldY, width: fieldW, height: fieldH, rx: 5 }));
+  defs.append(clip);
+  svg.append(defs);
+  const field = svgEl('g', {
+    'clip-path': `url(#${clipId})`,
+    'data-glue-up-phase': '1',
+    'data-cell-size': String(cell)
+  });
+  for (let row = 0; row < renderRows; row += 1) {
+    for (let col = 0; col < renderCols; col += 1) {
+      const x = startX + col * cell;
+      const y = startY + row * cell;
+      const patternCol = col + 1;
+      const rotate180 = patternCol % 2 === 1;
+      const slope = (row + patternCol) % 2 === 0 ? 1 : -1;
+      drawEndGrainCell(field, x, y, cell, slope, rotate180);
+    }
+  }
+  svg.append(field);
+}
+
 function renderBorders(layout = null) {
   if (!state.includeBorders) return;
   const svg = $('boardSvg');
@@ -429,6 +482,7 @@ function renderBorderedBoard() {
       class: 'bordered-diamond-field',
       'data-laminated-rows': String(rows),
       'data-finished-cell-pitch': String(finishedCellPitch()),
+      'data-glue-up-phase': String(state.glueUpPhase),
       'data-grid-x': String(gridX),
       'data-grid-width': String(gridW),
       'data-board-field-x': String(fieldX),
@@ -446,8 +500,9 @@ function renderBorderedBoard() {
           'data-cell-size': String(cell),
           transform: `translate(${gridX + col * cell} ${diamondY + row * cell}) scale(${cell / 100})`
         });
-        const rotate180 = col % 2 === 1;
-        const slope = (row + col) % 2 === 0 ? 1 : -1;
+        const patternCol = col + (state.glueUpPhase === 1 ? 1 : 0);
+        const rotate180 = patternCol % 2 === 1;
+        const slope = (row + patternCol) % 2 === 0 ? 1 : -1;
         drawEndGrainCell(cellGroup, 0, 0, 100, slope, rotate180);
         diamondField.append(cellGroup);
       }
@@ -466,7 +521,24 @@ function renderUnborderedActualBoard() {
   state.boardLength = actual.length;
   state.boardWidth = actual.width;
   try {
-    renderBoard();
+    if (state.glueUpPhase === 1) renderAlternateGlueUpBoard();
+    else renderBoard();
+    const field = $('boardSvg').querySelector('g[clip-path="url(#board-field-clip)"]');
+    if (field) {
+      const grid = previewGrid();
+      const boardW = 1116;
+      const boardH = 676;
+      const boardAspect = Math.max(0.15, actual.length / Math.max(0.15, actual.width));
+      let fieldW = boardW;
+      let fieldH = fieldW / boardAspect;
+      if (fieldH > boardH) {
+        fieldH = boardH;
+        fieldW = fieldH * boardAspect;
+      }
+      const cell = Math.max(fieldW / grid.lengthSliceCount, fieldH / grid.widthModuleCount);
+      field.dataset.glueUpPhase = String(state.glueUpPhase);
+      field.dataset.cellSize = String(cell);
+    }
   } finally {
     state.boardLength = requestedLength;
     state.boardWidth = requestedWidth;
@@ -779,6 +851,11 @@ function guideSvg(content, label) {
 function buildGuideVisuals(crosscuts, border, lamination) {
   const strips = activeStrips();
   const actual = actualBoardDimensions();
+  const firstCrosscutTurned = state.glueUpPhase === 1;
+  const glueUpLabel = firstCrosscutTurned ? 'Crosscut 1 turned 180°' : 'Crosscut 1 kept as cut';
+  const glueUpInstruction = firstCrosscutTurned
+    ? 'Turn Crosscut 1 180°, keep Crosscut 2 as cut, then continue alternating.'
+    : 'Keep Crosscut 1 as cut, turn Crosscut 2 180°, then continue alternating.';
   const total = Math.max(moduleWidth(), 0.001);
   let stripX = 40;
   const stripBlocks = strips.map((strip, index) => {
@@ -871,7 +948,7 @@ function buildGuideVisuals(crosscuts, border, lamination) {
     { title: 'Dry-fit the 45° cut pieces', text: 'Before crosscutting the long blanks, arrange the four 45° sections into two rows. Confirm that the angles, strip order, and mirrored faces meet cleanly.', svg: guideSvg(`${diamonds}<text x="210" y="178" text-anchor="middle">Two-row dry fit · check every joint before gluing</text>`, 'Two-row dry fit of the 45-degree cut pieces') },
     { title: state.includeBorders ? 'Glue the borders before crosscutting' : 'Prepare the full master blank', text: state.includeBorders ? `Glue the complete border schedule to both long outside edges of the master blank now. The borders must become part of the blank before any crosscuts are made.` : `Join the dry-fitted sections into the full master blank and verify at least ${crosscuts.requiredBlankLength.toFixed(3)} in of usable length before crosscutting.`, svg: guideSvg(`${masterBlankTop}<text x="210" y="187" text-anchor="middle">${state.includeBorders ? 'Borders glued to both long edges before crosscutting' : 'Full master blank ready for crosscut layout'}</text>`, state.includeBorders ? 'Top view of borders glued to the long master blank before crosscutting' : 'Top view of the full master blank before crosscutting') },
     { title: 'Mark the crosscuts from the top view', text: `With the completed master blank viewed from above, run each dotted cut line fully across its width. Mark ${crosscuts.crosscutCount} crosscuts at approximately ${crosscuts.roughCrosscut.toFixed(3)} in spacing, allowing for the editable ${crosscuts.bladeKerf.toFixed(3)} in blade kerf.`, svg: guideSvg(`${masterBlankTop}${topCrosscutLines}<path d="M305 ${masterY} V${(masterY + cutGap).toFixed(2)}" class="guide-dimension"/><text x="314" y="${(masterY + cutGap / 2 + 4).toFixed(2)}">${crosscuts.roughCrosscut.toFixed(3)} in</text>`, 'Top view of the completed master blank with dotted crosscut lines running across it') },
-    { title: 'Lay out every assigned crosscut', text: `Keep the pieces in order. The build uses ${assignedCount} crosscut${assignedCount === 1 ? '' : 's'}, shown together in one diamond row below. Because the blank is cut sideways, rotate every second crosscut 180° and mirror adjacent faces so the bands close into diamonds.`, svg: guideSvg(`<path d="M38 52 H382" stroke="${guideWood(state.edgeWood)}" stroke-width="10"/>${assignedCrosscuts}<path d="M38 136 H382" stroke="${guideWood(state.edgeWood)}" stroke-width="10"/><text x="210" y="26" text-anchor="middle">${assignedCount} crosscut${assignedCount === 1 ? '' : 's'} assigned to this build</text>${guideArrow(115,166,185,166,'alternate rotation')}`, 'All assigned crosscuts shown as a single diamond row') },
+    { title: 'Lay out every assigned crosscut', text: `Keep the pieces in order. Lay out all ${assignedCount} crosscuts assigned to this build in one diamond row as shown below. ${glueUpInstruction} Mirror adjacent faces so the bands close into the selected diamond placement.`, svg: guideSvg(`<path d="M38 52 H382" stroke="${guideWood(state.edgeWood)}" stroke-width="10"/>${assignedCrosscuts}<path d="M38 136 H382" stroke="${guideWood(state.edgeWood)}" stroke-width="10"/><text x="210" y="20" text-anchor="middle">${assignedCount} crosscut${assignedCount === 1 ? '' : 's'} · ${glueUpLabel}</text>${guideArrow(115,166,185,166,'continue alternating')}`, `All assigned crosscuts with ${glueUpLabel.toLowerCase()}`) },
     { title: 'Flatten, trim, sand, and finish', text: `Flatten both faces, make only the cleanup cuts needed to square the board, ease the edges, sand, and apply a food-safe finish appropriate to your use. Actual buildable size: ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in.`, svg: guideSvg(`<rect x="55" y="35" width="310" height="120" rx="7" fill="#b65c3d" stroke="#6e5a4b" stroke-width="5"/>${diamonds}<path d="M55 171 H365" class="guide-dimension"/><text x="210" y="186" text-anchor="middle">${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in actual</text>`, 'Finished cutting board with actual buildable dimensions') }
   ];
   return steps.map((step, index) => `<article class="guide-step"><div class="guide-step-number">${index + 1}</div><div class="guide-copy"><h3>${step.title}</h3><p>${step.text}</p></div>${step.svg}</article>`).join('');
@@ -934,9 +1011,13 @@ function renderWorkshopPlan() {
   const edgeRipSection = number(state.edgeInset) > 0.0005
     ? `<section><h2>Edge Rip</h2><p>Cut depth: <strong>${number(state.edgeInset).toFixed(3)} in</strong> · Replacement: <strong>${WOODS[state.edgeWood]?.name || state.edgeWood}</strong></p></section>`
     : '';
+  const glueUpLabel = state.glueUpPhase === 1 ? 'Crosscut 1 turned 180°' : 'Crosscut 1 kept as cut';
+  const glueUpChecklist = state.glueUpPhase === 1
+    ? 'Turn Crosscut 1 180°, keep Crosscut 2 as cut, and continue alternating.'
+    : 'Keep Crosscut 1 as cut, turn Crosscut 2 180°, and continue alternating.';
   $('printPlan').innerHTML = `
     <header><p class="print-eyebrow">Built By The Butts</p><h1>Diamond End Grain Workshop Plan</h1><p>Designer v${VERSION}</p></header>
-    <section class="print-summary"><h2>Finished Design</h2><p><strong>Actual Board Dimensions: ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in</strong></p>${actual.matchesRequested ? '' : `<p class="print-dimension-warning"><strong>Warning:</strong> Requested ${actual.requestedLength.toFixed(3)} × ${actual.requestedWidth.toFixed(3)} × ${actual.thickness.toFixed(3)} in. The actual dimensions use complete crosscuts, complete laminated rows, and the entered borders.</p>`}<p>${crosscuts.crosscutCount} crosscuts · ${border.selectedRows} laminated rows · ${state.includeBorders ? `${border.bands.length} border band${border.bands.length === 1 ? '' : 's'} per edge` : 'No borders'}</p></section>
+    <section class="print-summary"><h2>Finished Design</h2><p><strong>Actual Board Dimensions: ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in</strong></p>${actual.matchesRequested ? '' : `<p class="print-dimension-warning"><strong>Warning:</strong> Requested ${actual.requestedLength.toFixed(3)} × ${actual.requestedWidth.toFixed(3)} × ${actual.thickness.toFixed(3)} in. The actual dimensions use complete crosscuts, complete laminated rows, and the entered borders.</p>`}<p>${crosscuts.crosscutCount} crosscuts · ${border.selectedRows} laminated rows · ${state.includeBorders ? `${border.bands.length} border band${border.bands.length === 1 ? '' : 's'} per edge` : 'No borders'} · ${glueUpLabel}</p></section>
     <section class="print-board-section"><h2>Finished Board Reference</h2><p class="print-note">Keep this image available throughout the build to confirm wood placement, borders, and orientation.</p>${boardReference}</section>
     <section><h2>Lamination Engineering</h2><p>Required size before 45° cuts: <strong>${lamination.recommended.toFixed(3)} in</strong> (mathematical minimum ${lamination.minimum.toFixed(3)} in).</p><table><thead><tr><th>Strip</th><th>Species</th><th>Finished width</th><th>Rough rip</th><th>Quantity</th></tr></thead><tbody>${stripRows}</tbody></table></section>
     <section><h2>Crosscut Engineering</h2><table><tbody><tr><th>Calculated crosscuts</th><td>${crosscuts.crosscutCount}${crosscuts.isBalanced ? ' — balanced' : ' — unbalanced warning'}</td></tr><tr><th>Recommended rough crosscut</th><td>${crosscuts.roughCrosscut.toFixed(3)} in</td></tr><tr><th>Blade kerf</th><td>${crosscuts.bladeKerf.toFixed(3)} in</td></tr><tr><th>Required master blank</th><td>${crosscuts.requiredBlankLength.toFixed(3)} in</td></tr><tr><th>Projected finished run</th><td>${crosscuts.achievableLength.toFixed(3)} in</td></tr></tbody></table></section>
@@ -944,7 +1025,7 @@ function renderWorkshopPlan() {
     <section><h2>Border Schedule</h2><p>Entered total per edge: <strong>${state.includeBorders ? `${border.requestedWidth.toFixed(4)} in` : 'Not applicable'}</strong>${state.includeBorders ? ` · Requested board width would require ${border.requiredWidth.toFixed(4)} in per edge.` : ''}${state.includeBorders && !border.scheduleMatches ? ` · The actual board therefore differs by ${Math.abs(border.difference * 2).toFixed(4)} in overall width.` : ''}</p><table><thead><tr><th>Band</th><th>Species</th><th>Width</th><th>Finished length</th><th>Quantity</th></tr></thead><tbody>${borderRows}</tbody></table></section>
     <section><h2>Material Quantity (Estimate)</h2><p>Waste allowance: ${materials.wastePercent.toFixed(1)}% · Estimated purchase: ${materials.totalPurchaseBoardFeet.toFixed(3)} bd ft · Estimated Wood Cost: $${materials.totalEstimatedCost.toFixed(2)}</p><table><thead><tr><th>Species</th><th>Cu in</th><th>Net BF</th><th>Buy BF</th><th>$/BF</th><th>Cost</th></tr></thead><tbody>${materialRows}</tbody></table><p class="print-note">Actual material use varies with stock selection, milling, defects, and individual shop practices.</p></section>
     <section><h2>Illustrated Build Procedure</h2><p class="print-note">Diagrams are generated from this design. Wood colors are a guide; actual boards vary.</p><div class="guide-key">${materialKey}</div><div class="guide-steps">${illustratedSteps}</div></section>
-    <section><h2>Workshop Sequence — Quick Checklist</h2><ol><li>Review the design and keep the finished-board reference available.</li><li>Mill stock and rough-rip the laminate strips according to the strip schedule.</li><li>Dry-fit the strip order and confirm the species and symmetry.</li><li>Glue, flatten, and mill the blank to ${lamination.recommended.toFixed(3)} × ${lamination.recommended.toFixed(3)} in.</li><li>Mark all four adjacent-edge-center lines and complete the four 45° cuts.</li>${edgeRipChecklist}<li>Dry-fit the 45° cut sections in two rows and check the joints.</li>${masterBlankStep}<li>From the top view, run ${crosscuts.crosscutCount} dotted cut lines across the completed blank at approximately ${crosscuts.roughCrosscut.toFixed(3)} in spacing, using a ${crosscuts.bladeKerf.toFixed(3)} in kerf.</li><li>Lay out all ${crosscuts.crosscutCount} assigned crosscuts, alternating their rotation to form the diamonds.</li><li>Flatten, make only the cleanup cuts needed to square the board, and finish to the actual ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in dimensions.</li></ol></section>`;
+    <section><h2>Workshop Sequence — Quick Checklist</h2><ol><li>Review the design and keep the finished-board reference available.</li><li>Mill stock and rough-rip the laminate strips according to the strip schedule.</li><li>Dry-fit the strip order and confirm the species and symmetry.</li><li>Glue, flatten, and mill the blank to ${lamination.recommended.toFixed(3)} × ${lamination.recommended.toFixed(3)} in.</li><li>Mark all four adjacent-edge-center lines and complete the four 45° cuts.</li>${edgeRipChecklist}<li>Dry-fit the 45° cut sections in two rows and check the joints.</li>${masterBlankStep}<li>From the top view, run ${crosscuts.crosscutCount} dotted cut lines across the completed blank at approximately ${crosscuts.roughCrosscut.toFixed(3)} in spacing, using a ${crosscuts.bladeKerf.toFixed(3)} in kerf.</li><li>Lay out all ${crosscuts.crosscutCount} assigned crosscuts. ${glueUpChecklist}</li><li>Flatten, make only the cleanup cuts needed to square the board, and finish to the actual ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in dimensions.</li></ol></section>`;
 }
 
 function render() {
@@ -970,6 +1051,11 @@ function syncInputs() {
   $('bladeKerf').value = state.bladeKerf;
   $('edgeInset').value = state.edgeInset;
   $('edgeWood').innerHTML = woodOptions(state.edgeWood);
+  document.querySelectorAll('.glue-up-phase-control [data-glue-up-phase]').forEach(button => {
+    const active = Number(button.dataset.glueUpPhase) === state.glueUpPhase;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
 }
 
 function snapshot() {
@@ -989,6 +1075,7 @@ function commit() {
 function restore(serialized) {
   const parsed = JSON.parse(serialized);
   state = { ...defaultState(), ...parsed, version: VERSION };
+  state.glueUpPhase = Number(parsed.glueUpPhase) === 1 ? 1 : 0;
   state.wasteIsManual = Object.prototype.hasOwnProperty.call(parsed, 'wasteIsManual')
     ? Boolean(parsed.wasteIsManual)
     : Object.prototype.hasOwnProperty.call(parsed, 'wastePercent');
@@ -1048,6 +1135,13 @@ function bindEvents() {
   bindNumberInput('boardWidth', 'boardWidth');
   bindNumberInput('finishedThickness', 'finishedThickness');
   bindNumberInput('bladeKerf', 'bladeKerf');
+  document.querySelectorAll('.glue-up-phase-control [data-glue-up-phase]').forEach(button => {
+    button.addEventListener('click', () => {
+      state.glueUpPhase = Number(button.dataset.glueUpPhase) === 1 ? 1 : 0;
+      render();
+      commit();
+    });
+  });
   $('wastePercent').addEventListener('input', event => {
     state.wastePercent = Math.max(0, number(event.target.value));
     state.wasteIsManual = true;

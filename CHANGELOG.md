@@ -1,3 +1,12 @@
+## v3.0.57 — Starting-crosscut glue-up views
+
+- Added **Starting crosscut: As cut / Turned 180°** directly above the board preview.
+- The choice changes which crosscut receives the first 180° turn, shifting full and partial diamond placement at the board ends.
+- Both views use the same complete crosscuts in place; neither view translates, crops, adds, or removes material.
+- Actual dimensions, crosscut count, laminated rows, borders, Edge Rip, material quantity, and pricing remain identical between views.
+- The selection is saved with the project and is reflected in SVG export, the finished-board reference, and the illustrated build instructions.
+- Frozen v3.0.7 laminate geometry, Edge Rip geometry, and the original renderer remain source-identical.
+
 ## v3.0.56 — Honest actual board dimensions
 
 - Renamed the top result to **Actual Board Dimensions**.

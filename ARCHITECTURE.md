@@ -8,8 +8,9 @@ The application has one small state object containing only user-owned design inp
 - optional top/bottom border selection and an unbounded array of width/species bands
 - calculated whole laminated-row count derived from available width after borders
 - strip schedule
+- starting-crosscut glue-up phase (Crosscut 1 as cut or turned 180°)
 
-No rows, columns, sizing mode, layout mode, orientation mode, trim allowance, or finishing allowance are stored.
+No user-entered rows, columns, sizing mode, trim allowance, or finishing allowance are stored. The only layout choice is the two-position starting-crosscut glue-up phase; it changes preview placement but not manufacturing quantities.
 
 ## Geometry
 - `moduleWidth()` comes only from the active strip schedule and controls internal band proportions plus Edge Rip depth scaling.

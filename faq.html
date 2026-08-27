@@ -25,7 +25,7 @@
   </header>
 
   <main>
-    <section class="intro"><h2>Frequently asked questions</h2><p>Click a question to open its answer. These answers describe Designer v3.0.56 and the approved manufacturing behavior.</p><p>For a start-to-finish explanation of every control, see the <a href="user-guide.html">User Guide</a>.</p></section>
+    <section class="intro"><h2>Frequently asked questions</h2><p>Click a question to open its answer. These answers describe Designer v3.0.57 and the approved manufacturing behavior.</p><p>For a start-to-finish explanation of every control, see the <a href="user-guide.html">User Guide</a>.</p></section>
     <nav class="toc" aria-label="FAQ categories"><a href="#design">Design &amp; Preview</a><a href="#crosscuts">Crosscuts</a><a href="#borders">Borders</a><a href="#edge-rip">Edge Rip</a><a href="#materials">Materials &amp; Cost</a><a href="#files">Files &amp; Guides</a><a href="#troubleshooting">Troubleshooting</a></nav>
 
     <section id="design" class="group">
@@ -34,6 +34,7 @@
       <details class="faq"><summary>Why does the Designer start with finished dimensions?</summary><div class="answer"><p>The entries are the <strong>requested</strong> finished size. The Designer works backward from them, then reports the <strong>Actual Board Dimensions</strong> produced by complete crosscuts, complete laminated rows, and entered borders. It never hides a row calculation or silently trims away a good laminated row.</p></div></details>
       <details class="faq"><summary>Why can I change thickness without seeing a dramatically different pattern?</summary><div class="answer"><p>If the nearest whole crosscut count and laminated-row count remain the same, the arrangement can look similar. The thickness still changes the lamination requirement, rough-crosscut guidance, calculated finished run, master-blank length, material quantity, and the physical size represented by each crosscut.</p></div></details>
       <details class="faq"><summary>Why are the diamonds kept square instead of stretched to fill the preview?</summary><div class="answer"><p>Stretching would show a shape that cannot be built from square end-grain faces. The Designer keeps one uniform scale, centers any length overage, and clips only at the finished ends.</p></div></details>
+      <details class="faq"><summary>Why does Starting Crosscut change the number of full diamonds I see?</summary><div class="answer"><p>It changes which piece receives the first 180-degree turn in the alternating glue-up. One choice can center a full diamond near an end, while the other can place partial diamonds at both ends and one fewer full diamond through the center. It is the same collection of crosscuts in a different physical orientation; dimensions and material quantities do not change.</p></div></details>
       <details class="faq"><summary>Are the wood colors exact?</summary><div class="answer"><p>No. Colors help identify species and follow the pattern. Actual wood varies by tree, board, grain, age, sanding, lighting, and finish. Custom woods can be added with a name and approximate preview color.</p></div></details>
       <details class="faq"><summary>What does “Required Lamination Size Before 45° Cuts” mean?</summary><div class="answer"><p>It is the practical square size of the laminated blank before the first 45-degree cuts. The mathematical minimum is finished thickness × √2. The Designer rounds <strong>up</strong> to the nearest 1/8 inch so the blank is not undersized.</p></div></details>
     </section>
@@ -94,6 +95,6 @@
     <div class="callout"><strong>Still unsure?</strong>Keep the finished-board preview, printed illustrated guide, and real-photo Sample Build together. Use the project's calculated dimensions and counts, and use the photos to confirm order and orientation.</div>
   </main>
 
-  <footer><p>Built By The Butts · Diamond End Grain Designer FAQ · v3.0.56</p><a href="index.html">Return to the Designer</a></footer>
+  <footer><p>Built By The Butts · Diamond End Grain Designer FAQ · v3.0.57</p><a href="index.html">Return to the Designer</a></footer>
 </body>
 </html>
