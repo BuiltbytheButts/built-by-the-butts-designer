@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.54';
+const VERSION = '3.0.55';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -107,6 +107,10 @@ function moduleWidth() {
   return activeStrips().reduce((sum, strip) => sum + number(strip.width), 0);
 }
 
+function finishedCellPitch() {
+  return Math.max(0.125, number(state.finishedThickness));
+}
+
 function recommendedRoughRip(width) {
   return round(number(width) + ROUGH_RIP_EXTRA, 4);
 }
@@ -137,14 +141,17 @@ function crosscutEngineering() {
 }
 
 function previewGrid() {
-  const module = Math.max(0.125, moduleWidth());
+  const module = finishedCellPitch();
   const lengthSliceCount = crosscutEngineering().crosscutCount;
-  const widthModuleCount = Math.max(1, Math.round(number(state.boardWidth) / module));
+  // This ratio may be fractional. The frozen renderer uses it only to derive
+  // the same physical scale on both axes; complete buildable rows are reported
+  // separately by border engineering.
+  const widthModuleCount = Math.max(1, number(state.boardWidth) / module);
   return { lengthSliceCount, widthModuleCount, module };
 }
 
 function automaticLaminatedRows() {
-  return Math.max(1, Math.round(number(state.boardWidth) / Math.max(0.125, moduleWidth())));
+  return Math.max(1, Math.floor((number(state.boardWidth) + 1e-12) / finishedCellPitch()));
 }
 
 function borderEngineering() {
@@ -155,10 +162,10 @@ function borderEngineering() {
   const requestedWidth = bands.reduce((sum, band) => sum + band.width, 0);
   const automaticRows = automaticLaminatedRows();
   const availableDiamondWidth = Math.max(0, number(state.boardWidth) - 2 * requestedWidth);
-  const idealRows = availableDiamondWidth / Math.max(0.125, moduleWidth());
+  const idealRows = availableDiamondWidth / finishedCellPitch();
   const rowPlan = DiamondManufacturing.mirroredBorderRowPlan({
     boardWidth: state.boardWidth,
-    moduleWidth: moduleWidth(),
+    moduleWidth: finishedCellPitch(),
     requestedWidth,
     automaticRows,
     bordersEnabled: state.includeBorders
@@ -387,6 +394,11 @@ function renderBorderedBoard() {
     const diamondField = svgEl('g', {
       class: 'bordered-diamond-field',
       'data-laminated-rows': String(rows),
+      'data-finished-cell-pitch': String(finishedCellPitch()),
+      'data-grid-x': String(gridX),
+      'data-grid-width': String(gridW),
+      'data-board-field-x': String(fieldX),
+      'data-board-field-width': String(fieldW),
       'data-field-y': String(diamondY),
       'data-field-height': String(diamondH),
       'clip-path': `url(#${clipId})`

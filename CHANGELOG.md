@@ -1,3 +1,11 @@
+## v3.0.55 — Finished-cell sizing correction
+
+- Corrected preview and border-row sizing to use finished thickness as the physical square-cell pitch.
+- Kept finished strip widths responsible only for the relative wood bands inside each cell and for the existing Edge Rip geometry.
+- Corrected an 18.000 × 12.875 × 1.500 in recreation from four rows/two diamonds to six rows/three complete diamonds.
+- Corrected twelve finished crosscuts to occupy exactly 18.000 in instead of a 24.300 in strip-total grid clipped at the board ends.
+- Preserved the frozen laminate geometry, Edge Rip geometry, `drawEndGrainCell`, and `renderBoard` source.
+
 ## v3.0.54 — Clear Save/Open confirmation
 
 - Replaced the hidden-label file picker with a dedicated Open Project button.

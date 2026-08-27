@@ -12,7 +12,8 @@ The application has one small state object containing only user-owned design inp
 No rows, columns, sizing mode, layout mode, orientation mode, trim allowance, or finishing allowance are stored.
 
 ## Geometry
-- `moduleWidth()` comes only from the active strip schedule.
+- `moduleWidth()` comes only from the active strip schedule and controls internal band proportions plus Edge Rip depth scaling.
+- `finishedCellPitch()` comes only from finished thickness and controls the physical square-cell spacing, preview length, and complete-row fit.
 - `recommendedRoughRip()` is guidance only.
 - `recommendedRoughCrosscut()` is guidance only.
 - `crosscutEngineering()` is the single source of truth for even-count crosscut math.
@@ -57,11 +58,12 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 - With borders on, diamond field width = finished width − (2 × border width).
 - Borders are drawn as a separate overlay around the source-identical frozen renderer.
 - v3.0.14 extends that overlay to an outside-to-inside band schedule mirrored on both long edges; total border width is the sum of all bands.
-- v3.0.51 treats top and bottom borders as mirrored replacements: each border step removes one complete laminated row from both edges. Required width per edge remains `(finished width - selected rows × module width) / 2`, but selected rows can only decrease in pairs.
+- v3.0.51 treats top and bottom borders as mirrored replacements: each border step removes one complete laminated row from both edges. In v3.0.55, required width per edge is `(finished width - selected rows × finished cell pitch) / 2`, and selected rows can only decrease in pairs.
 - v3.0.16 makes the border schedule the input: available diamond width is `finished width - 2 × scheduled border width`, and the nearest complete laminated-row count is derived from that space.
 - v3.0.17 uses `floor(available diamond width / module width)` so partial laminated rows are never treated as buildable rows.
 - v3.0.18 adds a border-specific compositor that lays out exactly `laminated rows × crosscuts` inside the calculated inner field while continuing to call the frozen `drawEndGrainCell` geometry.
 - v3.0.19 applies one uniform cell scale in bordered mode. The row stack determines square cell size; length overage is centered and clipped at the finished ends.
+- v3.0.55 separates strip-band proportions from the physical footprint. Finished thickness sets the square cell pitch on both axes, so the calculated crosscuts occupy their correct finished length.
 
 ## v3.0.20 material-quantity invariant
 - `material.js` is the pure calculation source for species quantities.

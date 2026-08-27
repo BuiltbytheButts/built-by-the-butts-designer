@@ -29,7 +29,7 @@
   <main>
     <section class="intro">
       <div><h2>Design the finished board first</h2><p>The Designer starts with the board you want to finish—not a hidden grid or an oversized rough blank. Enter the finished dimensions, build the strip schedule, and let the engineering panels calculate the crosscuts, laminated rows, borders, material estimate, and shop guidance.</p></div>
-      <aside class="version-card"><span>Guide applies to</span><strong>Designer v3.0.54</strong><span>Calculations remain estimates until confirmed against your stock, machines, and shop practices.</span></aside>
+      <aside class="version-card"><span>Guide applies to</span><strong>Designer v3.0.55</strong><span>Calculations remain estimates until confirmed against your stock, machines, and shop practices.</span></aside>
     </section>
 
     <nav class="toc" aria-label="Table of contents">
@@ -54,7 +54,7 @@
       <h2>Using the Designer controls</h2>
       <div class="control-grid">
         <article class="control-card"><h3>Finished Board Dimensions</h3><p><strong>Length</strong> drives the calculated whole-crosscut count. <strong>Width</strong> drives the laminated-row and border fit. <strong>Thickness</strong> is the finished thickness of the board and the finished width of each crosscut after flattening.</p></article>
-        <article class="control-card"><h3>Strip Schedule</h3><p>Strip widths are finished design widths. The Designer adds approximately 1/16 inch only as rough-rip guidance. Labels run outside-in: 1A mirrors 1B, 2A mirrors 2B, and so on. Adding or removing a pair changes both matching positions.</p></article>
+        <article class="control-card"><h3>Strip Schedule</h3><p>Strip widths are finished design widths and control the wood-band proportions inside each diamond. They do not set the finished square-cell pitch; finished thickness does. The Designer adds approximately 1/16 inch only as rough-rip guidance. Labels run outside-in: 1A mirrors 1B, 2A mirrors 2B, and so on.</p></article>
         <article class="control-card"><h3>Edge Rip</h3><p>The slider controls only the two 45-degree corner areas removed after the first four 45-degree cuts. Replacement wood fills only those removed areas. Select <strong>Zero</strong> when this operation is not part of the design.</p></article>
         <article class="control-card"><h3>Top &amp; Bottom Borders</h3><p>Borders run along both long edges and are glued to the master blank before crosscutting. Every added band is a separate physical band. Adjacent bands may use the same species, but each still needs its own entry.</p></article>
         <article class="control-card"><h3>Crosscut Engineering</h3><p>Blade kerf remains editable. The recommended rough crosscut is the finished thickness plus approximately 1/8 inch for cleanup. The calculated result includes the whole-crosscut count, projected finished run, and required rough master-blank length.</p></article>
@@ -63,7 +63,7 @@
 
       <h3>How mirrored border rows work</h3>
       <p>A top border and a bottom border must replace laminate symmetrically. The Designer therefore removes complete laminated rows as pairs: one full row from the top and one full row from the bottom. It never suggests ripping one patterned row lengthwise to create partial edge pieces.</p>
-      <div class="example"><strong>Example:</strong> A 10.000-inch board with a 1.750-inch laminate module begins with six rows. Turning on borders removes one row from each edge, leaving four full rows. The diamond field becomes 7.000 inches wide, so the required border is 1.500 inches at each edge.</div>
+      <div class="example"><strong>Example:</strong> With a 12.875-inch board, 1.500-inch finished thickness, and 1.3125 inches of entered bands per edge, six complete finished cells fit between the borders. The diamond field is 6 × 1.500 = 9.000 inches, so each completed border must total 1.9375 inches. The entered schedule still needs 0.6250 inch per edge.</div>
     </section>
 
     <section id="metrics" class="section">
@@ -73,7 +73,7 @@
         <article class="metric-card"><h3>Calculated Crosscuts</h3><p>The actual nearest whole number of crosscuts needed for the finished length. The preview uses this count exactly; the Designer does not silently force an even number.</p></article>
         <article class="metric-card"><h3>Laminated Rows</h3><p>The complete patterned rows retained across the finished width. With borders selected, the count changes only by mirrored row pairs.</p></article>
         <article class="metric-card"><h3>Finished Board Target</h3><p>The outside finished length and width. Borders remain inside these dimensions; they do not increase the finished board size.</p></article>
-        <article class="metric-card"><h3>Finished Thickness</h3><p>The target thickness after final flattening and sanding. This value also drives crosscut width, rough-crosscut guidance, and lamination-size engineering.</p></article>
+        <article class="metric-card"><h3>Finished Thickness</h3><p>The target thickness after final flattening and sanding. It is also the finished square-cell pitch in both preview directions and drives crosscut width, rough-crosscut guidance, row fit, and lamination-size engineering.</p></article>
         <article class="metric-card"><h3>Preview</h3><p>The preview represents the finished board face. Pattern overage is centered and clipped at the ends so square diamond cells are never stretched into rectangles.</p></article>
       </div>
     </section>
@@ -136,7 +136,8 @@
       <h2>Glossary</h2>
       <dl class="terms">
         <dt>Crosscut</dt><dd>One slice cut perpendicular to the long master blank. After rotation, its end-grain face becomes part of the finished pattern.</dd>
-        <dt>Laminate module</dt><dd>The combined finished width of the active strip schedule; it forms one patterned row dimension.</dd>
+        <dt>Strip-schedule total</dt><dd>The combined finished width of the active strip schedule. It controls relative band proportions and Edge Rip geometry, but not the finished cell footprint.</dd>
+        <dt>Finished cell pitch</dt><dd>The finished board thickness. It sets the square spacing of each crosscut cell in both preview directions.</dd>
         <dt>Laminated row</dt><dd>One complete row of square end-grain faces across the finished board width.</dd>
         <dt>Master blank</dt><dd>The completed long patterned assembly—including borders when selected—before it is crosscut.</dd>
         <dt>Blade kerf</dt><dd>The width of material removed by the saw blade during each crosscut.</dd>
@@ -147,6 +148,6 @@
     </section>
   </main>
 
-  <footer><p>Built By The Butts · Diamond End Grain Designer User Guide · v3.0.54</p><a href="index.html">Return to the Designer</a></footer>
+  <footer><p>Built By The Butts · Diamond End Grain Designer User Guide · v3.0.55</p><a href="index.html">Return to the Designer</a></footer>
 </body>
 </html>

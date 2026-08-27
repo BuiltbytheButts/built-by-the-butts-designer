@@ -1,3 +1,11 @@
+# v3.0.55 Finished-Cell Sizing Correction
+- PASS — the reported 18.000 × 12.875 × 1.500 in recreation uses six retained rows and displays three complete diamonds between the borders.
+- PASS — the fixture intentionally totals 2.025 in across its finished strip schedule, while the preview correctly uses the independent 1.500 in finished cell pitch.
+- PASS — twelve calculated crosscuts occupy exactly the full 18.000 in preview length with no strip-total-driven clipping.
+- PASS — the recreated 1.3125 in border schedule requires 1.9375 in per edge and correctly reports 0.6250 in still needed.
+- PASS — the latest saved 18.000 × 13.000 × 1.500 in project renders six rows, 72 complete cells, a 9.000 in diamond field, and a 0.2500 in per-edge border warning.
+- PASS — syntax, geometry, manufacturing, material, version/cache, Sample Build, border, print, and frozen geometry/renderer regressions.
+
 # v3.0.54 Save/Open Confirmation and Restore
 - PASS — the exact user-downloaded v3.0.53 JSON restores 15.250 × 10.000 in, all eight strips, the border band, and the custom wood without browser errors.
 - PASS — reopening the same file clearly reports that it matches the design already on screen.

@@ -25,7 +25,7 @@
   </header>
 
   <main>
-    <section class="intro"><h2>Frequently asked questions</h2><p>Click a question to open its answer. These answers describe Designer v3.0.54 and the approved manufacturing behavior.</p><p>For a start-to-finish explanation of every control, see the <a href="user-guide.html">User Guide</a>.</p></section>
+    <section class="intro"><h2>Frequently asked questions</h2><p>Click a question to open its answer. These answers describe Designer v3.0.55 and the approved manufacturing behavior.</p><p>For a start-to-finish explanation of every control, see the <a href="user-guide.html">User Guide</a>.</p></section>
     <nav class="toc" aria-label="FAQ categories"><a href="#design">Design &amp; Preview</a><a href="#crosscuts">Crosscuts</a><a href="#borders">Borders</a><a href="#edge-rip">Edge Rip</a><a href="#materials">Materials &amp; Cost</a><a href="#files">Files &amp; Guides</a><a href="#troubleshooting">Troubleshooting</a></nav>
 
     <section id="design" class="group">
@@ -51,7 +51,7 @@
     <section id="borders" class="group">
       <h2>Top and bottom borders</h2>
       <details class="faq"><summary>Why do borders remove two laminated rows at a time?</summary><div class="answer"><p>The top and bottom borders are mirrored. Each border threshold therefore removes one complete row from the top and one complete row from the bottom. This prevents a design that would require ripping a patterned row lengthwise.</p></div></details>
-      <details class="faq"><summary>How does the 10-inch, 1.500-inch border example work?</summary><div class="answer"><p class="example">With a 1.750-inch laminate module, the unbordered 10.000-inch board uses six rows. Borders remove one row at each edge, leaving four rows: 4 × 1.750 = 7.000 inches. The remaining 3.000 inches is split across the mirrored edges, so each border must total 1.500 inches.</p></div></details>
+      <details class="faq"><summary>How does the finished-thickness border calculation work?</summary><div class="answer"><p class="example">For a 12.875-inch board at 1.500-inch finished thickness, 1.3125 inches of entered border per edge leaves 10.250 inches available. Six complete 1.500-inch cells fit, creating a 9.000-inch diamond field. The completed border must therefore total 1.9375 inches per edge.</p></div></details>
       <details class="faq"><summary>Why does the border panel say “still needed” or “too wide”?</summary><div class="answer"><p>Your entered physical bands are compared with the exact width needed to reach a complete mirrored row-pair boundary. Adjust the band widths until the check reads <strong>Matched ✓</strong>.</p></div></details>
       <details class="faq"><summary>Can I use several border colors?</summary><div class="answer"><p>Yes. Add as many bands as required and choose the width and species for each. The schedule is mirrored at both long edges.</p></div></details>
       <details class="faq"><summary>What if all border bands use the same species?</summary><div class="answer"><p>Add one entry for every physical band even when adjacent bands use the same species. Four same-color bands require four entries; the Designer does not merge them.</p></div></details>
@@ -87,13 +87,13 @@
       <h2>Troubleshooting</h2>
       <details class="faq"><summary>The Sample Build photos do not appear. What should I do?</summary><div class="answer"><p>Use Designer v3.0.52 or newer. All 20 photos are embedded directly in the Sample Build page, so they no longer depend on a nested photo folder. If an older copy is open, close it and open the current version.</p></div></details>
       <details class="faq"><summary>How do I enlarge a Sample Build photo?</summary><div class="answer"><p>Click the photo, or focus it with the keyboard and press Enter or Space. Use the on-screen arrows or keyboard left/right arrows to move between photos. Close with the × button, the background, or Escape.</p></div></details>
-      <details class="faq"><summary>Why does an old saved project look slightly different after opening?</summary><div class="answer"><p>The Designer migrates supported older data into current controls. Mirrored border row-pair engineering may change a prior odd row reduction into the current manufacturable paired result. Review warnings and save a new copy after confirming it.</p></div></details>
+      <details class="faq"><summary>Why does an old saved project look slightly different after opening?</summary><div class="answer"><p>The Designer migrates supported older data into current controls. Current previews use finished thickness for square-cell spacing; strip widths determine the bands inside each cell. This can correct the row and length proportions shown by an older release. Review warnings and save a new copy after confirming it.</p></div></details>
       <details class="faq"><summary>What should I check before trusting a material total?</summary><div class="answer"><p>Confirm that dimensions, strips, Edge Rip, border widths, species, kerf, and waste are correct; resolve the border and material-gap warnings; then compare the result with the actual boards available from your supplier.</p></div></details>
     </section>
 
     <div class="callout"><strong>Still unsure?</strong>Keep the finished-board preview, printed illustrated guide, and real-photo Sample Build together. Use the project's calculated dimensions and counts, and use the photos to confirm order and orientation.</div>
   </main>
 
-  <footer><p>Built By The Butts · Diamond End Grain Designer FAQ · v3.0.54</p><a href="index.html">Return to the Designer</a></footer>
+  <footer><p>Built By The Butts · Diamond End Grain Designer FAQ · v3.0.55</p><a href="index.html">Return to the Designer</a></footer>
 </body>
 </html>

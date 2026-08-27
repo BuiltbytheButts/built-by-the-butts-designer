@@ -72,7 +72,7 @@
     const requested = Math.max(0, Number(requestedWidth) || 0);
     const automatic = Math.max(0, Number.isFinite(Number(automaticRows))
       ? Math.floor(Number(automaticRows))
-      : Math.round(width / module));
+      : Math.floor((width + 1e-12) / module));
 
     if (!bordersEnabled) {
       return {
@@ -84,13 +84,19 @@
       };
     }
 
-    // Top and bottom borders are mirrored physical parts. A border can only
-    // replace full laminate rows as a pair: one row at each long edge.
-    const removedRowsPerEdge = Math.max(1, Math.ceil((requested - 1e-12) / module));
+    // Finished thickness is the square-cell pitch supplied by the Designer.
+    // The entered bands first determine how many complete cells physically fit
+    // in the remaining width. Any reduction is then rounded to a mirrored pair,
+    // one complete row at each long edge. Selecting borders always removes at
+    // least the first pair instead of requiring a patterned row to be ripped.
+    const availableWidth = Math.max(0, width - 2 * requested);
+    const rowsThatFit = Math.max(0, Math.floor((availableWidth + 1e-12) / module));
+    const rowsToRemove = Math.max(0, automatic - rowsThatFit);
+    const removedRowsPerEdge = Math.max(1, Math.ceil(rowsToRemove / 2));
     const selectedRows = Math.max(0, automatic - 2 * removedRowsPerEdge);
     const diamondFieldWidth = selectedRows * module;
     const requiredWidth = Math.max(0, (width - diamondFieldWidth) / 2);
-    return { automaticRows: automatic, removedRowsPerEdge, selectedRows, diamondFieldWidth, requiredWidth };
+    return { automaticRows: automatic, availableWidth, rowsThatFit, removedRowsPerEdge, selectedRows, diamondFieldWidth, requiredWidth };
   }
 
   return Object.freeze({

@@ -56,47 +56,50 @@ console.log('ACTUAL-CROSSCUT ENGINEERING PASS');
 
 (function testMirroredBordersRemoveLaminatedRowsInPairs() {
   let border = M.mirroredBorderRowPlan({
-    boardWidth: 10,
-    moduleWidth: 1.75,
-    requestedWidth: 0.5,
-    automaticRows: 6,
+    boardWidth: 12.875,
+    moduleWidth: 1.5,
+    requestedWidth: 1.3125,
+    automaticRows: 8,
     bordersEnabled: true
   });
   assertEq(border.removedRowsPerEdge, 1);
-  assertEq(border.selectedRows, 4);
-  assertClose(border.diamondFieldWidth, 7);
-  assertClose(border.requiredWidth, 1.5);
+  assertEq(border.rowsThatFit, 6);
+  assertEq(border.selectedRows, 6);
+  assertClose(border.diamondFieldWidth, 9);
+  assertClose(border.requiredWidth, 1.9375);
 
   border = M.mirroredBorderRowPlan({
     boardWidth: 13,
     moduleWidth: 1.5,
-    requestedWidth: 1.25,
-    automaticRows: 9,
+    requestedWidth: 1.75,
+    automaticRows: 8,
     bordersEnabled: true
   });
-  assertEq(border.selectedRows, 7);
-  assertClose(border.requiredWidth, 1.25);
+  assertEq(border.removedRowsPerEdge, 1);
+  assertEq(border.selectedRows, 6);
+  assertClose(border.requiredWidth, 2);
 
   border = M.mirroredBorderRowPlan({
     boardWidth: 13,
     moduleWidth: 1.5,
     requestedWidth: 3.5,
-    automaticRows: 9,
+    automaticRows: 8,
     bordersEnabled: true
   });
-  assertEq(border.removedRowsPerEdge, 3);
-  assertEq(border.selectedRows, 3);
-  assertClose(border.requiredWidth, 4.25);
+  assertEq(border.removedRowsPerEdge, 2);
+  assertEq(border.selectedRows, 4);
+  assertClose(border.requiredWidth, 3.5);
 
   border = M.mirroredBorderRowPlan({
     boardWidth: 10,
-    moduleWidth: 1.75,
+    moduleWidth: 1.5,
     requestedWidth: 0.5,
     automaticRows: 6,
     bordersEnabled: false
   });
   assertEq(border.removedRowsPerEdge, 0);
   assertEq(border.selectedRows, 6);
+  assertClose(border.diamondFieldWidth, 9);
   assertClose(border.requiredWidth, 0);
 })();
 console.log('MIRRORED BORDER-ROW ENGINEERING PASS');
