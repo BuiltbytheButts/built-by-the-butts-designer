@@ -1,3 +1,11 @@
+## v3.0.63 — Laminated-row length and board-foot disclosure
+
+- Added “Build N rows at least X in long each” directly inside the Laminated rows result card.
+- Added a live Estimated Wood Cost note showing the exact laminated-row count × kerf-inclusive row length used for board-foot calculations.
+- Added the same row-length basis to the printable workshop plan.
+- Confirmed and regression-locked that longer required rows proportionally increase estimated board feet and wood cost.
+- Frozen v3.0.7 laminate, Edge Rip, and renderer geometry remain unchanged.
+
 ## v3.0.62 — Length trace and finished-strip-total validation
 
 - Expanded Calculated crosscut result to show the complete master-blank formula: rough crosscuts plus the kerfs between adjacent pieces.

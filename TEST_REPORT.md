@@ -1,3 +1,12 @@
+# v3.0.63 Laminated-Row Length and Board-Foot Disclosure
+
+- PASS — the Laminated rows card states the required count and minimum kerf-inclusive length for every row.
+- PASS — a 24.000 in requested board at 1.500 in thickness shows 7 rows at least 27.875 in long in the validation fixture.
+- PASS — Estimated Wood Cost displays and uses the same 7 × 27.875 in row-length basis.
+- PASS — increasing the required row length proportionally increases rough board feet, purchase board feet, and estimated cost.
+- PASS — syntax, geometry, manufacturing, material, version/cache, and browser regression checks completed for v3.0.63.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/original-renderer function hashes are unchanged.
+
 # v3.0.62 Length Trace and Finished-Strip-Total Validation
 
 - PASS — 24.000 in requested length at 1.500 in finished thickness produces 16 crosscuts and a 24.000 in projected finished run.

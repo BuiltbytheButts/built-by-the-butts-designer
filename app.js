@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.62';
+const VERSION = '3.0.63';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -778,10 +778,14 @@ function renderMetrics() {
   const x = crosscutEngineering();
   const lamination = laminationRequirement();
   const stripPlan = stripScheduleEngineering();
+  const border = borderEngineering();
   const actual = actualBoardDimensions();
   $('moduleWidthMetric').textContent = `${lamination.recommended.toFixed(3)} in`;
   $('crosscutMetric').textContent = x.crosscutCount ? String(x.crosscutCount) : '—';
-  $('laminatedRowMetric').textContent = String(borderEngineering().selectedRows);
+  $('laminatedRowMetric').textContent = String(border.selectedRows);
+  $('laminatedRowHelp').textContent = border.selectedRows > 0
+    ? `Build ${border.selectedRows} row${border.selectedRows === 1 ? '' : 's'} at least ${x.requiredBlankLength.toFixed(3)} in long each.`
+    : 'No laminated rows are retained in this border schedule.';
   $('boardSizeMetric').textContent = `${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} in`;
   const actualWarning = $('actualBoardWarning');
   actualWarning.hidden = actual.matchesRequested;
@@ -809,7 +813,6 @@ function renderMetrics() {
   $('thicknessMetricCard').classList.toggle('metric-has-warning', !stripPlan.matches);
   $('edgeInsetLabel').textContent = `${number(state.edgeInset).toFixed(3)} in`;
   document.querySelectorAll('[data-inset]').forEach(button => button.classList.toggle('active', Math.abs(number(button.dataset.inset) - number(state.edgeInset)) < 1e-9));
-  const border = borderEngineering();
   $('borderFields').hidden = !state.includeBorders;
   $('diamondFieldMetric').textContent = state.includeBorders
     ? `${actual.length.toFixed(3)} × ${border.diamondFieldWidth.toFixed(3)} in`
@@ -832,6 +835,9 @@ function renderMetrics() {
 function renderMaterial() {
   const plan = materialQuantity();
   const recommendedWaste = recommendedWastePercent();
+  $('materialLengthHelp').textContent = plan.laminatedRows > 0
+    ? `Laminated-strip board feet include ${plan.laminatedRows} row${plan.laminatedRows === 1 ? '' : 's'} × ${plan.requiredBlankLength.toFixed(3)} in of kerf-inclusive length.`
+    : `No laminated-strip row length is included; this border schedule retains zero laminated rows.`;
   $('wasteRecommendation').textContent = `Recommended minimum for this design: ${recommendedWaste}% (${number(state.edgeInset) > 0 ? 'Edge Rip selected' : 'no Edge Rip'}).`;
   $('useRecommendedWasteBtn').hidden = !state.wasteIsManual && Math.abs(number(state.wastePercent) - recommendedWaste) < 1e-9;
   $('wasteWarning').hidden = number(state.wastePercent) >= recommendedWaste;
@@ -1056,7 +1062,7 @@ function renderWorkshopPlan() {
     <section><h2>Crosscut Engineering</h2><table><tbody><tr><th>Calculated crosscuts</th><td>${crosscuts.crosscutCount}${crosscuts.isBalanced ? ' — balanced' : ' — unbalanced warning'}</td></tr><tr><th>Recommended rough crosscut</th><td>${crosscuts.roughCrosscut.toFixed(3)} in</td></tr><tr><th>Blade kerf</th><td>${crosscuts.bladeKerf.toFixed(3)} in</td></tr><tr><th>Required master blank</th><td>${crosscuts.requiredBlankLength.toFixed(3)} in</td></tr><tr><th>Projected finished run</th><td>${crosscuts.achievableLength.toFixed(3)} in</td></tr></tbody></table></section>
     ${edgeRipSection}
     <section><h2>Border Schedule</h2><p>Entered total per edge: <strong>${state.includeBorders ? `${border.requestedWidth.toFixed(4)} in` : 'Not applicable'}</strong>${state.includeBorders ? ` · Requested board width would require ${border.requiredWidth.toFixed(4)} in per edge.` : ''}${state.includeBorders && !border.scheduleMatches ? ` · The actual board therefore differs by ${Math.abs(border.difference * 2).toFixed(4)} in overall width.` : ''}</p><table><thead><tr><th>Band</th><th>Species</th><th>Width</th><th>Finished length</th><th>Quantity</th></tr></thead><tbody>${borderRows}</tbody></table></section>
-    <section><h2>Estimated Wood Cost</h2><p>Waste allowance: ${materials.wastePercent.toFixed(1)}% · Estimated rough lumber: ${materials.totalPurchaseBoardFeet.toFixed(3)} bd ft · Estimated Wood Cost: $${materials.totalEstimatedCost.toFixed(2)}</p><table><thead><tr><th>Species</th><th>Includes</th><th>Est. Buy BF</th><th>$/BF</th><th>Cost</th></tr></thead><tbody>${materialRows}</tbody></table><p class="print-note">This rough-stock estimate counts the complete pre-45° laminated blanks, rough-rip allowance, required master-blank length and crosscut kerf, borders, Edge Rip replacement stock, and the selected waste allowance. Actual purchases still vary with available board sizes and defects.</p></section>
+    <section><h2>Estimated Wood Cost</h2><p>Waste allowance: ${materials.wastePercent.toFixed(1)}% · Estimated rough lumber: ${materials.totalPurchaseBoardFeet.toFixed(3)} bd ft · Estimated Wood Cost: $${materials.totalEstimatedCost.toFixed(2)}</p><p><strong>Laminated-row length used for board feet:</strong> ${materials.laminatedRows} row${materials.laminatedRows === 1 ? '' : 's'} × ${materials.requiredBlankLength.toFixed(3)} in each.</p><table><thead><tr><th>Species</th><th>Includes</th><th>Est. Buy BF</th><th>$/BF</th><th>Cost</th></tr></thead><tbody>${materialRows}</tbody></table><p class="print-note">This rough-stock estimate counts the complete pre-45° laminated blanks, rough-rip allowance, required master-blank length and crosscut kerf, borders, Edge Rip replacement stock, and the selected waste allowance. Actual purchases still vary with available board sizes and defects.</p></section>
     <section><h2>Illustrated Build Procedure</h2><p class="print-note">Diagrams are generated from this design. Wood colors are a guide; actual boards vary.</p><div class="guide-key">${materialKey}</div><div class="guide-steps">${illustratedSteps}</div></section>
     <section><h2>Workshop Sequence — Quick Checklist</h2><ol><li>Review the design and keep the finished-board reference available.</li><li>Mill stock and rough-rip the laminate strips according to the strip schedule.</li><li>Dry-fit the strip order and confirm the species and symmetry.</li><li>Glue, flatten, and mill the blank to ${lamination.recommended.toFixed(3)} × ${lamination.recommended.toFixed(3)} in.</li><li>Mark all four adjacent-edge-center lines and complete the four 45° cuts.</li>${edgeRipChecklist}<li>Dry-fit the 45° cut sections in two rows and check the joints.</li>${masterBlankStep}<li>From the top view, run ${crosscuts.crosscutCount} dotted cut lines across the completed blank at approximately ${crosscuts.roughCrosscut.toFixed(3)} in spacing, using a ${crosscuts.bladeKerf.toFixed(3)} in kerf.</li><li>Lay out all ${crosscuts.crosscutCount} assigned crosscuts. ${glueUpChecklist}</li><li>Flatten, make only the cleanup cuts needed to square the board, and finish to the actual ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in dimensions.</li></ol></section>`;
 }

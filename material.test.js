@@ -27,6 +27,22 @@ close(cherry.roughCubicInches, 2 * (1 + .0625) * 2.125 * requiredLength);
 close(cherry.estimatedCost, cherry.purchaseBoardFeet * 10);
 close(plan.totalEstimatedCost, plan.rows.reduce((sum,row)=>sum+row.purchaseBoardFeet*row.pricePerBoardFoot,0));
 
+const longerPlan = M.materialQuantityPlan({
+  finishedThickness: 1.5, requiredLaminationSize: 2.125, laminatedRows: 4,
+  moduleWidth: 1.5, stripRoughAllowance: .0625, borderRoughAllowance: .0625,
+  strips: [{width:1,wood:'maple'},{width:.5,wood:'walnut'}],
+  includeBorders: true, borderBands: [{width:1,wood:'cherry'}],
+  edgeInset: 0, edgeWood: 'purpleheart', crosscutCount: 16,
+  roughCrosscut: 1.625, bladeKerf: .125, wastePercent: 10,
+  prices: { maple: 8, walnut: 12, cherry: 10 }
+});
+const longerRequiredLength = 16 * 1.625 + 15 * .125;
+close(longerPlan.requiredBlankLength, longerRequiredLength);
+close(longerPlan.rows.find(row=>row.species==='maple').roughCubicInches, (1 + .0625) * 2.125 * longerRequiredLength * 4);
+close(longerPlan.totalPurchaseBoardFeet / plan.totalPurchaseBoardFeet, longerRequiredLength / requiredLength);
+if (!(longerPlan.totalEstimatedCost > plan.totalEstimatedCost)) throw new Error('Additional kerf-inclusive row length did not increase Estimated Wood Cost');
+console.log('KERF-INCLUSIVE ROW-LENGTH COST PASS');
+
 const edge = M.materialQuantityPlan({
   finishedThickness: 1, requiredLaminationSize: 1.5, laminatedRows: 6,
   moduleWidth: 2, stripRoughAllowance: .0625, borderRoughAllowance: .0625,
