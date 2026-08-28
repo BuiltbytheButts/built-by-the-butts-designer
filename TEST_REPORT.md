@@ -1,3 +1,12 @@
+# v3.0.65 Flush Step 7 Replacement-Triangle Assembly
+
+- PASS — Step 7 retains the octagonal Edge Rip cut face from the preceding operation.
+- PASS — the left replacement triangle shares the complete left target-band edge with no gap.
+- PASS — the right replacement triangle shares the complete right target-band edge with no gap.
+- PASS — both triangles use the currently selected Edge Rip replacement species and remain dynamically labeled.
+- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.65.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/board-renderer function hashes are unchanged.
+
 # v3.0.64 Pre-45° Lamination Strip-Total Validation
 
 - PASS — the strip total is compared with the rounded Required Lamination Size Before 45° Cuts instead of finished board thickness.

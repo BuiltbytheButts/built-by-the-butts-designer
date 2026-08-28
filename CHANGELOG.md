@@ -1,3 +1,11 @@
+## v3.0.65 — Flush Step 7 replacement-triangle assembly
+
+- Replaced the separated Step 7 replacement-piece/square diagram with one physical assembly view.
+- Retained the Step 6 octagonal cut face and attached one selected-wood triangle flush to each exposed side of the target band.
+- Kept the Step 7 title, species labels, and triangle colors dynamic for the active Edge Rip selections.
+- Added regression checks for both shared attachment seams and replacement-species color.
+- Frozen v3.0.7 laminate, Edge Rip, and board renderer geometry remain unchanged.
+
 ## v3.0.64 — Pre-45° lamination strip-total validation
 
 - Changed the strip-total requirement from finished board thickness to the rounded Required Lamination Size Before 45° Cuts.
