@@ -1,4 +1,4 @@
-# Diamond End Grain Designer v3.0.63
+# Diamond End Grain Designer v3.0.64
 
 Clean-architecture foundation rebuild for Built By The Butts.
 
@@ -8,6 +8,7 @@ Clean-architecture foundation rebuild for Built By The Butts.
 - The Designer never silently trims a complete laminated row to force the requested width.
 - Starting Crosscut switches which crosscut receives the first 180° turn, providing both physical glue-up views without changing dimensions, counts, borders, or material quantities.
 - Strip schedule is the source of pattern geometry.
+- The entered strip widths must total the rounded Required Lamination Size Before 45° Cuts; this is checked independently from finished board thickness.
 - No rows/columns sizing mode exists in state, UI, or renderer.
 - Rough machining values are recommendations, not user-entered allowances.
 - Crosscut Engineering reports the actual calculated whole-crosscut count.

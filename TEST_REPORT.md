@@ -1,3 +1,12 @@
+# v3.0.64 Pre-45° Lamination Strip-Total Validation
+
+- PASS — the strip total is compared with the rounded Required Lamination Size Before 45° Cuts instead of finished board thickness.
+- PASS — a 1.500 in finished board requires a 2.1250 in strip total; a 1.3750 in schedule reports a 0.7500 in shortage.
+- PASS — the warning appears in the Strip Schedule and Required Lamination Size result, not in Finished thickness.
+- PASS — the printable workshop plan, User Guide, and FAQ use the same pre-45° requirement.
+- PASS — syntax, geometry, manufacturing, material, version/cache, and browser regression checks completed for v3.0.64.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/original-renderer function hashes are unchanged.
+
 # v3.0.63 Laminated-Row Length and Board-Foot Disclosure
 
 - PASS — the Laminated rows card states the required count and minimum kerf-inclusive length for every row.

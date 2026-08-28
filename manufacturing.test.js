@@ -32,18 +32,23 @@ assertEq(plan.crosscutCount,14);
 assertEq(plan.isBalanced,true);
 console.log('ACTUAL-CROSSCUT ENGINEERING PASS');
 
-(function testFinishedStripTotalMustMatchThickness() {
-  let strips = M.stripScheduleThicknessPlan({ stripWidths: [0.5, 0.125, 0.125, 0.125, 0.125, 0.5], finishedThickness: 1.5 });
-  assertClose(strips.total, 1.5);
+(function testStripTotalMustMatchRequiredLaminationSize() {
+  let strips = M.stripScheduleLaminationPlan({ stripWidths: [0.8125, 0.125, 0.125, 0.125, 0.125, 0.8125], requiredLaminationSize: 2.125 });
+  assertClose(strips.total, 2.125);
   assertClose(strips.difference, 0);
   assertEq(strips.matches, true);
 
-  strips = M.stripScheduleThicknessPlan({ stripWidths: [0.5, 0.125, 0.125, 0.125, 0.5], finishedThickness: 1.5 });
+  strips = M.stripScheduleLaminationPlan({ stripWidths: [0.5, 0.125, 0.125, 0.125, 0.5], requiredLaminationSize: 2.125 });
   assertClose(strips.total, 1.375);
-  assertClose(strips.difference, -0.125);
+  assertClose(strips.difference, -0.75);
+  assertEq(strips.matches, false);
+
+  strips = M.stripScheduleLaminationPlan({ stripWidths: [1, 1.25], requiredLaminationSize: 2.125 });
+  assertClose(strips.total, 2.25);
+  assertClose(strips.difference, 0.125);
   assertEq(strips.matches, false);
 })();
-console.log('STRIP-TOTAL THICKNESS VALIDATION PASS');
+console.log('PRE-45 LAMINATION STRIP-TOTAL VALIDATION PASS');
 
 (function testDerivedMasterBlankLength() {
   const plan = M.finishedDimensionCrosscutPlan({

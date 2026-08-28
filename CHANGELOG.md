@@ -1,3 +1,11 @@
+## v3.0.64 — Pre-45° lamination strip-total validation
+
+- Changed the strip-total requirement from finished board thickness to the rounded Required Lamination Size Before 45° Cuts.
+- Renamed the visible result to “Strip total before 45° cuts” and moved its top warning from Finished thickness to Required Lamination Size.
+- Updated the printable workshop plan, User Guide, and FAQ to use the same manufacturing basis.
+- Added manufacturing and browser regression coverage for matched, short, and over-width pre-45° strip schedules.
+- Frozen v3.0.7 laminate, Edge Rip, and renderer geometry remain unchanged.
+
 ## v3.0.63 — Laminated-row length and board-foot disclosure
 
 - Added “Build N rows at least X in long each” directly inside the Laminated rows result card.

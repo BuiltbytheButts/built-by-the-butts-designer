@@ -29,7 +29,7 @@
   <main>
     <section class="intro">
       <div><h2>Start with the board size you want</h2><p>Enter the requested finished dimensions, then build the strip and border schedules. The Designer reports the actual board that complete crosscuts, complete laminated rows, and the entered borders will produce—without silently trimming away a good laminated row.</p></div>
-      <aside class="version-card"><span>Guide applies to</span><strong>Designer v3.0.63</strong><span>Calculations remain estimates until confirmed against your stock, machines, and shop practices.</span></aside>
+      <aside class="version-card"><span>Guide applies to</span><strong>Designer v3.0.64</strong><span>Calculations remain estimates until confirmed against your stock, machines, and shop practices.</span></aside>
     </section>
 
     <nav class="toc" aria-label="Table of contents">
@@ -40,11 +40,11 @@
       <h2>Quick start</h2>
       <div class="steps">
         <article class="step"><h3>Enter requested dimensions</h3><p>Set the finished length, width, and thickness you would like. Compare them with Actual Board Dimensions before building.</p></article>
-        <article class="step"><h3>Build the strip schedule</h3><p>Choose the finished strip widths and wood species in their mirrored A/B order. Confirm that Finished strip total matches the requested finished thickness.</p></article>
+        <article class="step"><h3>Build the strip schedule</h3><p>Choose the strip widths and wood species in their mirrored A/B order. Confirm that Strip total before 45° cuts matches the required lamination size shown at the top.</p></article>
         <article class="step"><h3>Choose the Edge Rip</h3><p>Set the cut depth and replacement wood, or select Zero when the design has no Edge Rip.</p></article>
         <article class="step"><h3>Choose borders</h3><p>Turn borders on only when required. Add one entry for every physical band at each edge.</p></article>
         <article class="step"><h3>Enter the blade kerf</h3><p>Use the actual thickness of the blade that will make the crosscuts.</p></article>
-        <article class="step"><h3>Review visible warnings</h3><p>Check the finished strip total, requested-versus-actual dimensions, odd crosscuts, border underage or overage, and waste.</p></article>
+        <article class="step"><h3>Review visible warnings</h3><p>Check the pre-45° strip total, requested-versus-actual dimensions, odd crosscuts, border underage or overage, and waste.</p></article>
         <article class="step"><h3>Enter wood prices</h3><p>Add your supplier's board-foot prices if you want an estimated wood cost.</p></article>
         <article class="step"><h3>Save and print</h3><p>Save the project, print the illustrated build guide, and keep the Sample Build nearby for real-photo reference.</p></article>
       </div>
@@ -55,7 +55,7 @@
       <div class="control-grid">
         <article class="control-card"><h3>Finished Board Dimensions</h3><p><strong>Requested length</strong> drives the calculated whole-crosscut count. <strong>Requested width</strong> drives the complete laminated-row and border fit. <strong>Thickness</strong> is the finished thickness of the board and the finished width of each crosscut after flattening. These entries are the desired size; the top result reports the buildable size.</p></article>
         <article class="control-card"><h3>Starting Crosscut</h3><p><strong>As cut</strong> keeps Crosscut 1 in its original orientation and turns Crosscut 2 first. <strong>Turned 180°</strong> turns Crosscut 1 and leaves Crosscut 2 as cut. Both choices continue alternating after that. This moves the diamond centers and changes whether full or partial diamonds appear at the ends, but it does not change dimensions, counts, borders, or material quantities.</p></article>
-        <article class="control-card"><h3>Strip Schedule</h3><p>Strip widths are finished design widths and control the wood-band proportions inside each diamond. Together, the finished strip widths must total the requested finished thickness. The Designer shows the total and warns when it is short or over. It adds approximately 1/16 inch only as rough-rip guidance. Labels run outside-in: 1A mirrors 1B, 2A mirrors 2B, and so on.</p></article>
+        <article class="control-card"><h3>Strip Schedule</h3><p>Strip widths control the wood-band proportions inside each diamond. Together, they must total the required lamination size before the 45° cuts—not the finished board thickness. The Designer shows both values and warns when the schedule is short or over. It adds approximately 1/16 inch only as rough-rip guidance. Labels run outside-in: 1A mirrors 1B, 2A mirrors 2B, and so on.</p></article>
         <article class="control-card"><h3>Edge Rip</h3><p>The slider controls only the two 45-degree corner areas removed after the first four 45-degree cuts. Replacement wood fills only those removed areas. Select <strong>Zero</strong> when this operation is not part of the design.</p></article>
         <article class="control-card"><h3>Top &amp; Bottom Borders</h3><p>Borders run along both long edges and are glued to the master blank before crosscutting. Every added band is a separate physical band. Adjacent bands may use the same species, but each still needs its own entry.</p></article>
         <article class="control-card"><h3>Crosscut Engineering</h3><p>Blade kerf remains editable. The recommended rough crosscut is the finished thickness plus approximately 1/8 inch for cleanup. Crosscut count is requested length ÷ finished thickness, rounded to the nearest whole piece. Required rough master-blank length is the rough crosscut width × piece count, plus one blade kerf between adjacent pieces.</p></article>
@@ -152,6 +152,6 @@
     </section>
   </main>
 
-  <footer><p>Built By The Butts · Diamond End Grain Designer User Guide · v3.0.63</p><a href="index.html">Return to the Designer</a></footer>
+  <footer><p>Built By The Butts · Diamond End Grain Designer User Guide · v3.0.64</p><a href="index.html">Return to the Designer</a></footer>
 </body>
 </html>

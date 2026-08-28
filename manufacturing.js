@@ -60,8 +60,8 @@
     };
   }
 
-  function stripScheduleThicknessPlan({ stripWidths, finishedThickness }) {
-    const required = Math.max(0, Number(finishedThickness) || 0);
+  function stripScheduleLaminationPlan({ stripWidths, requiredLaminationSize }) {
+    const required = Math.max(0, Number(requiredLaminationSize) || 0);
     const widths = Array.isArray(stripWidths) ? stripWidths : [];
     const total = widths.reduce((sum, width) => sum + Math.max(0, Number(width) || 0), 0);
     const difference = total - required;
@@ -117,7 +117,7 @@
     SHOP_INCREMENT,
     requiredLaminationSize,
     finishedDimensionCrosscutPlan,
-    stripScheduleThicknessPlan,
+    stripScheduleLaminationPlan,
     mirroredBorderRowPlan
   });
 });
