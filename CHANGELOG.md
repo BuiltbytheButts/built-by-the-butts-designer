@@ -1,3 +1,12 @@
+## v3.0.66 — Correct Step 7 diamond-square assembly
+
+- Reoriented the two Edge Rip replacement triangles to the top and bottom cut faces.
+- Redrew the laminated center so it forms the left and right points of the completed cross-section.
+- Added a true square outline rotated 45 degrees to match the physical glue-up reference.
+- Kept the strip schedule, replacement species, diagram title, and accessible description dynamic.
+- Added regression checks for the square outline, both full-length glue seams, and selected replacement-wood color.
+- Frozen v3.0.7 laminate, Edge Rip, and board renderer geometry remain unchanged.
+
 ## v3.0.65 — Flush Step 7 replacement-triangle assembly
 
 - Replaced the separated Step 7 replacement-piece/square diagram with one physical assembly view.

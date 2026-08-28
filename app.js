@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.65';
+const VERSION = '3.0.66';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -928,14 +928,22 @@ function buildGuideVisuals(crosscuts, border, lamination) {
   const edgeRipSpecies = WOODS[state.edgeWood]?.name || state.edgeWood;
   const ripTargetWood = strips.some(strip => strip.wood === 'walnut') ? 'walnut' : strips[Math.floor(strips.length / 2)]?.wood;
   const ripTargetSpecies = WOODS[ripTargetWood]?.name || ripTargetWood;
+  let edgeGlueStripX = 40;
+  const edgeGlueStripWidth = 340;
+  const edgeGlueStrips = strips.map(strip => {
+    const width = edgeGlueStripWidth * number(strip.width) / Math.max(total, 0.001);
+    const shape = `<rect x="${edgeGlueStripX.toFixed(2)}" y="12" width="${width.toFixed(2)}" height="166" fill="${guideWood(strip.wood)}"/>`;
+    edgeGlueStripX += width;
+    return shape;
+  }).join('');
   const edgeRipSteps = edgeRipSelected ? [{
     title: 'Cut the Edge Rip after the 45° cuts',
     text: `Use the completed 45° piece. Cut across the ${ripTargetSpecies} section to the selected ${number(state.edgeInset).toFixed(3)} in depth, creating the two angled shoulders shown below.`,
     svg: guideSvg(`<defs><clipPath id="guide-edge-octagon"><polygon points="155,20 265,20 305,60 305,130 265,170 155,170 115,130 115,60"/></clipPath></defs><g clip-path="url(#guide-edge-octagon)"><rect x="115" y="20" width="190" height="150" fill="${guideWood(strips[0]?.wood)}"/><rect x="115" y="55" width="190" height="24" fill="${guideWood(strips[1]?.wood)}"/><rect x="115" y="79" width="190" height="32" fill="${guideWood(ripTargetWood)}"/><rect x="115" y="111" width="190" height="24" fill="${guideWood(strips.at(-2)?.wood)}"/></g><polygon points="155,20 265,20 305,60 305,130 265,170 155,170 115,130 115,60" fill="none" stroke="#33261e" stroke-width="3"/><line x1="115" y1="79" x2="142" y2="95" class="guide-center-cut"/><line x1="278" y1="95" x2="305" y2="111" class="guide-center-cut"/><text x="72" y="72" class="guide-edge-label">CUT</text><path d="M92 76 L120 84" class="guide-arrow" marker-end="url(#guide-arrowhead)"/><text x="330" y="121" class="guide-edge-label">CUT</text><path d="M326 112 L300 105" class="guide-arrow" marker-end="url(#guide-arrowhead)"/>`, `Octagonal 45-degree piece with Edge Rip cuts across the ${ripTargetSpecies} section`)
   }, {
-    title: `Glue the new 45° ${edgeRipSpecies} to the cut edges`,
-    text: `Prepare matching 45° ${edgeRipSpecies} replacement pieces. Glue them directly to the freshly cut ${ripTargetSpecies} edges, keeping both mirrored assemblies aligned.`,
-    svg: guideSvg(`<defs><clipPath id="guide-edge-glue-octagon"><polygon points="155,20 265,20 305,60 305,130 265,170 155,170 115,130 115,60"/></clipPath></defs><g clip-path="url(#guide-edge-glue-octagon)"><rect x="115" y="20" width="190" height="150" fill="${guideWood(strips[0]?.wood)}"/><rect x="115" y="55" width="190" height="24" fill="${guideWood(strips[1]?.wood)}"/><rect x="115" y="79" width="190" height="32" fill="${guideWood(ripTargetWood)}"/><rect x="115" y="111" width="190" height="24" fill="${guideWood(strips.at(-2)?.wood)}"/></g><polygon data-guide-part="edge-rip-octagon" points="155,20 265,20 305,60 305,130 265,170 155,170 115,130 115,60" fill="none" stroke="#33261e" stroke-width="3"/><polygon data-guide-part="replacement-left" points="115,79 60,95 115,111" fill="${guideWood(state.edgeWood)}" stroke="#6e5a4b" stroke-width="3" stroke-linejoin="round"/><polygon data-guide-part="replacement-right" points="305,79 360,95 305,111" fill="${guideWood(state.edgeWood)}" stroke="#6e5a4b" stroke-width="3" stroke-linejoin="round"/><text x="210" y="186" text-anchor="middle">${edgeRipSpecies} triangles flush to both ${ripTargetSpecies} cut faces</text>`, `Octagonal ${ripTargetSpecies} cut face with two ${edgeRipSpecies} triangles attached flush to the left and right sides`)
+    title: `Glue the new 45° ${edgeRipSpecies} to the top and bottom cut faces`,
+    text: `Prepare matching 45° ${edgeRipSpecies} replacement pieces. Glue them flush to the freshly cut top and bottom ${ripTargetSpecies} faces so the completed cross-section is a square.`,
+    svg: guideSvg(`<defs><clipPath id="guide-edge-glue-center"><polygon points="140,45 280,45 380,95 280,145 140,145 40,95"/></clipPath></defs><g clip-path="url(#guide-edge-glue-center)">${edgeGlueStrips}</g><polygon data-guide-part="edge-rip-center-blank" points="140,45 280,45 380,95 280,145 140,145 40,95" fill="none" stroke="#33261e" stroke-width="3" stroke-linejoin="round"/><polygon data-guide-part="replacement-top" points="140,45 280,45 210,12" fill="${guideWood(state.edgeWood)}" stroke="#6e5a4b" stroke-width="3" stroke-linejoin="round"/><polygon data-guide-part="replacement-bottom" points="140,145 280,145 210,178" fill="${guideWood(state.edgeWood)}" stroke="#6e5a4b" stroke-width="3" stroke-linejoin="round"/><line data-guide-part="replacement-top-seam" x1="140" y1="45" x2="280" y2="45" stroke="#6e5a4b" stroke-width="3"/><line data-guide-part="replacement-bottom-seam" x1="140" y1="145" x2="280" y2="145" stroke="#6e5a4b" stroke-width="3"/><polygon data-guide-part="edge-rip-diamond-square" points="210,12 380,95 210,178 40,95" fill="none" stroke="#33261e" stroke-width="3" stroke-linejoin="round"/>`, `Completed square rotated 45 degrees with two ${edgeRipSpecies} triangles attached flush to the top and bottom ${ripTargetSpecies} cut faces`)
   }] : [];
   const borderTop = state.includeBorders ? border.bands.reduce((html, band, index) => html + `<rect x="45" y="${30 + index * 8}" width="330" height="8" fill="${guideWood(band.wood)}"/>`, '') : '';
   const borderBottom = state.includeBorders ? border.bands.reduce((html, band, index) => html + `<rect x="45" y="${152 - index * 8}" width="330" height="8" fill="${guideWood(band.wood)}"/>`, '') : '';

@@ -43,8 +43,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.65/g) || []).length === 5, 'All asset cache keys must be v3.0.65');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.66/g) || []).length === 5, 'All asset cache keys must be v3.0.66');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
   assert(html.includes('id="stripTotalMetric"') && html.includes('id="stripTotalWarning"') && html.includes('id="laminationWarning"'), 'Pre-45 strip-total validation is missing');
   assert(!html.includes('id="thicknessWarning"'), 'Strip-total warning remains attached to Finished thickness');
@@ -88,9 +88,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.65') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.65 page');
+  assert(userGuideHtml.includes('Designer v3.0.66') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.66 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 37, 'FAQ must contain the 37 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.65') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.65 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.66') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.66 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -101,7 +101,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.65', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.66', 'Wrong visible version');
   assert(await page.locator('#laminatedRowHelp').textContent() === 'Build 7 rows at least 20.875 in long each.', 'Default laminated-row length guidance is incorrect');
   assert((await page.locator('#materialLengthHelp').textContent()).includes('7 rows × 20.875 in of kerf-inclusive length'), 'Default cost guidance does not disclose row count and length');
   assert(await page.locator('#stripTotalMetric').textContent() === '1.5000 in', 'Default pre-45° strip total is incorrect');
@@ -326,15 +326,18 @@ function functionSource(source, name) {
   assert(guideTitles.indexOf('Make the four 45° cuts') < edgeRipCutIndex, 'Edge Rip is not after the first 45-degree cuts');
   assert(edgeRipCutIndex < edgeRipGlueIndex, 'Edge Rip cut is not before replacement glue-up');
   const edgeRipGlueStep = page.locator('#printPlan .guide-step').nth(edgeRipGlueIndex);
-  assert(await edgeRipGlueStep.locator('[data-guide-part="edge-rip-octagon"]').count() === 1, 'Step 7 no longer retains the octagonal cut face');
-  assert(await edgeRipGlueStep.locator('[data-guide-part="replacement-left"]').getAttribute('points') === '115,79 60,95 115,111', 'Left replacement triangle is not flush with the cut-face band');
-  assert(await edgeRipGlueStep.locator('[data-guide-part="replacement-right"]').getAttribute('points') === '305,79 360,95 305,111', 'Right replacement triangle is not flush with the cut-face band');
-  assert((await edgeRipGlueStep.textContent()).includes('triangles flush to both Walnut cut faces'), 'Step 7 does not describe both flush replacement triangles');
+  assert(await edgeRipGlueStep.locator('[data-guide-part="edge-rip-center-blank"]').getAttribute('points') === '140,45 280,45 380,95 280,145 140,145 40,95', 'Step 7 laminated center does not form the approved left and right points');
+  assert(await edgeRipGlueStep.locator('[data-guide-part="edge-rip-diamond-square"]').getAttribute('points') === '210,12 380,95 210,178 40,95', 'Step 7 completed outline is not the approved diamond-shaped square');
+  assert(await edgeRipGlueStep.locator('[data-guide-part="replacement-top"]').getAttribute('points') === '140,45 280,45 210,12', 'Top replacement triangle is not flush with the complete top cut face');
+  assert(await edgeRipGlueStep.locator('[data-guide-part="replacement-bottom"]').getAttribute('points') === '140,145 280,145 210,178', 'Bottom replacement triangle is not flush with the complete bottom cut face');
+  assert(await edgeRipGlueStep.locator('[data-guide-part="replacement-top-seam"]').getAttribute('x1') === '140' && await edgeRipGlueStep.locator('[data-guide-part="replacement-top-seam"]').getAttribute('x2') === '280', 'Top replacement seam does not cover the full cut face');
+  assert(await edgeRipGlueStep.locator('[data-guide-part="replacement-bottom-seam"]').getAttribute('x1') === '140' && await edgeRipGlueStep.locator('[data-guide-part="replacement-bottom-seam"]').getAttribute('x2') === '280', 'Bottom replacement seam does not cover the full cut face');
+  assert((await edgeRipGlueStep.textContent()).includes('completed cross-section is a square'), 'Step 7 does not explain the completed square cross-section');
   assert((await page.locator('#printPlan').textContent()).includes('Mill the selected lumber square and straight, and make sure to include extra allowance for planing and sanding.'), 'Simplified lumber-preparation wording is missing');
   await page.evaluate(() => { state.edgeWood = 'maple'; renderWorkshopPlan(); });
-  assert((await page.locator('#printPlan .guide-copy h3').allTextContents()).includes('Glue the new 45° Hard Maple to the cut edges'), 'Edge Rip replacement title is not dynamic');
-  assert(await page.locator('#printPlan [data-guide-part="replacement-left"]').getAttribute('fill') === '#e4ca96', 'Left Step 7 triangle does not use the selected replacement wood');
-  assert(await page.locator('#printPlan [data-guide-part="replacement-right"]').getAttribute('fill') === '#e4ca96', 'Right Step 7 triangle does not use the selected replacement wood');
+  assert((await page.locator('#printPlan .guide-copy h3').allTextContents()).includes('Glue the new 45° Hard Maple to the top and bottom cut faces'), 'Edge Rip replacement title is not dynamic');
+  assert(await page.locator('#printPlan [data-guide-part="replacement-top"]').getAttribute('fill') === '#e4ca96', 'Top Step 7 triangle does not use the selected replacement wood');
+  assert(await page.locator('#printPlan [data-guide-part="replacement-bottom"]').getAttribute('fill') === '#e4ca96', 'Bottom Step 7 triangle does not use the selected replacement wood');
   await page.evaluate(() => { state.edgeWood = 'walnut'; renderWorkshopPlan(); });
   assert(edgeRipGlueIndex < guideTitles.indexOf('Dry-fit the 45° cut pieces'), 'Replacement glue-up is not a separate step before dry fit');
   assert(await page.locator('#printPlan .guide-step').count() === 12, 'Edge Rip build must contain twelve illustrated steps');

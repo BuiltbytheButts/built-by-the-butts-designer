@@ -1,3 +1,12 @@
+# v3.0.66 Correct Step 7 Diamond-Square Assembly
+
+- PASS — the laminated center forms the left and right points of the completed cross-section.
+- PASS — the selected Edge Rip replacement triangles attach to the full top and bottom cut faces.
+- PASS — the final four-point outline is a true square rotated 45 degrees.
+- PASS — both replacement triangles retain dynamic species color and labeling.
+- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.66.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/board-renderer function hashes are unchanged.
+
 # v3.0.65 Flush Step 7 Replacement-Triangle Assembly
 
 - PASS — Step 7 retains the octagonal Edge Rip cut face from the preceding operation.
