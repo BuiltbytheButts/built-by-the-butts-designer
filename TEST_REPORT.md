@@ -1,3 +1,12 @@
+# v3.0.68 Grouped Strip Totals and Combined Center Stock
+
+- PASS — the printable Lamination Engineering table groups identical species and finished-width cut settings.
+- PASS — two 0.2500 in Hard Maple strips per blank across eight rows report 16 strips total.
+- PASS — the matching 0.2500 in Walnut center pair becomes one 0.5000 in finished / 0.5625 in rough strip per blank and reports eight strips total.
+- PASS — the material engine applies one center-strip rough allowance; the validation build is now 7.779 bd ft / $127.03 before comparison with the purchased stock.
+- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.68.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/board-renderer function hashes are unchanged.
+
 # v3.0.67 Dynamic Step 1 Lumber Layout
 
 - PASS — Step 1 draws one labeled lumber block for every strip in the active mirrored schedule.

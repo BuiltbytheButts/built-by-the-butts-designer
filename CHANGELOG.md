@@ -1,3 +1,12 @@
+## v3.0.68 — Grouped strip totals and combined center stock
+
+- Rebuilt the printable Lamination Engineering table as a cutting summary grouped by species and finished width.
+- Added per-blank quantities, laminated-row multiplication, and the total number of strips to prepare before changing a setup.
+- Combined a matching same-species center A/B pair into one wider physical strip with one rough-rip allowance.
+- Applied the combined-center savings to rough board feet and Estimated Wood Cost.
+- Added unit and browser regression checks for the 16-strip Maple total and the 8-piece, 0.5000 in Walnut center example.
+- Frozen v3.0.7 laminate, Edge Rip, and board renderer geometry remain unchanged.
+
 ## v3.0.67 — Dynamic Step 1 lumber layout
 
 - Made every Step 1 lumber block resize and recenter from the active mirrored strip count.

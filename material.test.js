@@ -3,6 +3,50 @@ const M = require('./material.js');
 function close(a,b,e=1e-9){if(Math.abs(a-b)>e)throw new Error(`${a} != ${b}`);}
 function eq(a,b){if(a!==b)throw new Error(`${a} != ${b}`);}
 
+const groupedCuts = M.laminateCutPlan({
+  laminatedRows: 8,
+  stripRoughAllowance: .0625,
+  strips: [
+    {width:.25,wood:'maple',label:'1A'}, {width:.125,wood:'cherry',label:'2A'},
+    {width:.25,wood:'padauk',label:'3A'}, {width:.1875,wood:'maple',label:'4A'},
+    {width:.25,wood:'walnut',label:'5A'}, {width:.25,wood:'walnut',label:'5B'},
+    {width:.1875,wood:'maple',label:'4B'}, {width:.25,wood:'padauk',label:'3B'},
+    {width:.125,wood:'cherry',label:'2B'}, {width:.25,wood:'maple',label:'1B'}
+  ]
+});
+eq(groupedCuts.entries.length, 5);
+eq(groupedCuts.physicalStripsPerBlank, 9);
+eq(groupedCuts.totalStrips, 72);
+eq(groupedCuts.centerCombined, true);
+const mapleQuarterCuts = groupedCuts.entries.find(entry => entry.wood === 'maple' && entry.finishedWidth === .25);
+eq(mapleQuarterCuts.quantityPerBlank, 2);
+eq(mapleQuarterCuts.totalQuantity, 16);
+eq(mapleQuarterCuts.positionLabels.join(' | '), '1A | 1B');
+const walnutCenterCut = groupedCuts.entries.find(entry => entry.wood === 'walnut');
+close(walnutCenterCut.finishedWidth, .5);
+close(walnutCenterCut.roughRipWidth, .5625);
+eq(walnutCenterCut.quantityPerBlank, 1);
+eq(walnutCenterCut.totalQuantity, 8);
+eq(walnutCenterCut.positionLabels[0], '5A + 5B (combined center)');
+
+const combinedCenterMaterial = M.materialQuantityPlan({
+  finishedThickness: 1.5, requiredLaminationSize: 2.125, laminatedRows: 8,
+  moduleWidth: 2.125, stripRoughAllowance: .0625, borderRoughAllowance: .0625,
+  strips: [
+    {width:.25,wood:'maple'}, {width:.125,wood:'cherry'},
+    {width:.25,wood:'padauk'}, {width:.1875,wood:'maple'},
+    {width:.25,wood:'walnut'}, {width:.25,wood:'walnut'},
+    {width:.1875,wood:'maple'}, {width:.25,wood:'padauk'},
+    {width:.125,wood:'cherry'}, {width:.25,wood:'maple'}
+  ],
+  includeBorders:false, borderBands:[], edgeInset:0, edgeWood:'walnut',
+  crosscutCount:12, roughCrosscut:1.625, bladeKerf:.125,
+  wastePercent:0, prices:{maple:0,cherry:0,padauk:0,walnut:28}
+});
+close(combinedCenterMaterial.rows.find(row => row.species === 'walnut').roughCubicInches, .5625 * 2.125 * 20.875 * 8);
+if (!(combinedCenterMaterial.rows.find(row => row.species === 'walnut').roughCubicInches < .625 * 2.125 * 20.875 * 8)) throw new Error('Combined center strip did not remove the duplicate rough-rip allowance');
+console.log('GROUPED STRIP COUNT / COMBINED CENTER PASS');
+
 const plan = M.materialQuantityPlan({
   finishedThickness: 1.5, requiredLaminationSize: 2.125, laminatedRows: 4,
   moduleWidth: 1.5, stripRoughAllowance: .0625, borderRoughAllowance: .0625,
@@ -75,8 +119,8 @@ const validation = M.materialQuantityPlan({
 });
 const purchasedBoardFeet = 24*7.25*1.875/144 + 24*9.25*.875/144 + 24*13*1.25/144 + 24*9.5*1.875/144;
 const purchasedCost = (24*7.25*1.875/144)*8 + (24*9.25*.875/144)*20 + (24*13*1.25/144)*28 + (24*9.5*1.875/144)*8;
-if (!(validation.totalPurchaseBoardFeet > 7.9 && validation.totalPurchaseBoardFeet < 8.0)) throw new Error(`Validation rough lumber ${validation.totalPurchaseBoardFeet} bd ft is outside the approved range`);
-if (!(validation.totalEstimatedCost > 131 && validation.totalEstimatedCost < 132)) throw new Error(`Validation cost $${validation.totalEstimatedCost} is outside the approved range`);
+if (!(validation.totalPurchaseBoardFeet > 7.77 && validation.totalPurchaseBoardFeet < 7.79)) throw new Error(`Validation rough lumber ${validation.totalPurchaseBoardFeet} bd ft is outside the approved range`);
+if (!(validation.totalEstimatedCost > 127 && validation.totalEstimatedCost < 127.1)) throw new Error(`Validation cost $${validation.totalEstimatedCost} is outside the approved range`);
 if (!(validation.totalPurchaseBoardFeet < purchasedBoardFeet && validation.totalEstimatedCost < purchasedCost)) throw new Error('Validation estimate must remain below the purchase that left usable stock');
 
 console.log('ROUGH-STOCK MATERIAL QUANTITY PASS');

@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.67';
+const VERSION = '3.0.68';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -1048,7 +1048,12 @@ function renderWorkshopPlan() {
   const stripPlan = stripScheduleEngineering();
   const materials = materialQuantity();
   const active = activeStrips();
-  const stripRows = active.map((strip, index) => `<tr><td>${stripOffsetLabel(index, active.length)}</td><td>${WOODS[strip.wood]?.name || strip.wood}</td><td>${number(strip.width).toFixed(4)} in</td><td>${recommendedRoughRip(strip.width).toFixed(4)} in</td><td>1 per laminated blank</td></tr>`).join('');
+  const laminateCuts = DiamondMaterial.laminateCutPlan({
+    strips: active.map((strip, index) => ({ ...strip, label: stripOffsetLabel(index, active.length) })),
+    laminatedRows: border.selectedRows,
+    stripRoughAllowance: ROUGH_RIP_EXTRA
+  });
+  const stripRows = laminateCuts.entries.map(entry => `<tr data-center-combined="${entry.combinedCenter}"><td>${entry.positionLabels.join(' · ')}</td><td>${WOODS[entry.wood]?.name || entry.wood}</td><td>${entry.finishedWidth.toFixed(4)} in</td><td>${entry.roughRipWidth.toFixed(4)} in</td><td><strong>${entry.totalQuantity} strip${entry.totalQuantity === 1 ? '' : 's'} total</strong><br><small>${entry.quantityPerBlank} per blank × ${laminateCuts.laminatedRows} row${laminateCuts.laminatedRows === 1 ? '' : 's'}</small></td></tr>`).join('');
   const borderRows = state.includeBorders
     ? border.bands.map((band, index) => `<tr><td>${index + 1}</td><td>${WOODS[band.wood]?.name || band.wood}</td><td>${band.width.toFixed(4)} in</td><td>${actual.length.toFixed(3)} in</td><td>2</td></tr>`).join('')
     : '<tr><td colspan="5">No borders selected</td></tr>';
@@ -1081,7 +1086,7 @@ function renderWorkshopPlan() {
     <header><p class="print-eyebrow">Built By The Butts</p><h1>Diamond End Grain Workshop Plan</h1><p>Designer v${VERSION}</p></header>
     <section class="print-summary"><h2>Finished Design</h2><p><strong>Actual Board Dimensions: ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in</strong></p>${actual.matchesRequested ? '' : `<p class="print-dimension-warning"><strong>Warning:</strong> Requested ${actual.requestedLength.toFixed(3)} × ${actual.requestedWidth.toFixed(3)} × ${actual.thickness.toFixed(3)} in. The actual dimensions use complete crosscuts, complete laminated rows, and the entered borders.</p>`}${stripPlan.matches ? '' : `<p class="print-dimension-warning"><strong>Strip-total warning:</strong> Strip widths total ${stripPlan.total.toFixed(4)} in, but the required lamination size before 45° cuts is ${stripPlan.required.toFixed(4)} in. Adjust the strip schedule by ${Math.abs(stripPlan.difference).toFixed(4)} in before building.</p>`}<p>${crosscuts.crosscutCount} crosscuts · ${border.selectedRows} laminated rows · ${state.includeBorders ? `${border.bands.length} border band${border.bands.length === 1 ? '' : 's'} per edge` : 'No borders'} · ${glueUpLabel}</p></section>
     <section class="print-board-section"><h2>Finished Board Reference</h2><p class="print-note">Keep this image available throughout the build to confirm wood placement, borders, and orientation.</p>${boardReference}</section>
-    <section><h2>Lamination Engineering</h2><p>Required size before 45° cuts: <strong>${lamination.recommended.toFixed(3)} in</strong> (mathematical minimum ${lamination.minimum.toFixed(3)} in). Strip total before 45° cuts: <strong>${stripPlan.total.toFixed(4)} in</strong> of ${stripPlan.required.toFixed(4)} in required${stripPlan.matches ? ' — matched' : ' — adjustment required'}.</p><table><thead><tr><th>Strip</th><th>Species</th><th>Finished width</th><th>Rough rip</th><th>Quantity</th></tr></thead><tbody>${stripRows}</tbody></table></section>
+    <section><h2>Lamination Engineering</h2><p>Required size before 45° cuts: <strong>${lamination.recommended.toFixed(3)} in</strong> (mathematical minimum ${lamination.minimum.toFixed(3)} in). Strip total before 45° cuts: <strong>${stripPlan.total.toFixed(4)} in</strong> of ${stripPlan.required.toFixed(4)} in required${stripPlan.matches ? ' — matched' : ' — adjustment required'}.</p><p class="print-note">Cut settings are grouped by species and finished width so each setup can be completed together. Totals cover all ${laminateCuts.laminatedRows} laminated rows.${laminateCuts.centerCombined ? ' The matching center pair is combined into one wider strip, using one rough-rip allowance instead of two.' : ''}</p><table class="lamination-cut-table"><thead><tr><th>Strip position(s)</th><th>Species</th><th>Finished width</th><th>Rough rip</th><th>Total to cut</th></tr></thead><tbody>${stripRows}</tbody></table></section>
     <section><h2>Crosscut Engineering</h2><table><tbody><tr><th>Calculated crosscuts</th><td>${crosscuts.crosscutCount}${crosscuts.isBalanced ? ' — balanced' : ' — unbalanced warning'}</td></tr><tr><th>Recommended rough crosscut</th><td>${crosscuts.roughCrosscut.toFixed(3)} in</td></tr><tr><th>Blade kerf</th><td>${crosscuts.bladeKerf.toFixed(3)} in</td></tr><tr><th>Required master blank</th><td>${crosscuts.requiredBlankLength.toFixed(3)} in</td></tr><tr><th>Projected finished run</th><td>${crosscuts.achievableLength.toFixed(3)} in</td></tr></tbody></table></section>
     ${edgeRipSection}
     <section><h2>Border Schedule</h2><p>Entered total per edge: <strong>${state.includeBorders ? `${border.requestedWidth.toFixed(4)} in` : 'Not applicable'}</strong>${state.includeBorders ? ` · Requested board width would require ${border.requiredWidth.toFixed(4)} in per edge.` : ''}${state.includeBorders && !border.scheduleMatches ? ` · The actual board therefore differs by ${Math.abs(border.difference * 2).toFixed(4)} in overall width.` : ''}</p><table><thead><tr><th>Band</th><th>Species</th><th>Width</th><th>Finished length</th><th>Quantity</th></tr></thead><tbody>${borderRows}</tbody></table></section>

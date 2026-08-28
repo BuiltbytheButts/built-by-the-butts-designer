@@ -43,8 +43,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.67/g) || []).length === 5, 'All asset cache keys must be v3.0.67');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.68/g) || []).length === 5, 'All asset cache keys must be v3.0.68');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
   assert(html.includes('id="stripTotalMetric"') && html.includes('id="stripTotalWarning"') && html.includes('id="laminationWarning"'), 'Pre-45 strip-total validation is missing');
   assert(!html.includes('id="thicknessWarning"'), 'Strip-total warning remains attached to Finished thickness');
@@ -88,9 +88,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.67') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.67 page');
+  assert(userGuideHtml.includes('Designer v3.0.68') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.68 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 37, 'FAQ must contain the 37 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.67') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.67 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.68') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.68 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -101,7 +101,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.67', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.68', 'Wrong visible version');
   assert(await page.locator('#laminatedRowHelp').textContent() === 'Build 7 rows at least 20.875 in long each.', 'Default laminated-row length guidance is incorrect');
   assert((await page.locator('#materialLengthHelp').textContent()).includes('7 rows × 20.875 in of kerf-inclusive length'), 'Default cost guidance does not disclose row count and length');
   assert(await page.locator('#stripTotalMetric').textContent() === '1.5000 in', 'Default pre-45° strip total is incorrect');
@@ -397,6 +397,39 @@ function functionSource(source, name) {
   assert(actualNoBorder.material.laminatedRows === 8, 'Material estimate does not count all eight complete laminated rows');
   assert(Math.abs(actualNoBorder.material.requiredBlankLength - 20.875) < 0.001, 'Material estimate does not use the full kerf-inclusive master blank');
   assert(actualNoBorder.material.totalPurchaseBoardFeet > 0, 'Rough-lumber estimate is empty');
+  const stripCutSummarySnapshot = await page.evaluate(() => snapshot());
+  await page.evaluate(() => restore(JSON.stringify({
+    boardLength: 18,
+    boardWidth: 13,
+    finishedThickness: 1.5,
+    includeBorders: false,
+    edgeInset: 0,
+    strips: [
+      { width: 0.25, wood: 'maple' },
+      { width: 0.125, wood: 'cherry' },
+      { width: 0.25, wood: 'padauk' },
+      { width: 0.1875, wood: 'maple' },
+      { width: 0.25, wood: 'walnut' },
+      { width: 0.25, wood: 'walnut' },
+      { width: 0.1875, wood: 'maple' },
+      { width: 0.25, wood: 'padauk' },
+      { width: 0.125, wood: 'cherry' },
+      { width: 0.25, wood: 'maple' }
+    ]
+  })));
+  const laminationCutRows = page.locator('#printPlan .lamination-cut-table tbody tr');
+  assert(await laminationCutRows.count() === 5, 'Lamination cut summary did not group identical species and widths');
+  const mapleQuarterRow = laminationCutRows.filter({ hasText: '1A · 1B' });
+  assert((await mapleQuarterRow.textContent()).includes('Hard Maple') && (await mapleQuarterRow.textContent()).includes('0.2500 in') && (await mapleQuarterRow.textContent()).includes('16 strips total') && (await mapleQuarterRow.textContent()).includes('2 per blank × 8 rows'), 'Quarter-inch Maple total does not report sixteen strips for eight rows');
+  const combinedCenterRow = page.locator('#printPlan .lamination-cut-table tbody tr[data-center-combined="true"]');
+  assert(await combinedCenterRow.count() === 1, 'Matching center pair was not combined into one cut-summary row');
+  const combinedCenterText = await combinedCenterRow.textContent();
+  assert(combinedCenterText.includes('5A + 5B (combined center)') && combinedCenterText.includes('Walnut') && combinedCenterText.includes('0.5000 in') && combinedCenterText.includes('0.5625 in') && combinedCenterText.includes('8 strips total') && combinedCenterText.includes('1 per blank × 8 rows'), 'Combined Walnut center does not report the approved half-inch cut and eight-strip total');
+  const groupedMaterial = await page.evaluate(() => materialQuantity());
+  assert(groupedMaterial.laminateCuts.reduce((sum, entry) => sum + entry.totalQuantity, 0) === 72, 'Material estimate does not use the grouped physical strip count');
+  assert(Math.abs(groupedMaterial.rows.find(row => row.species === 'walnut').roughCubicInches - 0.5625 * 2.125 * 20.875 * 8) < 1e-9, 'Material estimate did not remove the duplicate center-strip rough allowance');
+  assert((await page.locator('#printPlan').textContent()).includes('using one rough-rip allowance instead of two'), 'Printable guide does not explain the combined-center savings');
+  await page.evaluate(serialized => restore(serialized), stripCutSummarySnapshot);
   const unborderedFrameAspect = await page.locator('#boardSvg > rect').first().evaluate(rect => (Number(rect.getAttribute('width')) - 6) / (Number(rect.getAttribute('height')) - 6));
   assert(Math.abs(unborderedFrameAspect - 1.5) < 0.001, 'Unbordered preview frame does not use the actual 18 × 12 aspect');
   await page.locator('#boardWidth').fill('12');
@@ -507,8 +540,8 @@ function functionSource(source, name) {
   assert(await page.locator('#diamondFieldMetric').textContent() === '18.000 × 9.000 in', 'Recreation diamond field is not six 1.500 in rows');
   assert(await page.locator('#requiredBorderMetric').textContent() === '1.9375 in per edge', 'Recreation required border width is incorrect');
   assert(await page.locator('#borderDifferenceMetric').textContent() === '0.6250 in still needed per edge', 'Recreation border completion warning is incorrect');
-  assert(await page.locator('#materialPurchaseMetric').textContent() === '7.941 bd ft', 'Validation build rough-lumber estimate changed');
-  assert(await page.locator('#materialCostMetric').textContent() === '$131.56', 'Validation build cost estimate changed');
+  assert(await page.locator('#materialPurchaseMetric').textContent() === '7.779 bd ft', 'Validation build combined-center rough-lumber estimate changed');
+  assert(await page.locator('#materialCostMetric').textContent() === '$127.03', 'Validation build combined-center cost estimate changed');
   const validationMaterial = await page.evaluate(() => materialQuantity());
   assert(validationMaterial.rows.find(row => row.species === 'walnut').components.edgeRip > 0, 'Validation estimate omits Edge Rip replacement stock');
   assert(validationMaterial.rows.find(row => row.species === 'cherry').components.borders > 0, 'Validation estimate omits border stock');

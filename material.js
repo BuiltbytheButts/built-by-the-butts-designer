@@ -7,6 +7,79 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const BOARD_FOOT_CUBIC_INCHES = 144;
 
+  function laminateCutPlan(input) {
+    const laminatedRows = Math.max(0, Math.floor(Number(input.laminatedRows) || 0));
+    const roughAllowance = Math.max(0, Number(input.stripRoughAllowance) || 0);
+    const strips = Array.isArray(input.strips)
+      ? input.strips
+        .filter(strip => Number(strip.width) > 0)
+        .map((strip, index) => ({
+          width: Math.max(0, Number(strip.width) || 0),
+          wood: strip.wood,
+          label: String(strip.label || index + 1)
+        }))
+      : [];
+    const centerLeft = strips.length % 2 === 0 ? strips.length / 2 - 1 : -1;
+    const physicalStrips = [];
+
+    for (let index = 0; index < strips.length; index += 1) {
+      const strip = strips[index];
+      const next = strips[index + 1];
+      const combineCenter = index === centerLeft && next && strip.wood === next.wood;
+      if (combineCenter) {
+        const finishedWidth = strip.width + next.width;
+        physicalStrips.push({
+          wood: strip.wood,
+          finishedWidth,
+          roughRipWidth: finishedWidth + roughAllowance,
+          positionLabel: `${strip.label} + ${next.label} (combined center)`,
+          combinedCenter: true
+        });
+        index += 1;
+      } else {
+        physicalStrips.push({
+          wood: strip.wood,
+          finishedWidth: strip.width,
+          roughRipWidth: strip.width + roughAllowance,
+          positionLabel: strip.label,
+          combinedCenter: false
+        });
+      }
+    }
+
+    const entries = [];
+    const grouped = new Map();
+    physicalStrips.forEach(strip => {
+      const key = `${strip.wood}\u0000${strip.finishedWidth.toFixed(8)}`;
+      let entry = grouped.get(key);
+      if (!entry) {
+        entry = {
+          wood: strip.wood,
+          finishedWidth: strip.finishedWidth,
+          roughRipWidth: strip.roughRipWidth,
+          positionLabels: [],
+          quantityPerBlank: 0,
+          totalQuantity: 0,
+          combinedCenter: false
+        };
+        grouped.set(key, entry);
+        entries.push(entry);
+      }
+      entry.positionLabels.push(strip.positionLabel);
+      entry.quantityPerBlank += 1;
+      entry.totalQuantity = entry.quantityPerBlank * laminatedRows;
+      entry.combinedCenter ||= strip.combinedCenter;
+    });
+
+    return {
+      entries,
+      laminatedRows,
+      physicalStripsPerBlank: entries.reduce((sum, entry) => sum + entry.quantityPerBlank, 0),
+      totalStrips: entries.reduce((sum, entry) => sum + entry.totalQuantity, 0),
+      centerCombined: physicalStrips.some(strip => strip.combinedCenter)
+    };
+  }
+
   function materialQuantityPlan(input) {
     const thickness = Math.max(0, Number(input.finishedThickness) || 0);
     const moduleWidth = Math.max(0.001, Number(input.moduleWidth) || 0.001);
@@ -34,14 +107,14 @@
       return bySpecies[key];
     }
 
-    // Every finished row starts as a full-length square laminated blank. Count
-    // each physical strip at its recommended rough-rip width, the required
-    // pre-45-degree blank thickness, and the complete kerf-inclusive blank
-    // length. This intentionally includes the stock later removed by the four
-    // 45-degree cuts and by an optional Edge Rip.
-    strips.forEach(strip => {
-      const roughWidth = Math.max(0, Number(strip.width) || 0) + stripRoughAllowance;
-      const volume = roughWidth * laminationSize * requiredBlankLength * laminatedRows;
+    // Every finished row starts as a full-length square laminated blank. Group
+    // identical cut settings and treat a same-species center pair as one wider
+    // physical strip so its rough-rip allowance is counted only once. This
+    // still includes the stock later removed by the four 45-degree cuts and by
+    // an optional Edge Rip.
+    const laminateCuts = laminateCutPlan({ strips, laminatedRows, stripRoughAllowance });
+    laminateCuts.entries.forEach(strip => {
+      const volume = strip.roughRipWidth * laminationSize * requiredBlankLength * strip.totalQuantity;
       const row = species(strip.wood);
       row.roughCubicInches += volume;
       row.components.laminatedStrips = (row.components.laminatedStrips || 0) + volume;
@@ -77,6 +150,7 @@
       requiredBlankLength,
       requiredLaminationSize: laminationSize,
       laminatedRows,
+      laminateCuts: laminateCuts.entries,
       crosscutFactor,
       edgeFraction,
       totalRoughBoardFeet: rows.reduce((sum, row) => sum + row.roughBoardFeet, 0),
@@ -85,5 +159,5 @@
     };
   }
 
-  return Object.freeze({ BOARD_FOOT_CUBIC_INCHES, materialQuantityPlan });
+  return Object.freeze({ BOARD_FOOT_CUBIC_INCHES, laminateCutPlan, materialQuantityPlan });
 });

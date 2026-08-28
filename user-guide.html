@@ -29,7 +29,7 @@
   <main>
     <section class="intro">
       <div><h2>Start with the board size you want</h2><p>Enter the requested finished dimensions, then build the strip and border schedules. The Designer reports the actual board that complete crosscuts, complete laminated rows, and the entered borders will produce—without silently trimming away a good laminated row.</p></div>
-      <aside class="version-card"><span>Guide applies to</span><strong>Designer v3.0.67</strong><span>Calculations remain estimates until confirmed against your stock, machines, and shop practices.</span></aside>
+      <aside class="version-card"><span>Guide applies to</span><strong>Designer v3.0.68</strong><span>Calculations remain estimates until confirmed against your stock, machines, and shop practices.</span></aside>
     </section>
 
     <nav class="toc" aria-label="Table of contents">
@@ -92,7 +92,8 @@
       <h2>Estimated Wood Cost</h2>
       <p>The table estimates the rough lumber needed to execute the cut plan, then combines shared species into one purchasing row. It does not show finished-board volume.</p>
       <ul>
-        <li><strong>Rough laminate strips</strong> counts every physical strip in every retained laminated row at its rough-rip width, required pre-45° size, and full master-blank length.</li>
+        <li><strong>Rough laminate strips</strong> groups identical species and finished-width cuts, multiplies them by every retained laminated row, and reports the total pieces to prepare before changing the setup.</li>
+        <li><strong>Combined center strip</strong> replaces the matching same-species A/B center pair with one wider physical strip. Its rough-rip allowance is applied once, reducing waste without changing the visible design.</li>
         <li><strong>Edge Rip</strong> adds the replacement wood while retaining the original laminate that must first be built and cut.</li>
         <li><strong>Borders</strong> counts every entered band on both long edges.</li>
         <li><strong>Estimated rough lumber</strong> includes blade kerf and the selected waste allowance.</li>
@@ -112,7 +113,7 @@
 
     <section id="build-guides" class="section">
       <h2>Build references</h2>
-      <h3>Print Illustrated Build Guide</h3><p>Generates a guide from the active project. It contains the finished-board reference, current cut list, strip and border schedules, material estimate, selected Edge Rip steps, crosscut lines, and the ordered build procedure.</p>
+      <h3>Print Illustrated Build Guide</h3><p>Generates a guide from the active project. Its Lamination Engineering table groups matching species/width settings, shows the quantity per blank, multiplies by the laminated-row count, and reports the total strips to cut. A matching same-species center pair appears as one wider combined strip. The guide also contains the finished-board reference, border schedule, material estimate, selected Edge Rip steps, crosscut lines, and ordered build procedure.</p>
       <h3>Independent Sample Build</h3><p>Opens a separate real-photo reference without changing the current design. Click any photo to enlarge it, then use previous/next or the keyboard arrow keys. The photos are embedded in the page so they remain available even when the nested asset folder is not.</p>
       <p>The illustrated guide follows the active design; the Sample Build shows one real build. When they differ, use the active project's dimensions and species while using the photos for process and orientation reference.</p>
     </section>
@@ -152,6 +153,6 @@
     </section>
   </main>
 
-  <footer><p>Built By The Butts · Diamond End Grain Designer User Guide · v3.0.67</p><a href="index.html">Return to the Designer</a></footer>
+  <footer><p>Built By The Butts · Diamond End Grain Designer User Guide · v3.0.68</p><a href="index.html">Return to the Designer</a></footer>
 </body>
 </html>
