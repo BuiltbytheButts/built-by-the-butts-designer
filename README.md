@@ -1,4 +1,4 @@
-# Diamond End Grain Designer v3.0.66
+# Diamond End Grain Designer v3.0.67
 
 Clean-architecture foundation rebuild for Built By The Butts.
 
@@ -26,6 +26,7 @@ Clean-architecture foundation rebuild for Built By The Butts.
 - Border stock, Edge Rip replacement stock, rough-rip allowance, and waste are included by species; finished/net design volume is intentionally omitted from the interface.
 - Editable USD board-foot prices produce per-species and total estimated wood costs.
 - Print Illustrated Build Guide produces a current cut list, material summary, and ten visual steps generated from the active design for paper or PDF.
+- Print-guide Step 1 scales and centers every lumber block from the active mirrored strip count so the complete A/B schedule remains visible.
 - Independent Sample Build is a self-contained photo guide; all original photos are embedded and open in an enlarged previous/next viewer.
 - A printable User Guide and interactive FAQ open independently from the compact Help menu.
 - Border engineering shows the exact replacement width required per edge and flags underage or overage.

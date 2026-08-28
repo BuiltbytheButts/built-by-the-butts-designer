@@ -1,3 +1,11 @@
+# v3.0.67 Dynamic Step 1 Lumber Layout
+
+- PASS — Step 1 draws one labeled lumber block for every strip in the active mirrored schedule.
+- PASS — a twelve-strip design shows the full 1A–6A / 6B–1B sequence inside the printable diagram.
+- PASS — blocks progressively shrink as strip count grows, remain centered, do not overlap, and stay within the SVG bounds.
+- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.67.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/board-renderer function hashes are unchanged.
+
 # v3.0.66 Correct Step 7 Diamond-Square Assembly
 
 - PASS — the laminated center forms the left and right points of the completed cross-section.

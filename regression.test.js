@@ -43,8 +43,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.66/g) || []).length === 5, 'All asset cache keys must be v3.0.66');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.67/g) || []).length === 5, 'All asset cache keys must be v3.0.67');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
   assert(html.includes('id="stripTotalMetric"') && html.includes('id="stripTotalWarning"') && html.includes('id="laminationWarning"'), 'Pre-45 strip-total validation is missing');
   assert(!html.includes('id="thicknessWarning"'), 'Strip-total warning remains attached to Finished thickness');
@@ -88,9 +88,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.66') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.66 page');
+  assert(userGuideHtml.includes('Designer v3.0.67') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.67 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 37, 'FAQ must contain the 37 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.66') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.66 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.67') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.67 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -101,7 +101,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.66', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.67', 'Wrong visible version');
   assert(await page.locator('#laminatedRowHelp').textContent() === 'Build 7 rows at least 20.875 in long each.', 'Default laminated-row length guidance is incorrect');
   assert((await page.locator('#materialLengthHelp').textContent()).includes('7 rows × 20.875 in of kerf-inclusive length'), 'Default cost guidance does not disclose row count and length');
   assert(await page.locator('#stripTotalMetric').textContent() === '1.5000 in', 'Default pre-45° strip total is incorrect');
@@ -530,6 +530,7 @@ function functionSource(source, name) {
     assert(orderBoxes[0].y + orderBoxes[0].height <= orderBoxes[1].y, `Step ${stepIndex + 1} strip-order label lines overlap`);
   }
   assert(!(await page.locator('#printPlan .guide-step').nth(3).locator('svg').textContent()).includes('clamp'), 'Step 4 retains overlapping clamp labels');
+  const baselineLumberBlockWidth = Number(await page.locator('#printPlan .guide-step').first().locator('[data-guide-part="lumber-block"]').first().getAttribute('width'));
   const guideLayoutSnapshot = await page.evaluate(() => snapshot());
   await page.evaluate(() => {
     state.strips = [
@@ -551,6 +552,37 @@ function functionSource(source, name) {
     'A side: 1A · 2A · 3A · 4A · 5A',
     'B side: 5B · 4B · 3B · 2B · 1B'
   ]), 'Ten-strip project does not retain the exact non-overlapping 1A–5A / 5B–1B order');
+  assert(await page.locator('#printPlan .guide-step').first().locator('[data-guide-part="lumber-block"]').count() === 10, 'Step 1 does not show all ten lumber strips');
+  const tenStripLumberWidth = Number(await page.locator('#printPlan .guide-step').first().locator('[data-guide-part="lumber-block"]').first().getAttribute('width'));
+  assert(tenStripLumberWidth < baselineLumberBlockWidth, 'Step 1 lumber blocks do not shrink as the strip count grows');
+  await page.evaluate(() => {
+    state.strips = [
+      { width: 0.25, wood: 'maple' },
+      { width: 0.125, wood: 'cherry' },
+      { width: 0.1875, wood: 'padauk' },
+      { width: 0.1875, wood: 'maple' },
+      { width: 0.125, wood: 'padauk' },
+      { width: 0.1875, wood: 'walnut' },
+      { width: 0.1875, wood: 'walnut' },
+      { width: 0.125, wood: 'padauk' },
+      { width: 0.1875, wood: 'maple' },
+      { width: 0.1875, wood: 'padauk' },
+      { width: 0.125, wood: 'cherry' },
+      { width: 0.25, wood: 'maple' }
+    ];
+    renderWorkshopPlan();
+  });
+  const twelveStripStep = page.locator('#printPlan .guide-step').first();
+  const twelveStripLabels = await twelveStripStep.locator('[data-guide-part="lumber-strip-label"]').allTextContents();
+  assert(JSON.stringify(twelveStripLabels) === JSON.stringify(['1A', '2A', '3A', '4A', '5A', '6A', '6B', '5B', '4B', '3B', '2B', '1B']), 'Step 1 does not show the complete mirrored twelve-strip order');
+  const twelveStripBlocks = await twelveStripStep.locator('[data-guide-part="lumber-block"]').evaluateAll(blocks => blocks.map(block => {
+    const box = block.getBBox();
+    return { x: box.x, width: box.width };
+  }));
+  assert(twelveStripBlocks.length === 12, 'Step 1 does not draw all twelve lumber blocks');
+  assert(twelveStripBlocks.every(block => block.x >= 0 && block.x + block.width <= 420), 'Step 1 lumber blocks overflow the printable diagram');
+  assert(twelveStripBlocks.every((block, index) => index === 0 || twelveStripBlocks[index - 1].x + twelveStripBlocks[index - 1].width <= block.x), 'Step 1 lumber blocks overlap');
+  assert(twelveStripBlocks[0].width < tenStripLumberWidth, 'Step 1 lumber blocks do not continue shrinking for a twelve-strip schedule');
   await page.evaluate(serialized => restore(serialized), guideLayoutSnapshot);
   await page.evaluate(() => renderWorkshopPlan());
   assert(borderedPlanText.includes('Glue the borders before crosscutting'), 'Border-before-crosscut step is missing');

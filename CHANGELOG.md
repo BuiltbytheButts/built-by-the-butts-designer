@@ -1,3 +1,10 @@
+## v3.0.67 — Dynamic Step 1 lumber layout
+
+- Made every Step 1 lumber block resize and recenter from the active mirrored strip count.
+- Kept the complete A/B strip sequence visible inside the printable diagram, including twelve-strip schedules.
+- Added regression checks for complete labels, in-bounds blocks, non-overlap, and progressive resizing as strips are added.
+- Frozen v3.0.7 laminate, Edge Rip, and board renderer geometry remain unchanged.
+
 ## v3.0.66 — Correct Step 7 diamond-square assembly
 
 - Reoriented the two Edge Rip replacement triangles to the top and bottom cut faces.

@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.66';
+const VERSION = '3.0.67';
 const ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
@@ -886,6 +886,21 @@ function buildGuideVisuals(crosscuts, border, lamination) {
     ? 'Turn Crosscut 1 180°, keep Crosscut 2 as cut, then continue alternating.'
     : 'Keep Crosscut 1 as cut, turn Crosscut 2 180°, then continue alternating.';
   const total = Math.max(moduleWidth(), 0.001);
+  const lumberBlockCount = Math.max(strips.length, 1);
+  const lumberAvailableWidth = 372;
+  const lumberGap = Math.min(9, 72 / lumberBlockCount);
+  const lumberBlockSize = Math.min(46, (lumberAvailableWidth - lumberGap * (lumberBlockCount - 1)) / lumberBlockCount);
+  const lumberRowWidth = lumberBlockSize * lumberBlockCount + lumberGap * (lumberBlockCount - 1);
+  const lumberStartX = (420 - lumberRowWidth) / 2;
+  const lumberTop = 81 - lumberBlockSize / 2;
+  const lumberLabelY = lumberTop + lumberBlockSize + 18;
+  const lumberLabelSize = Math.max(6, Math.min(11, lumberBlockSize * 0.38));
+  const lumberBlocks = strips.map((strip, index) => {
+    const x = lumberStartX + index * (lumberBlockSize + lumberGap);
+    const center = x + lumberBlockSize / 2;
+    const label = stripOffsetLabel(index, strips.length);
+    return `<rect data-guide-part="lumber-block" data-guide-label="${label}" x="${x.toFixed(2)}" y="${lumberTop.toFixed(2)}" width="${lumberBlockSize.toFixed(2)}" height="${lumberBlockSize.toFixed(2)}" rx="${Math.min(3, lumberBlockSize / 8).toFixed(2)}" fill="${guideWood(strip.wood)}"/><text data-guide-part="lumber-strip-label" x="${center.toFixed(2)}" y="${lumberLabelY.toFixed(2)}" text-anchor="middle" font-size="${lumberLabelSize.toFixed(2)}">${label}</text>`;
+  }).join('');
   let stripX = 40;
   const stripBlocks = strips.map((strip, index) => {
     const width = 340 * number(strip.width) / total;
@@ -979,7 +994,7 @@ function buildGuideVisuals(crosscuts, border, lamination) {
   const cutGap = masterHeight / shownCutCount;
   const topCrosscutLines = Array.from({ length: shownCutCount - 1 }, (_, index) => `<line x1="${masterX}" y1="${(masterY + (index + 1) * cutGap).toFixed(2)}" x2="${masterX + masterWidth}" y2="${(masterY + (index + 1) * cutGap).toFixed(2)}" class="guide-center-cut"/>`).join('');
   const steps = [
-    { title: 'Prepare the lumber', text: 'Mill the selected lumber square and straight, and make sure to include extra allowance for planing and sanding.', svg: guideSvg(`${strips.map((strip, i) => `<rect x="${43 + i * 55}" y="58" width="46" height="46" rx="3" fill="${guideWood(strip.wood)}"/><text x="${66 + i * 55}" y="124" text-anchor="middle">${stripOffsetLabel(i, strips.length)}</text>`).join('')}<text x="210" y="28" text-anchor="middle">Allow extra material for planing and sanding</text>`, 'Selected lumber milled square with extra planing and sanding allowance') },
+    { title: 'Prepare the lumber', text: 'Mill the selected lumber square and straight, and make sure to include extra allowance for planing and sanding.', svg: guideSvg(`${lumberBlocks}<text x="210" y="28" text-anchor="middle">Allow extra material for planing and sanding</text>`, `All ${strips.length} selected lumber strips milled square with extra planing and sanding allowance`) },
     { title: 'Rip the laminate strips', text: `Rough-rip every strip about 1/16 in wider than its finished design width. Joint and plane consistently; the assembled blank must finish at least ${lamination.recommended.toFixed(3)} in before the 45° cuts.`, svg: guideSvg(`<rect x="48" y="62" width="324" height="66" fill="${guideWood(strips[0]?.wood)}"/>${[1,2,3,4,5].map(i => `<line x1="${48 + i * 54}" y1="48" x2="${48 + i * 54}" y2="142" class="guide-cut"/>`).join('')}<text x="210" y="32" text-anchor="middle">Rip oversize → finish to schedule</text>`, 'Rip lines through rough lumber') },
     { title: 'Dry-fit the strip order', text: 'Arrange the pieces in the exact A/B pair order shown below. Confirm the wood colors and symmetry before applying glue.', svg: guideSvg(`${squareStripBlocks}<rect x="145" y="30" width="130" height="130" fill="none" stroke="#222" stroke-width="2"/><text x="210" y="18" text-anchor="middle">Square laminate · ${total.toFixed(4)} in module</text>${stripOrderGuide}`, 'Color-coded square laminate strip order') },
     { title: 'Glue and flatten the laminated blank', text: `Apply glue evenly, clamp across the full blank, then flatten it. The finished blank must be a ${lamination.recommended.toFixed(3)} × ${lamination.recommended.toFixed(3)} in square before continuing.`, svg: guideSvg(`${squareStripBlocks}<rect x="145" y="30" width="130" height="130" fill="none" stroke="#222" stroke-width="2"/><path d="M145 19 H275 M134 30 V160" class="guide-dimension"/><text x="210" y="16" text-anchor="middle">${lamination.recommended.toFixed(3)} in</text><text x="123" y="99" text-anchor="middle" transform="rotate(-90 123 99)">${lamination.recommended.toFixed(3)} in</text>${stripOrderGuide}`, `Clamped ${lamination.recommended.toFixed(3)} inch square laminated blank`) },
