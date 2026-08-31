@@ -1,4 +1,4 @@
-# Diamond End Grain Designer v3.0.68
+# Diamond End Grain Designer v3.0.69
 
 Clean-architecture foundation rebuild for Built By The Butts.
 
@@ -41,7 +41,7 @@ Clean-architecture foundation rebuild for Built By The Butts.
 - Editable kerf, rough-crosscut guidance, actual count, and required master blank length in one result
 - Undo/redo
 - JSON save/open
-- SVG export
+- Downloadable design image (SVG)
 
 This release intentionally does not carry forward every v2 feature. Additional features should be added only after the core geometry is validated.
 

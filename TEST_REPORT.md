@@ -1,3 +1,10 @@
+# v3.0.69 Clearer Design-Image Download
+
+- PASS — the main action now reads “Download Design Image” and retains the existing SVG download behavior.
+- PASS — the button tooltip, FAQ, and User Guide explain SVG in plain language.
+- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.69.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/board-renderer function hashes are unchanged.
+
 # v3.0.68 Grouped Strip Totals and Combined Center Stock
 
 - PASS — the printable Lamination Engineering table groups identical species and finished-width cut settings.

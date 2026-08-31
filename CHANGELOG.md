@@ -1,3 +1,9 @@
+## v3.0.69 — Clearer design-image download
+
+- Renamed the “Export SVG” action to “Download Design Image” so the control describes its purpose in plain language.
+- Added a concise tooltip and updated the FAQ and User Guide to identify SVG as the scalable file format.
+- The downloaded artwork and all design calculations remain unchanged.
+
 ## v3.0.68 — Grouped strip totals and combined center stock
 
 - Rebuilt the printable Lamination Engineering table as a cutting summary grouped by species and finished width.
