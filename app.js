@@ -1,7 +1,8 @@
 'use strict';
 
-const VERSION = '3.0.69';
-const ROUGH_RIP_EXTRA = 1 / 16;
+const VERSION = '3.0.71';
+const STRIP_ROUGH_RIP_EXTRA = 0.035;
+const BORDER_ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
 const STORAGE_KEY = 'diamond-end-grain-designer-v3';
 
@@ -120,7 +121,7 @@ function finishedCellPitch() {
 }
 
 function recommendedRoughRip(width) {
-  return round(number(width) + ROUGH_RIP_EXTRA, 4);
+  return round(number(width) + STRIP_ROUGH_RIP_EXTRA, 4);
 }
 
 function recommendedRoughCrosscut() {
@@ -224,8 +225,8 @@ function materialQuantity() {
     edgeInset: state.edgeInset, edgeWood: state.edgeWood,
     laminatedRows: border.selectedRows,
     requiredLaminationSize: lamination.recommended,
-    stripRoughAllowance: ROUGH_RIP_EXTRA,
-    borderRoughAllowance: ROUGH_RIP_EXTRA,
+    stripRoughAllowance: STRIP_ROUGH_RIP_EXTRA,
+    borderRoughAllowance: BORDER_ROUGH_RIP_EXTRA,
     crosscutCount: crosscuts.crosscutCount, roughCrosscut: crosscuts.roughCrosscut,
     bladeKerf: state.bladeKerf, wastePercent: state.wastePercent,
     prices: state.woodPrices
@@ -838,14 +839,14 @@ function renderMaterial() {
   $('materialLengthHelp').textContent = plan.laminatedRows > 0
     ? `Laminated-strip board feet include ${plan.laminatedRows} row${plan.laminatedRows === 1 ? '' : 's'} × ${plan.requiredBlankLength.toFixed(3)} in of kerf-inclusive length.`
     : `No laminated-strip row length is included; this border schedule retains zero laminated rows.`;
-  $('wasteRecommendation').textContent = `Recommended minimum for this design: ${recommendedWaste}% (${number(state.edgeInset) > 0 ? 'Edge Rip selected' : 'no Edge Rip'}).`;
+  $('wasteRecommendation').textContent = `Recommended minimum for this design: ${recommendedWaste}% (${number(state.edgeInset) > 0 ? 'Diamond Accent selected' : 'no Diamond Accent'}).`;
   $('useRecommendedWasteBtn').hidden = !state.wasteIsManual && Math.abs(number(state.wastePercent) - recommendedWaste) < 1e-9;
   $('wasteWarning').hidden = number(state.wastePercent) >= recommendedWaste;
   $('wasteWarning').textContent = `Waste allowance is below the recommended ${recommendedWaste}% for this design.`;
   $('materialTableBody').innerHTML = plan.rows.map(row => {
     const parts = [];
     if (row.components.laminatedStrips) parts.push('Rough laminate strips');
-    if (row.components.edgeRip) parts.push('Edge Rip');
+    if (row.components.edgeRip) parts.push('Diamond Accent');
     if (row.components.borders) parts.push('Borders');
     return `<tr><td><strong>${WOODS[row.species]?.name || row.species}</strong></td><td><small>${parts.join(' + ')}</small></td><td>${row.purchaseBoardFeet.toFixed(3)}</td><td><input class="price-input" data-wood-price="${row.species}" type="number" min="0" step="0.01" value="${row.pricePerBoardFoot.toFixed(2)}" aria-label="${WOODS[row.species]?.name || row.species} price per board foot"></td><td data-species-cost="${row.species}">$${row.estimatedCost.toFixed(2)}</td></tr>`;
   }).join('');
@@ -952,12 +953,12 @@ function buildGuideVisuals(crosscuts, border, lamination) {
     return shape;
   }).join('');
   const edgeRipSteps = edgeRipSelected ? [{
-    title: 'Cut the Edge Rip after the 45° cuts',
+    title: 'Cut the Diamond Accent shoulders',
     text: `Use the completed 45° piece. Cut across the ${ripTargetSpecies} section to the selected ${number(state.edgeInset).toFixed(3)} in depth, creating the two angled shoulders shown below.`,
-    svg: guideSvg(`<defs><clipPath id="guide-edge-octagon"><polygon points="155,20 265,20 305,60 305,130 265,170 155,170 115,130 115,60"/></clipPath></defs><g clip-path="url(#guide-edge-octagon)"><rect x="115" y="20" width="190" height="150" fill="${guideWood(strips[0]?.wood)}"/><rect x="115" y="55" width="190" height="24" fill="${guideWood(strips[1]?.wood)}"/><rect x="115" y="79" width="190" height="32" fill="${guideWood(ripTargetWood)}"/><rect x="115" y="111" width="190" height="24" fill="${guideWood(strips.at(-2)?.wood)}"/></g><polygon points="155,20 265,20 305,60 305,130 265,170 155,170 115,130 115,60" fill="none" stroke="#33261e" stroke-width="3"/><line x1="115" y1="79" x2="142" y2="95" class="guide-center-cut"/><line x1="278" y1="95" x2="305" y2="111" class="guide-center-cut"/><text x="72" y="72" class="guide-edge-label">CUT</text><path d="M92 76 L120 84" class="guide-arrow" marker-end="url(#guide-arrowhead)"/><text x="330" y="121" class="guide-edge-label">CUT</text><path d="M326 112 L300 105" class="guide-arrow" marker-end="url(#guide-arrowhead)"/>`, `Octagonal 45-degree piece with Edge Rip cuts across the ${ripTargetSpecies} section`)
+    svg: guideSvg(`<defs><clipPath id="guide-edge-octagon"><polygon points="155,20 265,20 305,60 305,130 265,170 155,170 115,130 115,60"/></clipPath></defs><g clip-path="url(#guide-edge-octagon)"><rect x="115" y="20" width="190" height="150" fill="${guideWood(strips[0]?.wood)}"/><rect x="115" y="55" width="190" height="24" fill="${guideWood(strips[1]?.wood)}"/><rect x="115" y="79" width="190" height="32" fill="${guideWood(ripTargetWood)}"/><rect x="115" y="111" width="190" height="24" fill="${guideWood(strips.at(-2)?.wood)}"/></g><polygon points="155,20 265,20 305,60 305,130 265,170 155,170 115,130 115,60" fill="none" stroke="#33261e" stroke-width="3"/><line x1="115" y1="79" x2="142" y2="95" class="guide-center-cut"/><line x1="278" y1="95" x2="305" y2="111" class="guide-center-cut"/><text x="72" y="72" class="guide-edge-label">CUT</text><path d="M92 76 L120 84" class="guide-arrow" marker-end="url(#guide-arrowhead)"/><text x="330" y="121" class="guide-edge-label">CUT</text><path d="M326 112 L300 105" class="guide-arrow" marker-end="url(#guide-arrowhead)"/>`, `Octagonal 45-degree piece with Diamond Accent shoulder cuts across the ${ripTargetSpecies} section`)
   }, {
-    title: `Glue the new 45° ${edgeRipSpecies} to the top and bottom cut faces`,
-    text: `Prepare matching 45° ${edgeRipSpecies} replacement pieces. Glue them flush to the freshly cut top and bottom ${ripTargetSpecies} faces so the completed cross-section is a square.`,
+    title: `Glue the ${edgeRipSpecies} Diamond Accent pieces`,
+    text: `Prepare matching 45° ${edgeRipSpecies} Diamond Accent pieces. Glue them flush to the freshly cut top and bottom ${ripTargetSpecies} faces so the completed cross-section is a square.`,
     svg: guideSvg(`<defs><clipPath id="guide-edge-glue-center"><polygon points="140,45 280,45 380,95 280,145 140,145 40,95"/></clipPath></defs><g clip-path="url(#guide-edge-glue-center)">${edgeGlueStrips}</g><polygon data-guide-part="edge-rip-center-blank" points="140,45 280,45 380,95 280,145 140,145 40,95" fill="none" stroke="#33261e" stroke-width="3" stroke-linejoin="round"/><polygon data-guide-part="replacement-top" points="140,45 280,45 210,12" fill="${guideWood(state.edgeWood)}" stroke="#6e5a4b" stroke-width="3" stroke-linejoin="round"/><polygon data-guide-part="replacement-bottom" points="140,145 280,145 210,178" fill="${guideWood(state.edgeWood)}" stroke="#6e5a4b" stroke-width="3" stroke-linejoin="round"/><line data-guide-part="replacement-top-seam" x1="140" y1="45" x2="280" y2="45" stroke="#6e5a4b" stroke-width="3"/><line data-guide-part="replacement-bottom-seam" x1="140" y1="145" x2="280" y2="145" stroke="#6e5a4b" stroke-width="3"/><polygon data-guide-part="edge-rip-diamond-square" points="210,12 380,95 210,178 40,95" fill="none" stroke="#33261e" stroke-width="3" stroke-linejoin="round"/>`, `Completed square rotated 45 degrees with two ${edgeRipSpecies} triangles attached flush to the top and bottom ${ripTargetSpecies} cut faces`)
   }] : [];
   const borderTop = state.includeBorders ? border.bands.reduce((html, band, index) => html + `<rect x="45" y="${30 + index * 8}" width="330" height="8" fill="${guideWood(band.wood)}"/>`, '') : '';
@@ -995,10 +996,10 @@ function buildGuideVisuals(crosscuts, border, lamination) {
   const topCrosscutLines = Array.from({ length: shownCutCount - 1 }, (_, index) => `<line x1="${masterX}" y1="${(masterY + (index + 1) * cutGap).toFixed(2)}" x2="${masterX + masterWidth}" y2="${(masterY + (index + 1) * cutGap).toFixed(2)}" class="guide-center-cut"/>`).join('');
   const steps = [
     { title: 'Prepare the lumber', text: 'Mill the selected lumber square and straight, and make sure to include extra allowance for planing and sanding.', svg: guideSvg(`${lumberBlocks}<text x="210" y="28" text-anchor="middle">Allow extra material for planing and sanding</text>`, `All ${strips.length} selected lumber strips milled square with extra planing and sanding allowance`) },
-    { title: 'Rip the laminate strips', text: `Rough-rip every strip about 1/16 in wider than its finished design width. Joint and plane consistently; the assembled blank must finish at least ${lamination.recommended.toFixed(3)} in before the 45° cuts.`, svg: guideSvg(`<rect x="48" y="62" width="324" height="66" fill="${guideWood(strips[0]?.wood)}"/>${[1,2,3,4,5].map(i => `<line x1="${48 + i * 54}" y1="48" x2="${48 + i * 54}" y2="142" class="guide-cut"/>`).join('')}<text x="210" y="32" text-anchor="middle">Rip oversize → finish to schedule</text>`, 'Rip lines through rough lumber') },
+    { title: 'Rip the laminate strips', text: `Rough-rip every strip about 0.035 in wider than its finished design width. Joint and plane consistently; the assembled blank must finish at least ${lamination.recommended.toFixed(3)} in before the 45° cuts.`, svg: guideSvg(`<rect x="48" y="62" width="324" height="66" fill="${guideWood(strips[0]?.wood)}"/>${[1,2,3,4,5].map(i => `<line x1="${48 + i * 54}" y1="48" x2="${48 + i * 54}" y2="142" class="guide-cut"/>`).join('')}<text x="210" y="32" text-anchor="middle">Rip oversize → finish to schedule</text>`, 'Rip lines through rough lumber') },
     { title: 'Dry-fit the strip order', text: 'Arrange the pieces in the exact A/B pair order shown below. Confirm the wood colors and symmetry before applying glue.', svg: guideSvg(`${squareStripBlocks}<rect x="145" y="30" width="130" height="130" fill="none" stroke="#222" stroke-width="2"/><text x="210" y="18" text-anchor="middle">Square laminate · ${total.toFixed(4)} in module</text>${stripOrderGuide}`, 'Color-coded square laminate strip order') },
     { title: 'Glue and flatten the laminated blank', text: `Apply glue evenly, clamp across the full blank, then flatten it. The finished blank must be a ${lamination.recommended.toFixed(3)} × ${lamination.recommended.toFixed(3)} in square before continuing.`, svg: guideSvg(`${squareStripBlocks}<rect x="145" y="30" width="130" height="130" fill="none" stroke="#222" stroke-width="2"/><path d="M145 19 H275 M134 30 V160" class="guide-dimension"/><text x="210" y="16" text-anchor="middle">${lamination.recommended.toFixed(3)} in</text><text x="123" y="99" text-anchor="middle" transform="rotate(-90 123 99)">${lamination.recommended.toFixed(3)} in</text>${stripOrderGuide}`, `Clamped ${lamination.recommended.toFixed(3)} inch square laminated blank`) },
-    { title: 'Make the four 45° cuts', text: 'Mark the center of all four edges. Connect each center to the center of the next edge with a dotted line, then complete all four 45° cuts before beginning any Edge Rip operation.', svg: guideSvg(`${squareStripBlocks}<rect x="145" y="30" width="130" height="130" fill="none" stroke="#222" stroke-width="2"/><path d="M210 30 L275 95 L210 160 L145 95 Z" class="guide-center-cut" fill="none"/><circle cx="210" cy="30" r="4" class="guide-center-point"/><circle cx="275" cy="95" r="4" class="guide-center-point"/><circle cx="210" cy="160" r="4" class="guide-center-point"/><circle cx="145" cy="95" r="4" class="guide-center-point"/><text x="252" y="55">CUT</text><text x="250" y="139">CUT</text><text x="153" y="139">CUT</text><text x="151" y="55">CUT</text>${stripOrderGuide}`, 'Square laminate with four dotted 45-degree cuts') },
+    { title: 'Make the four 45° cuts', text: 'Mark the center of all four edges. Connect each center to the center of the next edge with a dotted line, then complete all four 45° cuts before beginning the Diamond Accent operation.', svg: guideSvg(`${squareStripBlocks}<rect x="145" y="30" width="130" height="130" fill="none" stroke="#222" stroke-width="2"/><path d="M210 30 L275 95 L210 160 L145 95 Z" class="guide-center-cut" fill="none"/><circle cx="210" cy="30" r="4" class="guide-center-point"/><circle cx="275" cy="95" r="4" class="guide-center-point"/><circle cx="210" cy="160" r="4" class="guide-center-point"/><circle cx="145" cy="95" r="4" class="guide-center-point"/><text x="252" y="55">CUT</text><text x="250" y="139">CUT</text><text x="153" y="139">CUT</text><text x="151" y="55">CUT</text>${stripOrderGuide}`, 'Square laminate with four dotted 45-degree cuts') },
     ...edgeRipSteps,
     { title: 'Dry-fit the 45° cut pieces', text: 'Before crosscutting the long blanks, arrange the four 45° sections into two rows. Confirm that the angles, strip order, and mirrored faces meet cleanly.', svg: guideSvg(`${diamonds}<text x="210" y="178" text-anchor="middle">Two-row dry fit · check every joint before gluing</text>`, 'Two-row dry fit of the 45-degree cut pieces') },
     { title: state.includeBorders ? 'Glue the borders before crosscutting' : 'Prepare the full master blank', text: state.includeBorders ? `Glue the complete border schedule to both long outside edges of the master blank now. The borders must become part of the blank before any crosscuts are made.` : `Join the dry-fitted sections into the full master blank and verify at least ${crosscuts.requiredBlankLength.toFixed(3)} in of usable length before crosscutting.`, svg: guideSvg(`${masterBlankTop}<text x="210" y="187" text-anchor="middle">${state.includeBorders ? 'Borders glued to both long edges before crosscutting' : 'Full master blank ready for crosscut layout'}</text>`, state.includeBorders ? 'Top view of borders glued to the long master blank before crosscutting' : 'Top view of the full master blank before crosscutting') },
@@ -1051,7 +1052,7 @@ function renderWorkshopPlan() {
   const laminateCuts = DiamondMaterial.laminateCutPlan({
     strips: active.map((strip, index) => ({ ...strip, label: stripOffsetLabel(index, active.length) })),
     laminatedRows: border.selectedRows,
-    stripRoughAllowance: ROUGH_RIP_EXTRA
+    stripRoughAllowance: STRIP_ROUGH_RIP_EXTRA
   });
   const stripRows = laminateCuts.entries.map(entry => `<tr data-center-combined="${entry.combinedCenter}"><td>${entry.positionLabels.join(' · ')}</td><td>${WOODS[entry.wood]?.name || entry.wood}</td><td>${entry.finishedWidth.toFixed(4)} in</td><td>${entry.roughRipWidth.toFixed(4)} in</td><td><strong>${entry.totalQuantity} strip${entry.totalQuantity === 1 ? '' : 's'} total</strong><br><small>${entry.quantityPerBlank} per blank × ${laminateCuts.laminatedRows} row${laminateCuts.laminatedRows === 1 ? '' : 's'}</small></td></tr>`).join('');
   const borderRows = state.includeBorders
@@ -1060,7 +1061,7 @@ function renderWorkshopPlan() {
   const materialRows = materials.rows.map(row => {
     const parts = [];
     if (row.components.laminatedStrips) parts.push('Rough laminate strips');
-    if (row.components.edgeRip) parts.push('Edge Rip');
+    if (row.components.edgeRip) parts.push('Diamond Accent');
     if (row.components.borders) parts.push('Borders');
     return `<tr><td>${WOODS[row.species]?.name || row.species}</td><td>${parts.join(' + ')}</td><td>${row.purchaseBoardFeet.toFixed(3)}</td><td>$${row.pricePerBoardFoot.toFixed(2)}</td><td>$${row.estimatedCost.toFixed(2)}</td></tr>`;
   }).join('');
@@ -1073,10 +1074,10 @@ function renderWorkshopPlan() {
   const edgeRipTargetWood = activeStrips().some(strip => strip.wood === 'walnut') ? 'walnut' : activeStrips()[Math.floor(activeStrips().length / 2)]?.wood;
   const edgeRipTargetSpecies = WOODS[edgeRipTargetWood]?.name || edgeRipTargetWood;
   const edgeRipChecklist = number(state.edgeInset) > 0.0005
-    ? `<li>After all four 45° cuts are complete, cut the ${number(state.edgeInset).toFixed(3)} in Edge Rip across the ${edgeRipTargetSpecies} section.</li><li>Glue the new 45° ${WOODS[state.edgeWood]?.name || state.edgeWood} replacement pieces onto the freshly cut ${edgeRipTargetSpecies} edges.</li>`
+    ? `<li>After all four 45° cuts are complete, cut the ${number(state.edgeInset).toFixed(3)} in Diamond Accent shoulders across the ${edgeRipTargetSpecies} section.</li><li>Glue the new 45° ${WOODS[state.edgeWood]?.name || state.edgeWood} Diamond Accent pieces onto the freshly cut ${edgeRipTargetSpecies} faces.</li>`
     : '';
   const edgeRipSection = number(state.edgeInset) > 0.0005
-    ? `<section><h2>Edge Rip</h2><p>Cut depth: <strong>${number(state.edgeInset).toFixed(3)} in</strong> · Replacement: <strong>${WOODS[state.edgeWood]?.name || state.edgeWood}</strong></p></section>`
+    ? `<section><h2>Diamond Accent</h2><p>Accent cut depth: <strong>${number(state.edgeInset).toFixed(3)} in</strong> · Accent wood: <strong>${WOODS[state.edgeWood]?.name || state.edgeWood}</strong></p></section>`
     : '';
   const glueUpLabel = state.glueUpPhase === 1 ? 'Crosscut 1 turned 180°' : 'Crosscut 1 kept as cut';
   const glueUpChecklist = state.glueUpPhase === 1
@@ -1090,7 +1091,7 @@ function renderWorkshopPlan() {
     <section><h2>Crosscut Engineering</h2><table><tbody><tr><th>Calculated crosscuts</th><td>${crosscuts.crosscutCount}${crosscuts.isBalanced ? ' — balanced' : ' — unbalanced warning'}</td></tr><tr><th>Recommended rough crosscut</th><td>${crosscuts.roughCrosscut.toFixed(3)} in</td></tr><tr><th>Blade kerf</th><td>${crosscuts.bladeKerf.toFixed(3)} in</td></tr><tr><th>Required master blank</th><td>${crosscuts.requiredBlankLength.toFixed(3)} in</td></tr><tr><th>Projected finished run</th><td>${crosscuts.achievableLength.toFixed(3)} in</td></tr></tbody></table></section>
     ${edgeRipSection}
     <section><h2>Border Schedule</h2><p>Entered total per edge: <strong>${state.includeBorders ? `${border.requestedWidth.toFixed(4)} in` : 'Not applicable'}</strong>${state.includeBorders ? ` · Requested board width would require ${border.requiredWidth.toFixed(4)} in per edge.` : ''}${state.includeBorders && !border.scheduleMatches ? ` · The actual board therefore differs by ${Math.abs(border.difference * 2).toFixed(4)} in overall width.` : ''}</p><table><thead><tr><th>Band</th><th>Species</th><th>Width</th><th>Finished length</th><th>Quantity</th></tr></thead><tbody>${borderRows}</tbody></table></section>
-    <section><h2>Estimated Wood Cost</h2><p>Waste allowance: ${materials.wastePercent.toFixed(1)}% · Estimated rough lumber: ${materials.totalPurchaseBoardFeet.toFixed(3)} bd ft · Estimated Wood Cost: $${materials.totalEstimatedCost.toFixed(2)}</p><p><strong>Laminated-row length used for board feet:</strong> ${materials.laminatedRows} row${materials.laminatedRows === 1 ? '' : 's'} × ${materials.requiredBlankLength.toFixed(3)} in each.</p><table><thead><tr><th>Species</th><th>Includes</th><th>Est. Buy BF</th><th>$/BF</th><th>Cost</th></tr></thead><tbody>${materialRows}</tbody></table><p class="print-note">This rough-stock estimate counts the complete pre-45° laminated blanks, rough-rip allowance, required master-blank length and crosscut kerf, borders, Edge Rip replacement stock, and the selected waste allowance. Actual purchases still vary with available board sizes and defects.</p></section>
+    <section><h2>Estimated Wood Cost</h2><p>Waste allowance: ${materials.wastePercent.toFixed(1)}% · Estimated rough lumber: ${materials.totalPurchaseBoardFeet.toFixed(3)} bd ft · Estimated Wood Cost: $${materials.totalEstimatedCost.toFixed(2)}</p><p><strong>Laminated-row length used for board feet:</strong> ${materials.laminatedRows} row${materials.laminatedRows === 1 ? '' : 's'} × ${materials.requiredBlankLength.toFixed(3)} in each.</p><table><thead><tr><th>Species</th><th>Includes</th><th>Est. Buy BF</th><th>$/BF</th><th>Cost</th></tr></thead><tbody>${materialRows}</tbody></table><p class="print-note">This rough-stock estimate counts the complete pre-45° laminated blanks, rough-rip allowance, required master-blank length and crosscut kerf, borders, Diamond Accent replacement stock, and the selected waste allowance. Actual purchases still vary with available board sizes and defects.</p></section>
     <section><h2>Illustrated Build Procedure</h2><p class="print-note">Diagrams are generated from this design. Wood colors are a guide; actual boards vary.</p><div class="guide-key">${materialKey}</div><div class="guide-steps">${illustratedSteps}</div></section>
     <section><h2>Workshop Sequence — Quick Checklist</h2><ol><li>Review the design and keep the finished-board reference available.</li><li>Mill stock and rough-rip the laminate strips according to the strip schedule.</li><li>Dry-fit the strip order and confirm the species and symmetry.</li><li>Glue, flatten, and mill the blank to ${lamination.recommended.toFixed(3)} × ${lamination.recommended.toFixed(3)} in.</li><li>Mark all four adjacent-edge-center lines and complete the four 45° cuts.</li>${edgeRipChecklist}<li>Dry-fit the 45° cut sections in two rows and check the joints.</li>${masterBlankStep}<li>From the top view, run ${crosscuts.crosscutCount} dotted cut lines across the completed blank at approximately ${crosscuts.roughCrosscut.toFixed(3)} in spacing, using a ${crosscuts.bladeKerf.toFixed(3)} in kerf.</li><li>Lay out all ${crosscuts.crosscutCount} assigned crosscuts. ${glueUpChecklist}</li><li>Flatten, make only the cleanup cuts needed to square the board, and finish to the actual ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in dimensions.</li></ol></section>`;
 }

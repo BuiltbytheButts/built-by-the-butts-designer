@@ -13,7 +13,7 @@ The application has one small state object containing only user-owned design inp
 No user-entered rows, columns, sizing mode, trim allowance, or finishing allowance are stored. The only layout choice is the two-position starting-crosscut glue-up phase; it changes preview placement but not manufacturing quantities.
 
 ## Geometry
-- `moduleWidth()` comes only from the active strip schedule and controls internal band proportions plus Edge Rip depth scaling.
+- `moduleWidth()` comes only from the active strip schedule and controls internal band proportions plus Diamond Accent depth scaling.
 - `finishedCellPitch()` comes only from finished thickness and controls the physical square-cell spacing, preview length, and complete-row fit.
 - `recommendedRoughRip()` is guidance only.
 - `recommendedRoughCrosscut()` is guidance only.
@@ -33,17 +33,17 @@ No user-entered rows, columns, sizing mode, trim allowance, or finishing allowan
 ## Persistence
 v3 uses its own local-storage key and JSON schema so old v2 autosaves cannot silently inject retired fields.
 
-## Edge Rip invariant
-The strip field is immutable under Edge Rip. Edge Rip is modeled as a subtractive 45-degree corner cut, followed by replacement stock filling exactly the removed triangular area.
+## Diamond Accent invariant
+The strip field is immutable under the Diamond Accent. The Diamond Accent is modeled as a subtractive 45-degree corner cut, followed by replacement stock filling exactly the removed triangular area.
 
 ## v3.0.36 wood-library invariant
 - The built-in catalog supplies stable species keys, labels, and approximate display colors.
-- Project-owned custom species use stable `custom-N` keys so one definition can be reused by strips, borders, Edge Rip, material pricing, diagrams, exports, and printouts.
+- Project-owned custom species use stable `custom-N` keys so one definition can be reused by strips, borders, Diamond Accent, material pricing, diagrams, exports, and printouts.
 - Custom species definitions are stored inside the project state; invalid saved colors and unsafe display-name characters are normalized during restore.
-- Wood catalog changes cannot alter the frozen laminate or Edge Rip geometry.
+- Wood catalog changes cannot alter the frozen laminate or Diamond Accent geometry.
 
 ## v3.0.7 geometry invariant
-The renderer has no fallback/filler wood. `geometry.js` computes clipped polygons for every physical laminate strip and is shared by the browser renderer and regression tests. Edge Rip is a separate cut/replacement overlay.
+The renderer has no fallback/filler wood. `geometry.js` computes clipped polygons for every physical laminate strip and is shared by the browser renderer and regression tests. Diamond Accent is a separate cut/replacement overlay.
 
 
 ## v3.0.8 lamination-size invariant
@@ -69,8 +69,8 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 ## v3.0.20 material-quantity invariant
 - `material.js` is the pure calculation source for species quantities.
 - Net board feet = finished cubic inches ÷ 144.
-- Finished composition includes diamond laminate after Edge Rip replacement, replacement wood, and every physical border band.
-- Purchase board feet retains the original laminate consumed before Edge Rip, adds rough-crosscut and blade-kerf consumption, then applies editable waste.
+- Finished composition includes diamond laminate after Diamond Accent replacement, replacement wood, and every physical border band.
+- Purchase board feet retains the original laminate consumed before the Diamond Accent is cut, adds rough-crosscut and blade-kerf consumption, then applies editable waste.
 - Species shared across components are combined into one purchasing row.
 
 ## v3.0.21 pricing invariant
@@ -81,9 +81,9 @@ The renderer has no fallback/filler wood. `geometry.js` computes clipped polygon
 ## v3.0.59 rough-stock cost invariant
 - `material.js` remains the pure source for wood quantities, but the visible estimate is now a cut-plan stock requirement rather than finished-board volume.
 - Every physical strip is counted at its recommended rough-rip width across every retained laminated row, the full required pre-45° lamination size, and the complete kerf-inclusive master-blank length.
-- The original full laminate remains counted when Edge Rip is selected; the replacement triangles add separate stock using the exact cut-area fraction from the selected depth.
+- The original full laminate remains counted when Diamond Accent is selected; the replacement triangles add separate stock using the exact cut-area fraction from the selected depth.
 - Every entered border band is counted twice, once for each long edge, with rough-rip allowance and the same required blank length and lamination size.
-- The selected waste percentage is applied after all rough laminate, Edge Rip, and border requirements are combined by species.
+- The selected waste percentage is applied after all rough laminate, Diamond Accent, and border requirements are combined by species.
 - Finished cubic inches and net board feet are not shown because they do not represent the lumber a woodworker must prepare or buy.
 - Estimated Wood Cost is the resulting purchase board feet multiplied by each species price.
 
@@ -100,4 +100,4 @@ The print-only procedure is regenerated from current state and contains nine SVG
 
 ## v3.0.25 guide-display invariant
 
-Guide-only shapes may respond to design state but must not alter the frozen finished-board renderer. Edge Rip guide content is conditional on a nonzero cut depth.
+Guide-only shapes may respond to design state but must not alter the frozen finished-board renderer. Diamond Accent guide content is conditional on a nonzero cut depth.

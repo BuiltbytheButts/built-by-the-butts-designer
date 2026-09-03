@@ -43,8 +43,8 @@ function functionSource(source, name) {
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.69/g) || []).length === 5, 'All asset cache keys must be v3.0.69');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.71/g) || []).length === 5, 'All asset cache keys must be v3.0.71');
   assert(html.includes('id="exportSvgBtn"') && html.includes('>Download Design Image</button>') && html.includes('scalable SVG image'), 'Plain-language design-image download control or tooltip is missing');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
   assert(html.includes('id="stripTotalMetric"') && html.includes('id="stripTotalWarning"') && html.includes('id="laminationWarning"'), 'Pre-45 strip-total validation is missing');
@@ -55,7 +55,7 @@ function functionSource(source, name) {
   assert(html.includes('id="helpMenu"') && html.includes('user-guide.html') && html.includes('faq.html'), 'Designer Help menu is missing the User Guide or FAQ');
   assert(html.includes('Estimated Wood Cost') && html.includes('Estimated rough lumber'), 'Rough-lumber cost estimate is missing');
   assert(!html.includes('materialNetMetric') && !html.includes('materialVolumeHelp') && !html.includes('materialGapWarning'), 'Finished/net material volume remains visible');
-  const controlOrder = ['Strip Schedule', 'Edge Rip', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Estimated Wood Cost', 'Wood Library'].map(label => html.indexOf(label));
+  const controlOrder = ['Strip Schedule', 'Diamond Accent', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Estimated Wood Cost', 'Wood Library'].map(label => html.indexOf(label));
   assert(controlOrder.every((position, index) => position >= 0 && (!index || position > controlOrder[index - 1])), 'Left-panel control sections are not in the approved order');
   const sampleHtml = fs.readFileSync(path.join(root, 'sample-build.html'), 'utf8');
   const sampleTemplateHtml = fs.readFileSync(path.join(root, 'sample-build.template.html'), 'utf8');
@@ -72,7 +72,8 @@ function functionSource(source, name) {
   assert(sampleHtml.includes('strip-stack-measurement.png') && sampleHtml.includes('strip-order-dry-fit.png'), 'Step 2 does not contain both supplied strip photos');
   assert(sampleHtml.includes('laminated-assembly-measurement.png') && sampleHtml.includes('laminated-blank-glue-up.png') && sampleHtml.includes('squared-blank-measurement.png'), 'Step 3 does not contain all three supplied glue-up photos');
   assert(sampleHtml.includes('marked-45-profile.png') && sampleHtml.includes('cut-section-measurement.png') && sampleHtml.includes('completed-45-sections.png'), 'Step 4 does not contain all three supplied 45-degree photos');
-  assert(sampleHtml.includes('edge-rip-before-cut.png') && sampleHtml.includes('edge-rip-cut-face.png') && sampleHtml.includes('matched-edge-rip-pair.png'), 'Step 5 does not contain all three supplied Edge Rip photos');
+  assert(sampleHtml.includes('edge-rip-before-cut.png') && sampleHtml.includes('edge-rip-cut-face.png') && sampleHtml.includes('matched-edge-rip-pair.png'), 'Step 5 does not contain all three supplied Diamond Accent photos');
+  assert(sampleHtml.includes('Cut the Diamond Accent shoulders') && sampleHtml.includes('Glue the maple Diamond Accent pieces') && !sampleHtml.includes('Edge Rip'), 'Sample Build does not use the approved Diamond Accent wording');
   assert(sampleHtml.includes('maple-walnut-glue-up.png') && sampleHtml.includes('replacement-strip-glue-up.png') && sampleHtml.includes('replacement-glue-up-alignment.png'), 'Step 6 does not contain all three supplied replacement glue-up photos');
   assert(sampleHtml.indexOf('strip-order-dry-fit.png') < sampleHtml.indexOf('strip-stack-measurement.png'), 'Step 2 must show the layout before the measurement');
   assert(sampleHtml.indexOf('laminated-blank-glue-up.png') < sampleHtml.indexOf('laminated-assembly-measurement.png') && sampleHtml.indexOf('laminated-assembly-measurement.png') < sampleHtml.indexOf('squared-blank-measurement.png'), 'Step 3 photo order is incorrect');
@@ -89,9 +90,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.69') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('Download Design Image') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.69 page');
+  assert(userGuideHtml.includes('Designer v3.0.71') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('0.2850-inch rough rip') && userGuideHtml.includes('Diamond Accent') && userGuideHtml.includes('Download Design Image') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.71 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 37, 'FAQ must contain the 37 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.69') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('What is Download Design Image for?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.69 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.71') && faqHtml.includes('+0.035-inch rough-rip recommendation') && faqHtml.includes('What does the Diamond Accent control change?') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('What is Download Design Image for?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.71 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -102,7 +103,8 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.69', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.71', 'Wrong visible version');
+  assert(await page.evaluate(() => recommendedRoughRip(0.25)) === 0.285, 'Quarter-inch strip does not recommend a 0.2850 in rough rip');
   assert(await page.locator('#exportSvgBtn').textContent() === 'Download Design Image', 'Design-image download button label is incorrect');
   assert((await page.locator('#exportSvgBtn').getAttribute('title')).includes('scalable SVG image'), 'Design-image download tooltip is missing');
   assert(await page.locator('#laminatedRowHelp').textContent() === 'Build 7 rows at least 20.875 in long each.', 'Default laminated-row length guidance is incorrect');
@@ -245,11 +247,11 @@ function functionSource(source, name) {
   await page.locator('[data-custom-color]').fill('#88aa66');
   await page.locator('[data-custom-color]').dispatchEvent('input');
   await page.locator('[data-custom-color]').dispatchEvent('change');
-  assert(await page.locator('#edgeWood option[value="custom-1"]').textContent() === 'Ambrosia Maple', 'Custom wood is missing from Edge Rip choices');
+  assert(await page.locator('#edgeWood option[value="custom-1"]').textContent() === 'Ambrosia Maple', 'Custom wood is missing from Diamond Accent choices');
   assert(await page.locator('[data-border-wood]').first().locator('option[value="custom-1"]').count() === 1, 'Custom wood is missing from border choices');
   await page.locator('#edgeWood').selectOption('custom-1');
-  assert(await page.evaluate(() => state.edgeWood) === 'custom-1', 'Custom wood was not accepted by Edge Rip');
-  assert(await page.locator('#boardSvg .edge-replacement[fill="url(#wood-custom-1)"]').count() > 0, 'Custom Edge Rip color did not reach the board renderer');
+  assert(await page.evaluate(() => state.edgeWood) === 'custom-1', 'Custom wood was not accepted by Diamond Accent');
+  assert(await page.locator('#boardSvg .edge-replacement[fill="url(#wood-custom-1)"]').count() > 0, 'Custom Diamond Accent color did not reach the board renderer');
   await page.locator('[data-border-wood]').first().evaluate(select => {
     select.value = 'custom-1';
     select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -300,8 +302,8 @@ function functionSource(source, name) {
   const labelsAfterRemoval = await page.locator('[data-strip-width]').evaluateAll(inputs => inputs.map(input => input.parentElement.textContent.trim()));
   assert(JSON.stringify(labelsAfterRemoval) === JSON.stringify(offsetLabels), 'Remaining strips were not renumbered after pair removal');
   await page.evaluate(() => restore(JSON.stringify(defaultState())));
-  assert(await page.locator('#wastePercent').inputValue() === '40', 'Edge Rip design should default to 40% waste');
-  assert((await page.locator('#wasteRecommendation').textContent()).includes('40% (Edge Rip selected)'), '40% Edge Rip recommendation is missing');
+  assert(await page.locator('#wastePercent').inputValue() === '40', 'Diamond Accent design should default to 40% waste');
+  assert((await page.locator('#wasteRecommendation').textContent()).includes('40% (Diamond Accent selected)'), '40% Diamond Accent recommendation is missing');
   await page.locator('#edgeInset').fill('0');
   await page.locator('#edgeInset').dispatchEvent('input');
   assert(await page.locator('#wastePercent').inputValue() === '35', 'No-Edge-Rip design should automatically use 35% waste');
@@ -309,13 +311,13 @@ function functionSource(source, name) {
   await page.locator('#wastePercent').dispatchEvent('input');
   await page.locator('#edgeInset').fill('0.5');
   await page.locator('#edgeInset').dispatchEvent('input');
-  assert(await page.locator('#wastePercent').inputValue() === '36', 'Manual waste entry was overwritten by Edge Rip');
+  assert(await page.locator('#wastePercent').inputValue() === '36', 'Manual waste entry was overwritten by Diamond Accent');
   assert(await page.locator('#wasteWarning').isVisible(), 'Below-recommendation waste warning is missing');
   await page.locator('#useRecommendedWasteBtn').click();
   assert(await page.locator('#wastePercent').inputValue() === '40', 'Use recommended did not restore the conditional value');
   assert(await page.locator('#printPlanBtn').isVisible(), 'Print Workshop Plan action is missing');
   const planText = await page.locator('#printPlan').textContent();
-  for (const heading of ['Finished Design', 'Lamination Engineering', 'Crosscut Engineering', 'Edge Rip', 'Border Schedule', 'Estimated Wood Cost', 'Illustrated Build Procedure', 'Workshop Sequence — Quick Checklist']) {
+  for (const heading of ['Finished Design', 'Lamination Engineering', 'Crosscut Engineering', 'Diamond Accent', 'Border Schedule', 'Estimated Wood Cost', 'Illustrated Build Procedure', 'Workshop Sequence — Quick Checklist']) {
     assert(planText.includes(heading), `Printable plan is missing ${heading}`);
   }
   assert((await page.locator('#printPlan').textContent()).includes('Actual Board Dimensions: 18.000 × 10.500 × 1.500 in'), 'Printable plan does not reflect the actual buildable dimensions');
@@ -324,10 +326,10 @@ function functionSource(source, name) {
   assert(await page.locator('#printPlan .print-board-reference polygon[fill^="#"]').count() > 0, 'Finished board reference does not contain printable solid wood colors');
   assert((await page.locator('#printPlan .print-board-section').textContent()).includes('Keep this image available throughout the build'), 'Finished board reference guidance is missing');
   const guideTitles = await page.locator('#printPlan .guide-copy h3').allTextContents();
-  const edgeRipCutIndex = guideTitles.indexOf('Cut the Edge Rip after the 45° cuts');
-  const edgeRipGlueIndex = guideTitles.findIndex(title => title.startsWith('Glue the new 45°'));
-  assert(guideTitles.indexOf('Make the four 45° cuts') < edgeRipCutIndex, 'Edge Rip is not after the first 45-degree cuts');
-  assert(edgeRipCutIndex < edgeRipGlueIndex, 'Edge Rip cut is not before replacement glue-up');
+  const edgeRipCutIndex = guideTitles.indexOf('Cut the Diamond Accent shoulders');
+  const edgeRipGlueIndex = guideTitles.findIndex(title => title.includes('Diamond Accent pieces'));
+  assert(guideTitles.indexOf('Make the four 45° cuts') < edgeRipCutIndex, 'Diamond Accent is not after the first 45-degree cuts');
+  assert(edgeRipCutIndex < edgeRipGlueIndex, 'Diamond Accent cut is not before accent glue-up');
   const edgeRipGlueStep = page.locator('#printPlan .guide-step').nth(edgeRipGlueIndex);
   assert(await edgeRipGlueStep.locator('[data-guide-part="edge-rip-center-blank"]').getAttribute('points') === '140,45 280,45 380,95 280,145 140,145 40,95', 'Step 7 laminated center does not form the approved left and right points');
   assert(await edgeRipGlueStep.locator('[data-guide-part="edge-rip-diamond-square"]').getAttribute('points') === '210,12 380,95 210,178 40,95', 'Step 7 completed outline is not the approved diamond-shaped square');
@@ -338,12 +340,12 @@ function functionSource(source, name) {
   assert((await edgeRipGlueStep.textContent()).includes('completed cross-section is a square'), 'Step 7 does not explain the completed square cross-section');
   assert((await page.locator('#printPlan').textContent()).includes('Mill the selected lumber square and straight, and make sure to include extra allowance for planing and sanding.'), 'Simplified lumber-preparation wording is missing');
   await page.evaluate(() => { state.edgeWood = 'maple'; renderWorkshopPlan(); });
-  assert((await page.locator('#printPlan .guide-copy h3').allTextContents()).includes('Glue the new 45° Hard Maple to the top and bottom cut faces'), 'Edge Rip replacement title is not dynamic');
+  assert((await page.locator('#printPlan .guide-copy h3').allTextContents()).includes('Glue the Hard Maple Diamond Accent pieces'), 'Diamond Accent title is not dynamic');
   assert(await page.locator('#printPlan [data-guide-part="replacement-top"]').getAttribute('fill') === '#e4ca96', 'Top Step 7 triangle does not use the selected replacement wood');
   assert(await page.locator('#printPlan [data-guide-part="replacement-bottom"]').getAttribute('fill') === '#e4ca96', 'Bottom Step 7 triangle does not use the selected replacement wood');
   await page.evaluate(() => { state.edgeWood = 'walnut'; renderWorkshopPlan(); });
   assert(edgeRipGlueIndex < guideTitles.indexOf('Dry-fit the 45° cut pieces'), 'Replacement glue-up is not a separate step before dry fit');
-  assert(await page.locator('#printPlan .guide-step').count() === 12, 'Edge Rip build must contain twelve illustrated steps');
+  assert(await page.locator('#printPlan .guide-step').count() === 12, 'Diamond Accent build must contain twelve illustrated steps');
   assert(await page.locator('#printPlan .guide-svg').count() === 12, 'Every illustrated step must contain a diagram');
   assert((await page.locator('#printPlan').textContent()).includes('0.125 in blade kerf'), 'Illustrated crosscut step does not reflect blade kerf');
   assert((await page.locator('#printPlan').textContent()).includes('crosscuts assigned to this build'), 'Assigned crosscut count is not shown in one line');
@@ -356,9 +358,9 @@ function functionSource(source, name) {
   await page.locator('#edgeInset').fill('0');
   await page.locator('#edgeInset').dispatchEvent('input');
   await page.evaluate(() => renderWorkshopPlan());
-  assert(!(await page.locator('#printPlan').textContent()).includes('Edge Rip selected'), 'Illustration shows Edge Rip when none is selected');
-  assert(!(await page.locator('#printPlan').textContent()).includes('Cut depth:'), 'Edge Rip schedule shows when none is selected');
-  assert(await page.locator('#printPlan .guide-step').count() === 10, 'Zero Edge Rip should remove its separate illustrated step');
+  assert(!(await page.locator('#printPlan').textContent()).includes('Diamond Accent selected'), 'Illustration shows Diamond Accent when none is selected');
+  assert(!(await page.locator('#printPlan').textContent()).includes('Accent cut depth:'), 'Diamond Accent schedule shows when none is selected');
+  assert(await page.locator('#printPlan .guide-step').count() === 10, 'Zero Diamond Accent should remove its separate illustrated step');
   await page.locator('#edgeInset').fill('0.5');
   await page.locator('#edgeInset').dispatchEvent('input');
   await page.evaluate(() => renderWorkshopPlan());
@@ -423,14 +425,14 @@ function functionSource(source, name) {
   const laminationCutRows = page.locator('#printPlan .lamination-cut-table tbody tr');
   assert(await laminationCutRows.count() === 5, 'Lamination cut summary did not group identical species and widths');
   const mapleQuarterRow = laminationCutRows.filter({ hasText: '1A · 1B' });
-  assert((await mapleQuarterRow.textContent()).includes('Hard Maple') && (await mapleQuarterRow.textContent()).includes('0.2500 in') && (await mapleQuarterRow.textContent()).includes('16 strips total') && (await mapleQuarterRow.textContent()).includes('2 per blank × 8 rows'), 'Quarter-inch Maple total does not report sixteen strips for eight rows');
+  assert((await mapleQuarterRow.textContent()).includes('Hard Maple') && (await mapleQuarterRow.textContent()).includes('0.2500 in') && (await mapleQuarterRow.textContent()).includes('0.2850 in') && (await mapleQuarterRow.textContent()).includes('16 strips total') && (await mapleQuarterRow.textContent()).includes('2 per blank × 8 rows'), 'Quarter-inch Maple total does not report the 0.2850 in rough rip and sixteen strips for eight rows');
   const combinedCenterRow = page.locator('#printPlan .lamination-cut-table tbody tr[data-center-combined="true"]');
   assert(await combinedCenterRow.count() === 1, 'Matching center pair was not combined into one cut-summary row');
   const combinedCenterText = await combinedCenterRow.textContent();
-  assert(combinedCenterText.includes('5A + 5B (combined center)') && combinedCenterText.includes('Walnut') && combinedCenterText.includes('0.5000 in') && combinedCenterText.includes('0.5625 in') && combinedCenterText.includes('8 strips total') && combinedCenterText.includes('1 per blank × 8 rows'), 'Combined Walnut center does not report the approved half-inch cut and eight-strip total');
+  assert(combinedCenterText.includes('5A + 5B (combined center)') && combinedCenterText.includes('Walnut') && combinedCenterText.includes('0.5000 in') && combinedCenterText.includes('0.5350 in') && combinedCenterText.includes('8 strips total') && combinedCenterText.includes('1 per blank × 8 rows'), 'Combined Walnut center does not report the approved half-inch cut and eight-strip total');
   const groupedMaterial = await page.evaluate(() => materialQuantity());
   assert(groupedMaterial.laminateCuts.reduce((sum, entry) => sum + entry.totalQuantity, 0) === 72, 'Material estimate does not use the grouped physical strip count');
-  assert(Math.abs(groupedMaterial.rows.find(row => row.species === 'walnut').roughCubicInches - 0.5625 * 2.125 * 20.875 * 8) < 1e-9, 'Material estimate did not remove the duplicate center-strip rough allowance');
+  assert(Math.abs(groupedMaterial.rows.find(row => row.species === 'walnut').roughCubicInches - 0.535 * 2.125 * 20.875 * 8) < 1e-9, 'Material estimate did not remove the duplicate center-strip rough allowance');
   assert((await page.locator('#printPlan').textContent()).includes('using one rough-rip allowance instead of two'), 'Printable guide does not explain the combined-center savings');
   await page.evaluate(serialized => restore(serialized), stripCutSummarySnapshot);
   const unborderedFrameAspect = await page.locator('#boardSvg > rect').first().evaluate(rect => (Number(rect.getAttribute('width')) - 6) / (Number(rect.getAttribute('height')) - 6));
@@ -543,12 +545,12 @@ function functionSource(source, name) {
   assert(await page.locator('#diamondFieldMetric').textContent() === '18.000 × 9.000 in', 'Recreation diamond field is not six 1.500 in rows');
   assert(await page.locator('#requiredBorderMetric').textContent() === '1.9375 in per edge', 'Recreation required border width is incorrect');
   assert(await page.locator('#borderDifferenceMetric').textContent() === '0.6250 in still needed per edge', 'Recreation border completion warning is incorrect');
-  assert(await page.locator('#materialPurchaseMetric').textContent() === '7.779 bd ft', 'Validation build combined-center rough-lumber estimate changed');
-  assert(await page.locator('#materialCostMetric').textContent() === '$127.03', 'Validation build combined-center cost estimate changed');
+  assert(await page.locator('#materialPurchaseMetric').textContent() === '7.281 bd ft', 'Validation build tightened rough-lumber estimate changed');
+  assert(await page.locator('#materialCostMetric').textContent() === '$119.91', 'Validation build tightened cost estimate changed');
   const validationMaterial = await page.evaluate(() => materialQuantity());
-  assert(validationMaterial.rows.find(row => row.species === 'walnut').components.edgeRip > 0, 'Validation estimate omits Edge Rip replacement stock');
+  assert(validationMaterial.rows.find(row => row.species === 'walnut').components.edgeRip > 0, 'Validation estimate omits Diamond Accent replacement stock');
   assert(validationMaterial.rows.find(row => row.species === 'cherry').components.borders > 0, 'Validation estimate omits border stock');
-  assert((await page.locator('#materialTableBody').textContent()).includes('Rough laminate strips') && (await page.locator('#materialTableBody').textContent()).includes('Edge Rip') && (await page.locator('#materialTableBody').textContent()).includes('Borders'), 'Material table does not disclose all rough-stock components');
+  assert((await page.locator('#materialTableBody').textContent()).includes('Rough laminate strips') && (await page.locator('#materialTableBody').textContent()).includes('Diamond Accent') && (await page.locator('#materialTableBody').textContent()).includes('Borders'), 'Material table does not disclose all rough-stock components');
   await page.evaluate(() => renderWorkshopPlan());
   const borderedPlanText = await page.locator('#printPlan').textContent();
   const expectedStripOrder = [
@@ -625,7 +627,7 @@ function functionSource(source, name) {
   assert(borderedPlanText.indexOf('Glue the borders before crosscutting') < borderedPlanText.indexOf('Mark the crosscuts from the top view'), 'Borders are not glued before crosscutting in the guide');
   const guideCrosscutCount = await page.evaluate(() => crosscutEngineering().crosscutCount);
   assert(await page.locator('#printPlan svg[aria-label*=completed] .guide-center-cut').count() === guideCrosscutCount - 1, 'Top-view crosscut lines do not match the calculated count');
-  assert((await page.locator('#printPlan').textContent()).includes('freshly cut Walnut edges'), 'Selected Edge Rip replacement glue-up is missing');
+  assert((await page.locator('#printPlan').textContent()).includes('freshly cut Walnut faces'), 'Selected Diamond Accent glue-up is missing');
   assert(await page.locator('.bordered-diamond-cell').count() === 72, 'Six rows by twelve crosscuts should render 72 complete cells');
   assert(await page.locator('[data-row="0"]').count() === 12 && await page.locator('[data-row="5"]').count() === 12, 'First or last recreation row is missing');
   assert(/^translate\([^)]*\) scale\([^ ,)]+\)$/.test(await page.locator('.bordered-diamond-cell').first().getAttribute('transform')), 'Recreation cells are not uniformly scaled squares');

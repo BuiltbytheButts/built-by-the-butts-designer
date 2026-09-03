@@ -1,4 +1,4 @@
-# Diamond End Grain Designer v3.0.69
+# Diamond End Grain Designer v3.0.71
 
 Clean-architecture foundation rebuild for Built By The Butts.
 
@@ -24,7 +24,7 @@ Clean-architecture foundation rebuild for Built By The Butts.
 - Bordered diamond cells retain square proportions, and calculated crosscuts span the finished length without strip-total-driven clipping.
 - Estimated Wood Cost counts every physical rough-ripped strip across every laminated row, using the required pre-45° lamination size and the full kerf-inclusive master-blank length.
 - Identical laminate cut settings are grouped into total strip counts, and a matching same-species center pair is manufactured as one wider strip with one rough-rip allowance.
-- Border stock, Edge Rip replacement stock, rough-rip allowance, and waste are included by species; finished/net design volume is intentionally omitted from the interface.
+- Border stock, Diamond Accent replacement stock, rough-rip allowance, and waste are included by species; finished/net design volume is intentionally omitted from the interface.
 - Editable USD board-foot prices produce per-species and total estimated wood costs.
 - Print Illustrated Build Guide produces a current cut list, material summary, and ten visual steps generated from the active design for paper or PDF.
 - Print-guide Step 1 scales and centers every lumber block from the active mirrored strip count so the complete A/B schedule remains visible.
@@ -37,7 +37,7 @@ Clean-architecture foundation rebuild for Built By The Butts.
 - Finished board dimensions
 - Editable strip schedule and species
 - Recommended rough rip beside each strip
-- Edge rip inset through 1 inch and replacement species
+- Diamond Accent depth through 1 inch and accent species
 - Editable kerf, rough-crosscut guidance, actual count, and required master blank length in one result
 - Undo/redo
 - JSON save/open

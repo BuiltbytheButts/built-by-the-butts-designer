@@ -1,3 +1,19 @@
+# v3.0.71 Diamond Accent Terminology
+
+- PASS — the Designer control is labeled Diamond Accent with Accent cut depth and Diamond Accent wood settings.
+- PASS — the printed guide uses Cut the Diamond Accent shoulders and dynamically names the selected Diamond Accent pieces.
+- PASS — material rows, waste guidance, Sample Build, User Guide, FAQ, and current documentation use Diamond Accent terminology.
+- PASS — existing saved-project fields remain compatible, and all geometry, manufacturing, material, and browser regression checks completed for v3.0.71.
+- PASS — frozen geometry.js and frozen Diamond Accent/laminate/board-renderer function hashes are unchanged.
+
+# v3.0.70 Tighter Laminate-Strip Rough-Rip Allowance
+
+- PASS — a 0.2500 in finished laminate strip recommends a 0.2850 in rough rip.
+- PASS — a combined 0.5000 in center pair recommends a 0.5350 in rough rip with the allowance applied once.
+- PASS — the first validation build updates from 7.779 bd ft / $127.03 to 7.281 bd ft / $119.91 while its separate border allowance remains unchanged.
+- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.70.
+- PASS — frozen geometry.js and frozen Edge Rip/laminate/board-renderer function hashes are unchanged.
+
 # v3.0.69 Clearer Design-Image Download
 
 - PASS — the main action now reads “Download Design Image” and retains the existing SVG download behavior.

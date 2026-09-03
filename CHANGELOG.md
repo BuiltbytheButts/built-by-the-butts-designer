@@ -1,3 +1,18 @@
+## v3.0.71 — Diamond Accent terminology
+
+- Renamed the user-facing “Edge Rip” feature to “Diamond Accent” because the completed feature appears within the diamond field rather than at the board edge.
+- Updated the controls to “Accent cut depth” and “Diamond Accent wood.”
+- Updated the generated build guide, material descriptions, waste guidance, Sample Build, User Guide, FAQ, and current documentation.
+- Preserved the existing saved-project fields, calculations, geometry, material quantities, and design rendering.
+
+## v3.0.70 — Tighter laminate-strip rough-rip allowance
+
+- Changed laminate-strip rough-rip guidance from +0.0625 in to +0.0350 in.
+- A 0.2500 in finished strip now recommends a 0.2850 in rough rip instead of 0.3125 in.
+- Applied the tighter laminate-strip allowance to grouped cutting totals, combined center strips, rough board feet, and Estimated Wood Cost.
+- Kept the separate border-stock allowance at +0.0625 in and the rough-crosscut allowance at +0.125 in.
+- Frozen geometry, board dimensions, strip totals, crosscut counts, and rendered design remain unchanged.
+
 ## v3.0.69 — Clearer design-image download
 
 - Renamed the “Export SVG” action to “Download Design Image” so the control describes its purpose in plain language.

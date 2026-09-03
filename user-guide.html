@@ -29,7 +29,7 @@
   <main>
     <section class="intro">
       <div><h2>Start with the board size you want</h2><p>Enter the requested finished dimensions, then build the strip and border schedules. The Designer reports the actual board that complete crosscuts, complete laminated rows, and the entered borders will produce—without silently trimming away a good laminated row.</p></div>
-      <aside class="version-card"><span>Guide applies to</span><strong>Designer v3.0.69</strong><span>Calculations remain estimates until confirmed against your stock, machines, and shop practices.</span></aside>
+      <aside class="version-card"><span>Guide applies to</span><strong>Designer v3.0.71</strong><span>Calculations remain estimates until confirmed against your stock, machines, and shop practices.</span></aside>
     </section>
 
     <nav class="toc" aria-label="Table of contents">
@@ -41,7 +41,7 @@
       <div class="steps">
         <article class="step"><h3>Enter requested dimensions</h3><p>Set the finished length, width, and thickness you would like. Compare them with Actual Board Dimensions before building.</p></article>
         <article class="step"><h3>Build the strip schedule</h3><p>Choose the strip widths and wood species in their mirrored A/B order. Confirm that Strip total before 45° cuts matches the required lamination size shown at the top.</p></article>
-        <article class="step"><h3>Choose the Edge Rip</h3><p>Set the cut depth and replacement wood, or select Zero when the design has no Edge Rip.</p></article>
+        <article class="step"><h3>Choose the Diamond Accent</h3><p>Set the accent cut depth and wood, or select Zero when the design has no Diamond Accent.</p></article>
         <article class="step"><h3>Choose borders</h3><p>Turn borders on only when required. Add one entry for every physical band at each edge.</p></article>
         <article class="step"><h3>Enter the blade kerf</h3><p>Use the actual thickness of the blade that will make the crosscuts.</p></article>
         <article class="step"><h3>Review visible warnings</h3><p>Check the pre-45° strip total, requested-versus-actual dimensions, odd crosscuts, border underage or overage, and waste.</p></article>
@@ -55,8 +55,8 @@
       <div class="control-grid">
         <article class="control-card"><h3>Finished Board Dimensions</h3><p><strong>Requested length</strong> drives the calculated whole-crosscut count. <strong>Requested width</strong> drives the complete laminated-row and border fit. <strong>Thickness</strong> is the finished thickness of the board and the finished width of each crosscut after flattening. These entries are the desired size; the top result reports the buildable size.</p></article>
         <article class="control-card"><h3>Starting Crosscut</h3><p><strong>As cut</strong> keeps Crosscut 1 in its original orientation and turns Crosscut 2 first. <strong>Turned 180°</strong> turns Crosscut 1 and leaves Crosscut 2 as cut. Both choices continue alternating after that. This moves the diamond centers and changes whether full or partial diamonds appear at the ends, but it does not change dimensions, counts, borders, or material quantities.</p></article>
-        <article class="control-card"><h3>Strip Schedule</h3><p>Strip widths control the wood-band proportions inside each diamond. Together, they must total the required lamination size before the 45° cuts—not the finished board thickness. The Designer shows both values and warns when the schedule is short or over. It adds approximately 1/16 inch only as rough-rip guidance. Labels run outside-in: 1A mirrors 1B, 2A mirrors 2B, and so on.</p></article>
-        <article class="control-card"><h3>Edge Rip</h3><p>The slider controls only the two 45-degree corner areas removed after the first four 45-degree cuts. Replacement wood fills only those removed areas. Select <strong>Zero</strong> when this operation is not part of the design.</p></article>
+        <article class="control-card"><h3>Strip Schedule</h3><p>Strip widths control the wood-band proportions inside each diamond. Together, they must total the required lamination size before the 45° cuts—not the finished board thickness. The Designer shows both values and warns when the schedule is short or over. It adds 0.035 inch only as rough-rip guidance, so a 0.2500-inch finished strip is shown as a 0.2850-inch rough rip. Labels run outside-in: 1A mirrors 1B, 2A mirrors 2B, and so on.</p></article>
+        <article class="control-card"><h3>Diamond Accent</h3><p>The slider controls only the two 45-degree shoulder areas removed after the first four 45-degree cuts. The selected accent wood fills those removed areas and forms the smaller accent diamonds in the completed board. Select <strong>Zero</strong> when this feature is not part of the design.</p></article>
         <article class="control-card"><h3>Top &amp; Bottom Borders</h3><p>Borders run along both long edges and are glued to the master blank before crosscutting. Every added band is a separate physical band. Adjacent bands may use the same species, but each still needs its own entry.</p></article>
         <article class="control-card"><h3>Crosscut Engineering</h3><p>Blade kerf remains editable. The recommended rough crosscut is the finished thickness plus approximately 1/8 inch for cleanup. Crosscut count is requested length ÷ finished thickness, rounded to the nearest whole piece. Required rough master-blank length is the rough crosscut width × piece count, plus one blade kerf between adjacent pieces.</p></article>
         <article class="control-card"><h3>Wood Library</h3><p>Choose from the built-in woods or add a custom name and color. Preview colors are identification aids only; actual color changes with the individual board, grain, age, sanding, and finish.</p></article>
@@ -85,7 +85,7 @@
       <h3>Odd crosscut count</h3><p>An odd count produces an unbalanced pattern at the two ends. The preview deliberately shows the uneven result. Change the finished length or thickness if you want an even count.</p>
       <h3>Border width mismatch</h3><p>The entered band total is compared with the width required to replace complete mirrored row pairs. “Still needed” means the entered bands are too narrow; “too wide” means their total exceeds the paired boundary. Adjust the physical bands until the result reads <strong>Matched ✓</strong>.</p>
       <h3>Actual size differs from requested</h3><p>The board is built from complete physical parts. This warning shows that their total does not equal the requested length or width. You may accept the actual size, change the requested dimensions, or adjust the border schedule. The Designer will not trim a complete laminated row for you.</p>
-      <h3>Waste below recommendation</h3><p>The default recommended minimum is 35% without an Edge Rip and 40% with an Edge Rip. You may override it, but the warning remains visible below the recommendation.</p>
+      <h3>Waste below recommendation</h3><p>The default recommended minimum is 35% without a Diamond Accent and 40% with a Diamond Accent. You may override it, but the warning remains visible below the recommendation.</p>
     </section>
 
     <section id="materials" class="section">
@@ -94,7 +94,7 @@
       <ul>
         <li><strong>Rough laminate strips</strong> groups identical species and finished-width cuts, multiplies them by every retained laminated row, and reports the total pieces to prepare before changing the setup.</li>
         <li><strong>Combined center strip</strong> replaces the matching same-species A/B center pair with one wider physical strip. Its rough-rip allowance is applied once, reducing waste without changing the visible design.</li>
-        <li><strong>Edge Rip</strong> adds the replacement wood while retaining the original laminate that must first be built and cut.</li>
+        <li><strong>Diamond Accent</strong> adds the accent wood while retaining the original laminate that must first be built and cut.</li>
         <li><strong>Borders</strong> counts every entered band on both long edges.</li>
         <li><strong>Estimated rough lumber</strong> includes blade kerf and the selected waste allowance.</li>
         <li><strong>Estimated Wood Cost</strong> multiplies estimated rough board feet by the price you enter for each species.</li>
@@ -106,14 +106,14 @@
     <section id="projects" class="section">
       <h2>Project and output tools</h2>
       <h3>Undo and Redo</h3><p>Moves backward or forward through design changes made during the current session.</p>
-      <h3>Save Project</h3><p>Downloads the current design as a JSON project file, including dimensions, strips, borders, Edge Rip, woods, prices, kerf, and waste settings.</p>
+      <h3>Save Project</h3><p>Downloads the current design as a JSON project file, including dimensions, strips, borders, Diamond Accent, woods, prices, kerf, and waste settings.</p>
       <h3>Open Project</h3><p>Loads a previously saved Designer JSON file. Older supported project formats are migrated into the current border-band and wood-library structure.</p>
       <h3>Download Design Image</h3><p>Downloads the current finished-board design as an SVG—a scalable image that stays sharp at any size and can be edited in compatible graphics software. Confirm dimensions and manufacturing values in the Designer rather than measuring the image.</p>
     </section>
 
     <section id="build-guides" class="section">
       <h2>Build references</h2>
-      <h3>Print Illustrated Build Guide</h3><p>Generates a guide from the active project. Its Lamination Engineering table groups matching species/width settings, shows the quantity per blank, multiplies by the laminated-row count, and reports the total strips to cut. A matching same-species center pair appears as one wider combined strip. The guide also contains the finished-board reference, border schedule, material estimate, selected Edge Rip steps, crosscut lines, and ordered build procedure.</p>
+      <h3>Print Illustrated Build Guide</h3><p>Generates a guide from the active project. Its Lamination Engineering table groups matching species/width settings, shows the quantity per blank, multiplies by the laminated-row count, and reports the total strips to cut. A matching same-species center pair appears as one wider combined strip. The guide also contains the finished-board reference, border schedule, material estimate, selected Diamond Accent steps, crosscut lines, and ordered build procedure.</p>
       <h3>Independent Sample Build</h3><p>Opens a separate real-photo reference without changing the current design. Click any photo to enlarge it, then use previous/next or the keyboard arrow keys. The photos are embedded in the page so they remain available even when the nested asset folder is not.</p>
       <p>The illustrated guide follows the active design; the Sample Build shows one real build. When they differ, use the active project's dimensions and species while using the photos for process and orientation reference.</p>
     </section>
@@ -126,7 +126,7 @@
         <li>Rip, label, and dry-fit the mirrored strip schedule.</li>
         <li>Glue, flatten, and mill each laminated blank square to the required pre-45-degree size.</li>
         <li>Mark adjacent edge centers and make all four initial 45-degree cuts.</li>
-        <li>If selected, make the Edge Rip across the target section and glue the replacement pieces to the cut edges.</li>
+        <li>If selected, cut the Diamond Accent shoulders across the target section and glue the accent pieces to the cut faces.</li>
         <li>Dry-fit the 45-degree sections, then assemble the full long master blank.</li>
         <li>If selected, glue the complete borders to both long edges before crosscutting.</li>
         <li>Mark and cut every assigned crosscut using the displayed rough spacing and actual kerf.</li>
@@ -140,12 +140,12 @@
       <h2>Glossary</h2>
       <dl class="terms">
         <dt>Crosscut</dt><dd>One slice cut perpendicular to the long master blank. After rotation, its end-grain face becomes part of the finished pattern.</dd>
-        <dt>Strip-schedule total</dt><dd>The combined finished width of the active strip schedule. It controls relative band proportions and Edge Rip geometry, but not the finished cell footprint.</dd>
+        <dt>Strip-schedule total</dt><dd>The combined finished width of the active strip schedule. It controls relative band proportions and Diamond Accent geometry, but not the finished cell footprint.</dd>
         <dt>Finished cell pitch</dt><dd>The finished board thickness. It sets the square spacing of each crosscut cell in both preview directions.</dd>
         <dt>Laminated row</dt><dd>One complete row of square end-grain faces across the finished board width.</dd>
         <dt>Master blank</dt><dd>The completed long patterned assembly—including borders when selected—before it is crosscut.</dd>
         <dt>Blade kerf</dt><dd>The width of material removed by the saw blade during each crosscut.</dd>
-        <dt>Edge Rip</dt><dd>The optional cut across the designated center section after the first 45-degree cuts, followed by replacement wood on the cut edges.</dd>
+        <dt>Diamond Accent</dt><dd>The optional pair of shoulder cuts across the designated center section after the first 45-degree cuts, followed by accent wood on the cut faces. These pieces form the smaller accent diamonds in the completed board.</dd>
         <dt>Border band</dt><dd>One physical strip within the mirrored border schedule. Each entry appears at both long edges.</dd>
         <dt>Requested dimensions</dt><dd>The length and width you would like the board to reach.</dd>
         <dt>Actual Board Dimensions</dt><dd>The buildable outside size from whole crosscuts, whole laminated rows, and the entered borders.</dd>
@@ -153,6 +153,6 @@
     </section>
   </main>
 
-  <footer><p>Built By The Butts · Diamond End Grain Designer User Guide · v3.0.69</p><a href="index.html">Return to the Designer</a></footer>
+  <footer><p>Built By The Butts · Diamond End Grain Designer User Guide · v3.0.71</p><a href="index.html">Return to the Designer</a></footer>
 </body>
 </html>

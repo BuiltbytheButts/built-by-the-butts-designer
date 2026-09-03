@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
   <title>Diamond End Grain Designer</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.69" />
+  <link rel="stylesheet" href="styles.css?v=3.0.71" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.69</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.71</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -54,13 +54,13 @@
       </section>
 
       <section>
-        <h2>Edge Rip</h2>
-        <label>Edge rip cut depth <span id="edgeInsetLabel"></span><input id="edgeInset" type="range" min="0" max="1" step="0.0625" /></label>
+        <h2>Diamond Accent</h2>
+        <label>Accent cut depth <span id="edgeInsetLabel"></span><input id="edgeInset" type="range" min="0" max="1" step="0.0625" /></label>
         <div class="inset-quick-values">
           <button type="button" data-inset="0">Zero</button><button type="button" data-inset="0.125">⅛″</button><button type="button" data-inset="0.25">¼″</button><button type="button" data-inset="0.375">⅜″</button><button type="button" data-inset="0.5">½″</button><button type="button" data-inset="0.625">⅝″</button><button type="button" data-inset="0.75">¾″</button><button type="button" data-inset="0.875">⅞″</button><button type="button" data-inset="1">1″</button>
         </div>
         <p class="help">Cut depth controls only the two removed 45° corner areas. The laminated strip geometry stays fixed; replacement wood fills only what is cut away.</p>
-        <label>Replacement wood<select id="edgeWood"></select></label>
+        <label>Diamond Accent wood<select id="edgeWood"></select></label>
       </section>
 
       <section>
@@ -87,7 +87,7 @@
 
       <section>
         <h2>Estimated Wood Cost</h2>
-        <p class="help">Enter your supplier's USD price per board foot. Quantities are based on every rough-ripped strip, every laminated row, the full pre-45° blanks, crosscut kerf, borders, Edge Rip replacement stock, and the selected waste allowance.</p>
+        <p class="help">Enter your supplier's USD price per board foot. Quantities are based on every rough-ripped strip, every laminated row, the full pre-45° blanks, crosscut kerf, borders, Diamond Accent replacement stock, and the selected waste allowance.</p>
         <p class="help">The estimate is rough lumber required for the build; actual purchases still depend on available board sizes, defects, and stock selection.</p>
         <p id="materialLengthHelp" class="material-help"></p>
         <label>Waste allowance (%)<input id="wastePercent" type="number" min="0" max="100" step="1" /></label>
@@ -135,7 +135,7 @@
         </article>
         <article class="info-card">
           <h3>Rough-cut guidance</h3>
-          <p>Strip rough-rip suggestions use +1/16″. Crosscut guidance uses +1/8″. These are starting recommendations, not machining requirements.</p>
+          <p>Laminate strip rough-rip suggestions use +0.035″. Crosscut guidance uses +1/8″. These are starting recommendations, not machining requirements.</p>
         </article>
       </div>
     </section>
@@ -144,9 +144,9 @@
   <article id="printPlan" class="print-plan" aria-label="Printable workshop plan"></article>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="geometry.js?v=3.0.69"></script>
-  <script src="manufacturing.js?v=3.0.69"></script>
-  <script src="material.js?v=3.0.69"></script>
-  <script src="app.js?v=3.0.69"></script>
+  <script src="geometry.js?v=3.0.71"></script>
+  <script src="manufacturing.js?v=3.0.71"></script>
+  <script src="material.js?v=3.0.71"></script>
+  <script src="app.js?v=3.0.71"></script>
 </body>
 </html>

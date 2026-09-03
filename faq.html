@@ -25,8 +25,8 @@
   </header>
 
   <main>
-    <section class="intro"><h2>Frequently asked questions</h2><p>Click a question to open its answer. These answers describe Designer v3.0.69 and the approved manufacturing behavior.</p><p>For a start-to-finish explanation of every control, see the <a href="user-guide.html">User Guide</a>.</p></section>
-    <nav class="toc" aria-label="FAQ categories"><a href="#design">Design &amp; Preview</a><a href="#crosscuts">Crosscuts</a><a href="#borders">Borders</a><a href="#edge-rip">Edge Rip</a><a href="#materials">Materials &amp; Cost</a><a href="#files">Files &amp; Guides</a><a href="#troubleshooting">Troubleshooting</a></nav>
+    <section class="intro"><h2>Frequently asked questions</h2><p>Click a question to open its answer. These answers describe Designer v3.0.71 and the approved manufacturing behavior.</p><p>For a start-to-finish explanation of every control, see the <a href="user-guide.html">User Guide</a>.</p></section>
+    <nav class="toc" aria-label="FAQ categories"><a href="#design">Design &amp; Preview</a><a href="#crosscuts">Crosscuts</a><a href="#borders">Borders</a><a href="#edge-rip">Diamond Accent</a><a href="#materials">Materials &amp; Cost</a><a href="#files">Files &amp; Guides</a><a href="#troubleshooting">Troubleshooting</a></nav>
 
     <section id="design" class="group">
       <h2>Design and preview</h2>
@@ -62,24 +62,24 @@
     </section>
 
     <section id="edge-rip" class="group">
-      <h2>Edge Rip</h2>
-      <details class="faq"><summary>What does the Edge Rip control change?</summary><div class="answer"><p>It changes only the two 45-degree corner areas removed from the completed first-cut section. Replacement wood fills only those removed areas; the original laminate geometry does not stretch or change.</p></div></details>
-      <details class="faq"><summary>When is the Edge Rip performed?</summary><div class="answer"><p>Make all four initial 45-degree cuts first. Then cut across the designated center section, prepare matching 45-degree replacement pieces, and glue them to the fresh cut edges.</p></div></details>
-      <details class="faq"><summary>How do I make a design without an Edge Rip?</summary><div class="answer"><p>Select <strong>Zero</strong>. The replacement geometry and Edge Rip steps are then omitted from the preview guidance and printable procedure.</p></div></details>
+      <h2>Diamond Accent</h2>
+      <details class="faq"><summary>What does the Diamond Accent control change?</summary><div class="answer"><p>It changes only the two 45-degree corner areas removed from the completed first-cut section. The selected accent wood fills only those removed areas; the original laminate geometry does not stretch or change.</p></div></details>
+      <details class="faq"><summary>When is the Diamond Accent made?</summary><div class="answer"><p>Make all four initial 45-degree cuts first. Then cut the two shoulders across the designated center section, prepare matching 45-degree accent pieces, and glue them to the fresh cut faces.</p></div></details>
+      <details class="faq"><summary>How do I make a design without a Diamond Accent?</summary><div class="answer"><p>Select <strong>Zero</strong>. The accent geometry and Diamond Accent steps are then omitted from the preview guidance and printable procedure.</p></div></details>
     </section>
 
     <section id="materials" class="group">
       <h2>Materials, waste, and cost</h2>
       <details class="faq"><summary>Why is the wood cost an estimate?</summary><div class="answer"><p>Every shop and board is different. Defects, grain selection, milling, machine setup, available board sizes, and workflow can change the actual amount purchased and used.</p></div></details>
-      <details class="faq"><summary>What does estimated rough lumber include?</summary><div class="answer"><p>It counts every physical rough-ripped strip in every laminated row, the required pre-45° blank size, full kerf-inclusive master-blank length, borders on both edges, Edge Rip replacement wood, and the selected waste allowance. Identical laminate cuts are grouped for the printable total, and a matching same-species center pair is counted as one wider strip with one rough-rip allowance. The Designer displays the exact row-count × row-length basis used for the laminate board feet. Finished-board volume is not shown.</p></div></details>
-      <details class="faq"><summary>Why does waste default to 35% or 40%?</summary><div class="answer"><p>The recommended minimum is 35% when there is no Edge Rip and 40% when an Edge Rip is selected. You may enter another value, but a warning remains visible below the recommendation.</p></div></details>
+      <details class="faq"><summary>What does estimated rough lumber include?</summary><div class="answer"><p>It counts every physical rough-ripped strip in every laminated row, the required pre-45° blank size, full kerf-inclusive master-blank length, borders on both edges, Diamond Accent replacement wood, and the selected waste allowance. Laminate strips use the +0.035-inch rough-rip recommendation; border stock keeps its separate +1/16-inch allowance. Identical laminate cuts are grouped for the printable total, and a matching same-species center pair is counted as one wider strip with one rough-rip allowance. The Designer displays the exact row-count × row-length basis used for the laminate board feet. Finished-board volume is not shown.</p></div></details>
+      <details class="faq"><summary>Why does waste default to 35% or 40%?</summary><div class="answer"><p>The recommended minimum is 35% when there is no Diamond Accent and 40% when a Diamond Accent is selected. You may enter another value, but a warning remains visible below the recommendation.</p></div></details>
       <details class="faq"><summary>What is included in Estimated Wood Cost?</summary><div class="answer"><p>It is the estimated rough lumber for each species multiplied by the board-foot prices you enter. It does not include glue, sandpaper, finish, blades, electricity, labor, or other shop supplies.</p></div></details>
-      <details class="faq"><summary>Are border and Edge Rip woods counted and combined correctly?</summary><div class="answer"><p>Yes. Each physical border band is counted on both long edges. The full original laminate remains in the estimate because it must be built before Edge Rip; replacement wood is then added separately. Shared species are combined into one purchasing row.</p></div></details>
+      <details class="faq"><summary>Are border and Diamond Accent woods counted and combined correctly?</summary><div class="answer"><p>Yes. Each physical border band is counted on both long edges. The full original laminate remains in the estimate because it must be built before the Diamond Accent shoulders are cut; accent wood is then added separately. Shared species are combined into one purchasing row.</p></div></details>
     </section>
 
     <section id="files" class="group">
       <h2>Projects, exporting, and build guides</h2>
-      <details class="faq"><summary>What does Save Project store?</summary><div class="answer"><p>The downloaded JSON file stores the design dimensions, strips, border bands, Edge Rip, woods, custom colors, prices, kerf, and waste choices. Use Open Project to continue later.</p></div></details>
+      <details class="faq"><summary>What does Save Project store?</summary><div class="answer"><p>The downloaded JSON file stores the design dimensions, strips, border bands, Diamond Accent, woods, custom colors, prices, kerf, and waste choices. Use Open Project to continue later.</p></div></details>
       <details class="faq"><summary>What is Download Design Image for?</summary><div class="answer"><p>It downloads the current finished-board design as an SVG—a scalable image that stays sharp at any size and can be edited in compatible graphics software. Use the engineering values and printed plan for machining dimensions rather than measuring the image.</p></div></details>
       <details class="faq"><summary>What is the difference between the Illustrated Build Guide and Sample Build?</summary><div class="answer"><p>The <strong>Illustrated Build Guide</strong> is generated from the active project, including its woods, counts, dimensions, and selected operations. The <strong>Sample Build</strong> is an independent real-photo reference showing one actual build.</p></div></details>
       <details class="faq"><summary>Can I print the User Guide, FAQ, or Sample Build?</summary><div class="answer"><p>Yes. Each page has its own print control. Printing the FAQ opens every answer first. The Sample Build can also be printed independently without altering the active design.</p></div></details>
@@ -90,12 +90,12 @@
       <details class="faq"><summary>The Sample Build photos do not appear. What should I do?</summary><div class="answer"><p>Use Designer v3.0.52 or newer. All 20 photos are embedded directly in the Sample Build page, so they no longer depend on a nested photo folder. If an older copy is open, close it and open the current version.</p></div></details>
       <details class="faq"><summary>How do I enlarge a Sample Build photo?</summary><div class="answer"><p>Click the photo, or focus it with the keyboard and press Enter or Space. Use the on-screen arrows or keyboard left/right arrows to move between photos. Close with the × button, the background, or Escape.</p></div></details>
       <details class="faq"><summary>Why does an old saved project look slightly different after opening?</summary><div class="answer"><p>The Designer migrates supported older data into current controls. Current previews use finished thickness for square-cell spacing; strip widths determine the bands inside each cell. This can correct the row and length proportions shown by an older release. Review warnings and save a new copy after confirming it.</p></div></details>
-      <details class="faq"><summary>What should I check before trusting a material total?</summary><div class="answer"><p>Confirm the Actual Board Dimensions, strips, Edge Rip, border widths, species, kerf, and waste; review any requested-size or border warnings; then compare the result with the actual boards available from your supplier.</p></div></details>
+      <details class="faq"><summary>What should I check before trusting a material total?</summary><div class="answer"><p>Confirm the Actual Board Dimensions, strips, Diamond Accent, border widths, species, kerf, and waste; review any requested-size or border warnings; then compare the result with the actual boards available from your supplier.</p></div></details>
     </section>
 
     <div class="callout"><strong>Still unsure?</strong>Keep the finished-board preview, printed illustrated guide, and real-photo Sample Build together. Use the project's calculated dimensions and counts, and use the photos to confirm order and orientation.</div>
   </main>
 
-  <footer><p>Built By The Butts · Diamond End Grain Designer FAQ · v3.0.69</p><a href="index.html">Return to the Designer</a></footer>
+  <footer><p>Built By The Butts · Diamond End Grain Designer FAQ · v3.0.71</p><a href="index.html">Return to the Designer</a></footer>
 </body>
 </html>
