@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.71';
+const VERSION = '3.0.72';
 const STRIP_ROUGH_RIP_EXTRA = 0.035;
 const BORDER_ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;

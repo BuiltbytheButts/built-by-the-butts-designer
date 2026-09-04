@@ -1,3 +1,11 @@
+## v3.0.72 — Compact uniform header actions
+
+- Standardized all eight header actions to the same compact width and height, including Help and Sample Build.
+- Tightened spacing, padding, and type size while preserving every approved action label.
+- Allowed longer labels to wrap and remain centered inside the matching controls.
+- Added a narrower-screen adjustment that keeps the controls uniform while reducing their width slightly.
+- Designer behavior, calculations, saved projects, and print output remain unchanged.
+
 ## v3.0.71 — Diamond Accent terminology
 
 - Renamed the user-facing “Edge Rip” feature to “Diamond Accent” because the completed feature appears within the diamond field rather than at the board edge.

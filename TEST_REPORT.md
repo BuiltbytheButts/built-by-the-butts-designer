@@ -1,3 +1,11 @@
+# v3.0.72 Compact Uniform Header Actions
+
+- PASS — the header contains eight matching clickable controls.
+- PASS — every header control has the same compact width and 46 px height, including Help and Sample Build.
+- PASS — long labels remain centered and wrap within their controls.
+- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.72.
+- PASS — frozen geometry.js and frozen Diamond Accent/laminate/board-renderer function hashes are unchanged.
+
 # v3.0.71 Diamond Accent Terminology
 
 - PASS — the Designer control is labeled Diamond Accent with Accent cut depth and Diamond Accent wood settings.
