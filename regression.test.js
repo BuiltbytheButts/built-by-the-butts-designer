@@ -44,8 +44,8 @@ function functionSource(source, name) {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.73/g) || []).length === 5, 'All asset cache keys must be v3.0.73');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72|73)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.74/g) || []).length === 5, 'All asset cache keys must be v3.0.74');
   assert(css.includes('@media(min-width:1001px){html,body{height:100%;overflow:hidden}') && css.includes('overscroll-behavior:contain'), 'Desktop controls-panel scroll containment CSS is missing');
   assert(html.includes('id="exportSvgBtn"') && html.includes('>Download Design Image</button>') && html.includes('scalable SVG image'), 'Plain-language design-image download control or tooltip is missing');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
@@ -54,7 +54,8 @@ function functionSource(source, name) {
   assert(html.includes('These strip widths build the lamination before the 45° cuts.'), 'Strip Schedule help still describes the entries as finished-width totals');
   assert(html.includes('id="laminatedRowHelp"') && html.includes('id="materialLengthHelp"'), 'Laminated-row length guidance is missing');
   assert(html.includes('Starting crosscut') && (html.match(/data-glue-up-phase=/g) || []).length === 2, 'Starting-crosscut glue-up control is missing');
-  assert(html.includes('id="helpMenu"') && html.includes('user-guide.html') && html.includes('faq.html'), 'Designer Help menu is missing the User Guide or FAQ');
+  assert(html.includes('id="userGuideLink"') && html.includes('id="faqLink"') && !html.includes('id="helpMenu"'), 'Direct User Guide and FAQ header actions are missing or the Help dropdown remains');
+  assert(html.indexOf('id="userGuideLink"') < html.indexOf('id="faqLink"'), 'User Guide must appear before FAQ');
   assert(html.includes('Estimated Wood Cost') && html.includes('Estimated rough lumber'), 'Rough-lumber cost estimate is missing');
   assert(!html.includes('materialNetMetric') && !html.includes('materialVolumeHelp') && !html.includes('materialGapWarning'), 'Finished/net material volume remains visible');
   const controlOrder = ['Strip Schedule', 'Diamond Accent', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Estimated Wood Cost', 'Wood Library'].map(label => html.indexOf(label));
@@ -92,9 +93,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.73') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('0.2850-inch rough rip') && userGuideHtml.includes('Diamond Accent') && userGuideHtml.includes('Download Design Image') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.73 page');
+  assert(userGuideHtml.includes('Designer v3.0.74') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('0.2850-inch rough rip') && userGuideHtml.includes('Diamond Accent') && userGuideHtml.includes('Download Design Image') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.74 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 37, 'FAQ must contain the 37 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.73') && faqHtml.includes('+0.035-inch rough-rip recommendation') && faqHtml.includes('What does the Diamond Accent control change?') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('What is Download Design Image for?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.73 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.74') && faqHtml.includes('+0.035-inch rough-rip recommendation') && faqHtml.includes('What does the Diamond Accent control change?') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('What is Download Design Image for?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.74 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -105,14 +106,20 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.73', 'Wrong visible version');
-  const headerControlSizes = await page.locator('.header-actions > button, .header-actions > .header-link, .header-actions > .help-menu > summary').evaluateAll(elements => elements.map(element => {
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.74', 'Wrong visible version');
+  const headerControlSizes = await page.locator('.header-actions > button, .header-actions > .header-link').evaluateAll(elements => elements.map(element => {
     const rect = element.getBoundingClientRect();
     return { width: Math.round(rect.width), height: Math.round(rect.height) };
   }));
-  assert(headerControlSizes.length === 8, 'Header must contain eight standardized actions');
+  assert(headerControlSizes.length === 9, 'Header must contain nine standardized actions');
   assert(new Set(headerControlSizes.map(size => size.width)).size === 1 && new Set(headerControlSizes.map(size => size.height)).size === 1, 'Header actions are not the same size');
   assert(headerControlSizes[0].width <= 100 && headerControlSizes[0].height === 46, 'Header actions are not using the approved compact size');
+  const headerLayout = await page.evaluate(() => {
+    const title = document.querySelector('.app-header > div:first-child').getBoundingClientRect();
+    const actions = document.querySelector('.header-actions').getBoundingClientRect();
+    return { titleRight: title.right, actionsLeft: actions.left, actionsRight: actions.right, viewportWidth: innerWidth };
+  });
+  assert(headerLayout.titleRight <= headerLayout.actionsLeft && headerLayout.actionsRight <= headerLayout.viewportWidth, 'Nine-action header overlaps or leaves the viewport');
   const desktopScrollFrame = await page.evaluate(() => {
     const header = document.querySelector('.app-header');
     const panel = document.querySelector('.controls-panel');
@@ -225,10 +232,10 @@ function functionSource(source, name) {
   assert((await page.locator('#toast').textContent()).includes('could not be opened'), 'Invalid project error is not visible');
   assert(await page.locator('#boardLength').inputValue() === '15.25', 'Invalid project changed the active design');
   await page.evaluate(() => restore(JSON.stringify(defaultState())));
-  assert(await page.locator('#helpMenu').isVisible(), 'Help menu is missing');
-  await page.locator('#helpMenu summary').click();
-  assert(await page.locator('#userGuideLink').isVisible() && await page.locator('#faqLink').isVisible(), 'Help menu links did not open');
-  assert(await page.locator('#userGuideLink').getAttribute('target') === '_blank' && await page.locator('#faqLink').getAttribute('target') === '_blank', 'Help pages are not independent');
+  assert(await page.locator('#userGuideLink').isVisible() && await page.locator('#faqLink').isVisible(), 'Direct User Guide or FAQ action is missing');
+  assert(await page.locator('#userGuideLink').textContent() === 'User Guide' && await page.locator('#faqLink').textContent() === 'FAQ', 'Documentation action labels are incorrect');
+  assert(await page.locator('#userGuideLink').getAttribute('target') === '_blank' && await page.locator('#faqLink').getAttribute('target') === '_blank', 'Documentation pages are not independent');
+  assert(await page.locator('#userGuideLink').evaluate((link, faq) => Boolean(link.compareDocumentPosition(faq) & Node.DOCUMENT_POSITION_FOLLOWING), await page.locator('#faqLink').elementHandle()), 'User Guide does not appear before FAQ');
   assert(await page.locator('#sampleBuildLink').isVisible(), 'Sample Build link is missing');
   assert(await page.locator('#sampleBuildLink').getAttribute('target') === '_blank', 'Sample Build is not independent of the active designer view');
   assert(await page.locator('#laminationMinimumMetric').count() === 0, 'Minimum/rounding explanation still occupies the top metric card');

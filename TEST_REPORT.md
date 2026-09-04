@@ -1,3 +1,11 @@
+# v3.0.74 Direct User Guide and FAQ Actions
+
+- PASS — User Guide is the first documentation action and FAQ follows it in the former Help location.
+- PASS — the Help dropdown has been removed and both documentation pages open directly in new tabs.
+- PASS — all nine header actions retain matching compact dimensions.
+- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.74.
+- PASS — frozen geometry.js and frozen Diamond Accent/laminate/board-renderer function hashes are unchanged.
+
 # v3.0.73 Contained Controls-Panel Scrolling
 
 - PASS — desktop document scrolling is locked to the viewport below the sticky header.

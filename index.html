@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Diamond End Grain Designer by Built By The Butts" />
   <title>Diamond End Grain Designer</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.73" />
+  <link rel="stylesheet" href="styles.css?v=3.0.74" />
 </head>
 <body>
   <header class="app-header">
     <div>
       <p class="eyebrow">Built By The Butts</p>
-      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.73</span></h1>
+      <h1>Diamond End Grain Designer <span class="version-badge">v3.0.74</span></h1>
     </div>
     <div class="header-actions">
       <button id="undoBtn" class="secondary" type="button">Undo</button>
@@ -19,13 +19,8 @@
       <button id="saveProjectBtn" class="secondary" type="button">Save Project</button>
       <button id="openProjectBtn" class="secondary" type="button">Open Project</button>
       <input id="openProjectInput" type="file" accept="application/json,.json" hidden />
-      <details id="helpMenu" class="help-menu">
-        <summary class="secondary">Help</summary>
-        <div class="help-menu-popover">
-          <a id="userGuideLink" href="user-guide.html" target="_blank" rel="noopener"><strong>User Guide</strong><span>Learn every control and the full workflow</span></a>
-          <a id="faqLink" href="faq.html" target="_blank" rel="noopener"><strong>FAQ</strong><span>Find quick answers to common questions</span></a>
-        </div>
-      </details>
+      <a id="userGuideLink" class="secondary header-link" href="user-guide.html" target="_blank" rel="noopener">User Guide</a>
+      <a id="faqLink" class="secondary header-link" href="faq.html" target="_blank" rel="noopener">FAQ</a>
       <a id="sampleBuildLink" class="secondary header-link" href="sample-build.html" target="_blank" rel="noopener">Sample Build</a>
       <button id="printPlanBtn" class="secondary" type="button">Print Illustrated Build Guide</button>
       <button id="exportSvgBtn" class="primary" type="button" title="Download the current board design as a scalable SVG image.">Download Design Image</button>
@@ -144,9 +139,9 @@
   <article id="printPlan" class="print-plan" aria-label="Printable workshop plan"></article>
 
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="geometry.js?v=3.0.73"></script>
-  <script src="manufacturing.js?v=3.0.73"></script>
-  <script src="material.js?v=3.0.73"></script>
-  <script src="app.js?v=3.0.73"></script>
+  <script src="geometry.js?v=3.0.74"></script>
+  <script src="manufacturing.js?v=3.0.74"></script>
+  <script src="material.js?v=3.0.74"></script>
+  <script src="app.js?v=3.0.74"></script>
 </body>
 </html>

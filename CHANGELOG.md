@@ -1,3 +1,10 @@
+## v3.0.74 — Direct User Guide and FAQ actions
+
+- Replaced the Help dropdown with separate User Guide and FAQ header buttons.
+- Placed User Guide first, followed immediately by FAQ in the former Help location.
+- Kept both resources opening independently in a new tab.
+- Preserved compact, matching dimensions across all nine header actions.
+
 ## v3.0.73 — Contained controls-panel scrolling
 
 - Prevented the desktop page from sliding behind the sticky header.
