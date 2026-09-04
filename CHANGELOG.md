@@ -1,3 +1,10 @@
+## v3.0.73 — Contained controls-panel scrolling
+
+- Prevented the desktop page from sliding behind the sticky header.
+- Kept sizing, strip, and material scrolling inside the rounded controls panel below the header.
+- Preserved normal whole-page scrolling for narrow and mobile layouts.
+- Designer behavior, calculations, saved projects, and print output remain unchanged.
+
 ## v3.0.72 — Compact uniform header actions
 
 - Standardized all eight header actions to the same compact width and height, including Help and Sample Build.

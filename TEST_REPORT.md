@@ -1,3 +1,11 @@
+# v3.0.73 Contained Controls-Panel Scrolling
+
+- PASS — desktop document scrolling is locked to the viewport below the sticky header.
+- PASS — the controls-panel scrollbar remains contained inside the rounded panel and below the header.
+- PASS — narrow/mobile layouts retain normal page scrolling.
+- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.73.
+- PASS — frozen geometry.js and frozen Diamond Accent/laminate/board-renderer function hashes are unchanged.
+
 # v3.0.72 Compact Uniform Header Actions
 
 - PASS — the header contains eight matching clickable controls.

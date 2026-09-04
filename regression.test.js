@@ -42,9 +42,11 @@ function functionSource(source, name) {
   }
 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.72/g) || []).length === 5, 'All asset cache keys must be v3.0.72');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.73/g) || []).length === 5, 'All asset cache keys must be v3.0.73');
+  assert(css.includes('@media(min-width:1001px){html,body{height:100%;overflow:hidden}') && css.includes('overscroll-behavior:contain'), 'Desktop controls-panel scroll containment CSS is missing');
   assert(html.includes('id="exportSvgBtn"') && html.includes('>Download Design Image</button>') && html.includes('scalable SVG image'), 'Plain-language design-image download control or tooltip is missing');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
   assert(html.includes('id="stripTotalMetric"') && html.includes('id="stripTotalWarning"') && html.includes('id="laminationWarning"'), 'Pre-45 strip-total validation is missing');
@@ -90,9 +92,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.72') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('0.2850-inch rough rip') && userGuideHtml.includes('Diamond Accent') && userGuideHtml.includes('Download Design Image') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.72 page');
+  assert(userGuideHtml.includes('Designer v3.0.73') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('0.2850-inch rough rip') && userGuideHtml.includes('Diamond Accent') && userGuideHtml.includes('Download Design Image') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.73 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 37, 'FAQ must contain the 37 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.72') && faqHtml.includes('+0.035-inch rough-rip recommendation') && faqHtml.includes('What does the Diamond Accent control change?') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('What is Download Design Image for?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.72 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.73') && faqHtml.includes('+0.035-inch rough-rip recommendation') && faqHtml.includes('What does the Diamond Accent control change?') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('What is Download Design Image for?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.73 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -103,7 +105,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.72', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.73', 'Wrong visible version');
   const headerControlSizes = await page.locator('.header-actions > button, .header-actions > .header-link, .header-actions > .help-menu > summary').evaluateAll(elements => elements.map(element => {
     const rect = element.getBoundingClientRect();
     return { width: Math.round(rect.width), height: Math.round(rect.height) };
@@ -111,6 +113,24 @@ function functionSource(source, name) {
   assert(headerControlSizes.length === 8, 'Header must contain eight standardized actions');
   assert(new Set(headerControlSizes.map(size => size.width)).size === 1 && new Set(headerControlSizes.map(size => size.height)).size === 1, 'Header actions are not the same size');
   assert(headerControlSizes[0].width <= 100 && headerControlSizes[0].height === 46, 'Header actions are not using the approved compact size');
+  const desktopScrollFrame = await page.evaluate(() => {
+    const header = document.querySelector('.app-header');
+    const panel = document.querySelector('.controls-panel');
+    window.scrollTo(0, 100);
+    const panelTopBefore = panel.getBoundingClientRect().top;
+    panel.scrollTop = Math.min(250, panel.scrollHeight - panel.clientHeight);
+    return {
+      bodyOverflow: getComputedStyle(document.body).overflow,
+      pageScrollY: window.scrollY,
+      headerBottom: header.getBoundingClientRect().bottom,
+      panelTopBefore,
+      panelTopAfter: panel.getBoundingClientRect().top,
+      panelScrollTop: panel.scrollTop
+    };
+  });
+  assert(desktopScrollFrame.bodyOverflow === 'hidden' && desktopScrollFrame.pageScrollY === 0, 'Desktop page can still scroll behind the sticky header');
+  assert(desktopScrollFrame.panelTopBefore >= desktopScrollFrame.headerBottom && Math.abs(desktopScrollFrame.panelTopAfter - desktopScrollFrame.panelTopBefore) < 0.5, 'Controls-panel scrollbar can move beneath the header');
+  assert(desktopScrollFrame.panelScrollTop > 0, 'Controls panel did not retain its own scrolling');
   assert(await page.evaluate(() => recommendedRoughRip(0.25)) === 0.285, 'Quarter-inch strip does not recommend a 0.2850 in rough rip');
   assert(await page.locator('#exportSvgBtn').textContent() === 'Download Design Image', 'Design-image download button label is incorrect');
   assert((await page.locator('#exportSvgBtn').getAttribute('title')).includes('scalable SVG image'), 'Design-image download tooltip is missing');
