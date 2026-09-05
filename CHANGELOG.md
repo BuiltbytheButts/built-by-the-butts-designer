@@ -1,3 +1,22 @@
+## v3.0.78 — Clearer Crosscut Engineering labels
+
+- Renamed “Required master blank” to “Required Length.”
+- Renamed “Projected finished run” to “Projected Width.”
+- Added print-guide regression coverage for both labels.
+
+## v3.0.77 — Flat-face Picture 8 alignment
+
+- Rotated the four completed 45° sections onto their flat faces and placed them edge-to-edge in one row.
+- Alternated section orientation so the diagonal bands form matching half-diamonds and the selected Diamond Accent faces meet at each seam.
+- Replaced the point markers with full-height seam guides and updated the illustrated instructions, checklist, and regression coverage.
+
+## v3.0.76 — Picture 7–matched one-row 45° dry fit
+
+- Replaced Picture 8's generic two-row diamond icons with four realistic completed 45° cross-sections in one point-to-point row.
+- Picture 8 now reuses Picture 7's active strip widths, species colors, and selected Diamond Accent wood.
+- Added visible joint markers and explicit guidance to preserve the Picture 7 orientation before gluing.
+- Updated the printable quick checklist and regression coverage for the one-row dry fit.
+
 ## v3.0.75 — First-position User Guide and restored preview size
 
 - Moved User Guide ahead of Undo so it is the first header action.

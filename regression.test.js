@@ -45,7 +45,7 @@ function functionSource(source, name) {
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
   assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72|73|74)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.75/g) || []).length === 5, 'All asset cache keys must be v3.0.75');
+  assert((html.match(/v=3\.0\.78/g) || []).length === 5, 'All asset cache keys must be v3.0.78');
   assert(css.includes('position:sticky;top:86px;height:calc(100vh - 100px)') && css.includes('.preview-card{min-height:620px}') && css.includes('overscroll-behavior:contain'), 'Sticky controls-panel or restored desktop preview CSS is missing');
   assert(html.includes('id="exportSvgBtn"') && html.includes('>Download Design Image</button>') && html.includes('scalable SVG image'), 'Plain-language design-image download control or tooltip is missing');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
@@ -93,9 +93,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.75') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('0.2850-inch rough rip') && userGuideHtml.includes('Diamond Accent') && userGuideHtml.includes('Download Design Image') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.75 page');
+  assert(userGuideHtml.includes('Designer v3.0.78') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('0.2850-inch rough rip') && userGuideHtml.includes('Diamond Accent') && userGuideHtml.includes('Download Design Image') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.78 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 37, 'FAQ must contain the 37 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.75') && faqHtml.includes('+0.035-inch rough-rip recommendation') && faqHtml.includes('What does the Diamond Accent control change?') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('What is Download Design Image for?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.75 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.78') && faqHtml.includes('+0.035-inch rough-rip recommendation') && faqHtml.includes('What does the Diamond Accent control change?') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('What is Download Design Image for?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.78 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -106,7 +106,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.75', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.78', 'Wrong visible version');
   const headerControlSizes = await page.locator('.header-actions > button, .header-actions > .header-link').evaluateAll(elements => elements.map(element => {
     const rect = element.getBoundingClientRect();
     return { width: Math.round(rect.width), height: Math.round(rect.height) };
@@ -390,7 +390,18 @@ function functionSource(source, name) {
   assert((await page.locator('#printPlan').textContent()).includes('crosscuts assigned to this build'), 'Assigned crosscut count is not shown in one line');
   assert(await page.locator('#printPlan svg[aria-label*=four] .guide-center-cut').count() === 1, 'Center-to-center 45-degree guide is missing');
   assert((await page.locator('#printPlan').textContent()).includes('2.125 × 2.125 in'), 'Square lamination dimensions are not shown on both sides');
-  assert((await page.locator('#printPlan').textContent()).includes('Dry-fit the 45° cut pieces'), 'Two-row 45-degree dry fit step is missing');
+  assert((await page.locator('#printPlan').textContent()).includes('Dry-fit the 45° cut pieces'), 'One-row 45-degree dry fit step is missing');
+  assert((await page.locator('#printPlan').textContent()).includes('Required Length'), 'Crosscut Engineering is missing the Required Length label');
+  assert((await page.locator('#printPlan').textContent()).includes('Projected Width'), 'Crosscut Engineering is missing the Projected Width label');
+  assert(!(await page.locator('#printPlan').textContent()).includes('Required master blank'), 'Old Required master blank label remains in the printed guide');
+  assert(!(await page.locator('#printPlan').textContent()).includes('Projected finished run'), 'Old Projected finished run label remains in the printed guide');
+  const dryFitStep = page.locator('#printPlan .guide-step').filter({ hasText: 'Dry-fit the 45° cut pieces' });
+  assert(await dryFitStep.locator('[data-guide-part="dry-fit-piece"]').count() === 4, 'Picture 8 must show exactly four completed 45-degree sections');
+  assert(await dryFitStep.locator('[data-guide-part="dry-fit-joint"]').count() === 3, 'Picture 8 must mark the three flat-face alignment joints');
+  assert(await dryFitStep.locator('[data-guide-part="dry-fit-strip"]').count() === 4 * (await page.locator('[data-strip-width]').count()), 'Every Picture 8 section must reuse the complete active strip schedule');
+  assert(JSON.stringify(await dryFitStep.locator('[data-guide-part="dry-fit-piece"]').evaluateAll(pieces => pieces.map(piece => piece.dataset.guideOrientation))) === JSON.stringify(['45', '-45', '45', '-45']), 'Picture 8 sections do not alternate flat-face orientation');
+  assert((await dryFitStep.textContent()).includes('matching half-diamonds'), 'Picture 8 does not explain the half-diamond alignment');
+  assert((await dryFitStep.textContent()).includes('Flat-face dry fit'), 'Picture 8 is not labeled as a flat-face dry fit');
   assert((await page.locator('#printPlan').textContent()).includes('run each dotted cut line fully across its width'), 'Top-view crosscut instruction is missing');
   assert((await page.locator('#printPlan').textContent()).includes('1.625 in'), 'Calculated crosscut spacing is missing');
   assert(((await page.locator('#printPlan').textContent()).match(/CUT/g) || []).length >= 4, 'All four corner cuts are not labeled');
