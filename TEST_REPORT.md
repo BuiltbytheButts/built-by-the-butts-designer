@@ -1,9 +1,10 @@
-# v3.0.80 Correct Picture 8 Perspective
+# v3.0.81 Dynamic Laminated-Row Instructions
 
 - PASS — User Guide is the first clickable header action, ahead of Undo.
 - PASS — the desktop preview card retains a 620 px minimum height for a substantially larger board.
 - PASS — the controls panel remains sticky below the header and retains its independent scrollbar during page scrolling.
-- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.80.
+- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.81.
+- PASS — Pictures 8 and 9 expose the calculated required-row count, cap the representative drawing at four rows, and instruct the builder to continue and glue every required row.
 - PASS — Picture 8 flips Sections 1 and 3 by 180° so asymmetric matching bands close into half-diamonds; Pictures 9 and 10 reuse that corrected phase.
 - PASS — Pictures 9–12 carry the active four-section profile, crosscut count, strip schedule, Diamond Accent, alternating orientation, finished grid, and borders through the remaining build sequence.
 - PASS — Crosscut Engineering displays “Required Length” and “Projected Width,” with the former labels removed.

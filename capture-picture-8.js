@@ -6,7 +6,7 @@ const { chromium } = require("C:/Users/built/.cache/codex-runtimes/codex-primary
 
 (async function capturePicture8() {
   const appUrl = pathToFileURL(path.join(__dirname, "index.html")).href;
-  const outputPath = path.resolve(__dirname, "..", "..", "outputs", "Diamond-End-Grain-Designer-v3.0.80-picture-8.png");
+  const outputPath = path.resolve(__dirname, "..", "..", "outputs", "Diamond-End-Grain-Designer-v3.0.81-picture-8.png");
   const strips = [
     { width: 0.25, wood: "maple" },
     { width: 0.125, wood: "cherry" },
@@ -28,7 +28,7 @@ const { chromium } = require("C:/Users/built/.cache/codex-runtimes/codex-primary
   await page.goto(appUrl);
   await page.evaluate((nextStrips) => {
     localStorage.setItem("diamond-end-grain-designer-v3", JSON.stringify({
-      version: "3.0.80",
+      version: "3.0.81",
       boardLength: 18,
       boardWidth: 12,
       finishedThickness: 1.5,
@@ -60,6 +60,8 @@ const { chromium } = require("C:/Users/built/.cache/codex-runtimes/codex-primary
     pieces: element.querySelectorAll('[data-guide-part="dry-fit-piece"]').length,
     strips: element.querySelectorAll('[data-guide-part="dry-fit-strip"]').length,
     joints: element.querySelectorAll('[data-guide-part="dry-fit-joint"]').length,
+    requiredRows: element.querySelector('[data-guide-part="dry-fit-row"]')?.dataset.guideRequiredRows,
+    shownRows: element.querySelector('[data-guide-part="dry-fit-row"]')?.dataset.guideShownRows,
     text: element.innerText
   }));
   await browser.close();

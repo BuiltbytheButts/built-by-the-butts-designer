@@ -1,3 +1,11 @@
+## v3.0.81 — Dynamic laminated-row instructions
+
+- Pictures 8 and 9 now read the calculated laminated-row count from the active design instead of assuming four rows.
+- Each diagram shows up to four representative rows for readability and states how many of the required rows are shown.
+- Picture 8 tells the builder to continue the alternating perspective through the final required row.
+- Picture 9 explicitly instructs the builder to glue every required row into the full master blank.
+- Picture 10 now identifies the same master blank by its calculated row count.
+
 ## v3.0.80 — Correct Picture 8 perspective
 
 - Flipped Sections 1 and 3 end-for-end while keeping Sections 2 and 4 in place.

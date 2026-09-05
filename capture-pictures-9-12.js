@@ -6,7 +6,7 @@ const { chromium } = require("C:/Users/built/.cache/codex-runtimes/codex-primary
 
 (async function capturePictures9To12() {
   const appUrl = pathToFileURL(path.join(__dirname, "index.html")).href;
-  const outputPath = path.resolve(__dirname, "..", "..", "outputs", "Diamond-End-Grain-Designer-v3.0.80-pictures-9-12.png");
+  const outputPath = path.resolve(__dirname, "..", "..", "outputs", "Diamond-End-Grain-Designer-v3.0.81-pictures-9-12.png");
   const strips = [
     { width: 0.25, wood: "maple" },
     { width: 0.125, wood: "cherry" },
@@ -28,7 +28,7 @@ const { chromium } = require("C:/Users/built/.cache/codex-runtimes/codex-primary
   await page.goto(appUrl);
   await page.evaluate((nextStrips) => {
     localStorage.setItem("diamond-end-grain-designer-v3", JSON.stringify({
-      version: "3.0.80",
+      version: "3.0.81",
       boardLength: 18,
       boardWidth: 12,
       finishedThickness: 1.5,

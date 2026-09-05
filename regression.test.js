@@ -45,7 +45,7 @@ function functionSource(source, name) {
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
   assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72|73|74)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.80/g) || []).length === 5, 'All asset cache keys must be v3.0.80');
+  assert((html.match(/v=3\.0\.81/g) || []).length === 5, 'All asset cache keys must be v3.0.81');
   assert(css.includes('position:sticky;top:86px;height:calc(100vh - 100px)') && css.includes('.preview-card{min-height:620px}') && css.includes('overscroll-behavior:contain'), 'Sticky controls-panel or restored desktop preview CSS is missing');
   assert(html.includes('id="exportSvgBtn"') && html.includes('>Download Design Image</button>') && html.includes('scalable SVG image'), 'Plain-language design-image download control or tooltip is missing');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
@@ -93,9 +93,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.80') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('0.2850-inch rough rip') && userGuideHtml.includes('Diamond Accent') && userGuideHtml.includes('Download Design Image') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.80 page');
+  assert(userGuideHtml.includes('Designer v3.0.81') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('0.2850-inch rough rip') && userGuideHtml.includes('Diamond Accent') && userGuideHtml.includes('Download Design Image') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.81 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 37, 'FAQ must contain the 37 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.80') && faqHtml.includes('+0.035-inch rough-rip recommendation') && faqHtml.includes('What does the Diamond Accent control change?') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('What is Download Design Image for?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.80 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.81') && faqHtml.includes('+0.035-inch rough-rip recommendation') && faqHtml.includes('What does the Diamond Accent control change?') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('What is Download Design Image for?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.81 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -106,7 +106,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.80', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.81', 'Wrong visible version');
   const headerControlSizes = await page.locator('.header-actions > button, .header-actions > .header-link').evaluateAll(elements => elements.map(element => {
     const rect = element.getBoundingClientRect();
     return { width: Math.round(rect.width), height: Math.round(rect.height) };
@@ -401,13 +401,27 @@ function functionSource(source, name) {
   assert(await dryFitStep.locator('[data-guide-part="dry-fit-strip"]').count() === 4 * (await page.locator('[data-strip-width]').count()), 'Every Picture 8 section must reuse the complete active strip schedule');
   assert(JSON.stringify(await dryFitStep.locator('[data-guide-part="dry-fit-piece"]').evaluateAll(pieces => pieces.map(piece => piece.dataset.guideOrientation))) === JSON.stringify(['-135', '-45', '-135', '-45']), 'Picture 8 does not flip Sections 1 and 3 into the matching-band perspective');
   assert((await dryFitStep.textContent()).includes('form half-diamonds'), 'Picture 8 does not explain the half-diamond alignment');
-  assert((await dryFitStep.textContent()).includes('Sections 1 and 3 flipped 180°'), 'Picture 8 does not label the corrected flipped-section perspective');
+  assert((await dryFitStep.textContent()).includes('Flip odd-numbered rows end-for-end'), 'Picture 8 does not label the corrected flipped-row perspective');
   const illustratedCrosscutCount = await page.evaluate(() => crosscutEngineering().crosscutCount);
   const illustratedRowCount = await page.evaluate(() => borderEngineering().selectedRows);
+  assert(Number(await dryFitStep.locator('[data-guide-part="dry-fit-row"]').getAttribute('data-guide-required-rows')) === illustratedRowCount, 'Picture 8 required-row count is not dynamic');
+  assert(Number(await dryFitStep.locator('[data-guide-part="dry-fit-row"]').getAttribute('data-guide-shown-rows')) === Math.min(4, illustratedRowCount), 'Picture 8 representative-row count is not capped at four');
+  assert((await dryFitStep.textContent()).includes(`This build requires ${illustratedRowCount} laminated row`), 'Picture 8 does not state the calculated laminated-row requirement');
   const masterBlankGuideStep = page.locator('#printPlan .guide-step').filter({ hasText: 'Prepare the full master blank' });
   assert(await masterBlankGuideStep.locator('[data-guide-part="master-blank-profile"]').count() === 1, 'Picture 9 does not show the realistic assembled master-blank profile');
   assert(await masterBlankGuideStep.locator('[data-guide-part="dry-fit-piece"]').count() === 4, 'Picture 9 does not carry all four Picture 8 sections into the master blank');
   assert(await masterBlankGuideStep.locator('[data-guide-part="master-blank-seam"]').count() === 3, 'Picture 9 does not show the three joined section seams');
+  assert(Number(await masterBlankGuideStep.locator('[data-guide-part="master-blank-profile"]').getAttribute('data-guide-required-rows')) === illustratedRowCount, 'Picture 9 required-row count is not dynamic');
+  assert((await masterBlankGuideStep.textContent()).includes(`Glue all ${illustratedRowCount} aligned laminated rows`), 'Picture 9 does not instruct the builder to glue every required row');
+  const dynamicRowGuideSnapshot = await page.evaluate(() => snapshot());
+  await page.evaluate(() => { state.boardWidth = 4.5; render(); });
+  const threeRowDryFitStep = page.locator('#printPlan .guide-step').filter({ hasText: 'Dry-fit the 45° cut pieces' });
+  const threeRowMasterStep = page.locator('#printPlan .guide-step').filter({ hasText: 'Prepare the full master blank' });
+  assert(await threeRowDryFitStep.locator('[data-guide-part="dry-fit-piece"]').count() === 3, 'Picture 8 does not reduce the drawing when only three laminated rows are required');
+  assert(Number(await threeRowDryFitStep.locator('[data-guide-part="dry-fit-row"]').getAttribute('data-guide-required-rows')) === 3, 'Picture 8 did not recalculate a three-row design');
+  assert(await threeRowMasterStep.locator('[data-guide-part="dry-fit-piece"]').count() === 3, 'Picture 9 does not reduce the representative master profile to three required rows');
+  assert((await threeRowMasterStep.textContent()).includes('Glue all 3 aligned laminated rows'), 'Picture 9 did not recalculate its glue-up instruction for three rows');
+  await page.evaluate(serialized => restore(serialized), dynamicRowGuideSnapshot);
   const topViewGuideStep = page.locator('#printPlan .guide-step').filter({ hasText: 'Mark the crosscuts from the top view' });
   assert(await topViewGuideStep.locator('[data-guide-part="master-blank-top-view"]').count() === 1, 'Picture 10 does not show the realistic four-section master-blank top surface');
   assert(await topViewGuideStep.locator('[data-guide-part="master-crosscut-line"]').count() === illustratedCrosscutCount - 1, 'Picture 10 crosscut lines do not match the calculated count');
