@@ -1,3 +1,11 @@
+# v3.0.75 First-Position User Guide and Restored Preview Size
+
+- PASS — User Guide is the first clickable header action, ahead of Undo.
+- PASS — the desktop preview card retains a 620 px minimum height for a substantially larger board.
+- PASS — the controls panel remains sticky below the header and retains its independent scrollbar during page scrolling.
+- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.75.
+- PASS — frozen geometry.js and frozen Diamond Accent/laminate/board-renderer function hashes are unchanged.
+
 # v3.0.74 Direct User Guide and FAQ Actions
 
 - PASS — User Guide is the first documentation action and FAQ follows it in the former Help location.

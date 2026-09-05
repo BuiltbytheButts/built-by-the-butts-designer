@@ -44,9 +44,9 @@ function functionSource(source, name) {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   assert(!/Alternate even option/i.test(html), 'Alternate Even Option remains in UI');
-  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72|73)/.test(html), 'Stale cache key remains');
-  assert((html.match(/v=3\.0\.74/g) || []).length === 5, 'All asset cache keys must be v3.0.74');
-  assert(css.includes('@media(min-width:1001px){html,body{height:100%;overflow:hidden}') && css.includes('overscroll-behavior:contain'), 'Desktop controls-panel scroll containment CSS is missing');
+  assert(!/v=3\.0\.(10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31|32|33|34|35|36|37|38|39|40|41|42|43|44|45|46|47|48|49|50|51|52|53|54|55|56|57|58|59|60|61|62|63|64|65|66|67|68|69|70|71|72|73|74)/.test(html), 'Stale cache key remains');
+  assert((html.match(/v=3\.0\.75/g) || []).length === 5, 'All asset cache keys must be v3.0.75');
+  assert(css.includes('position:sticky;top:86px;height:calc(100vh - 100px)') && css.includes('.preview-card{min-height:620px}') && css.includes('overscroll-behavior:contain'), 'Sticky controls-panel or restored desktop preview CSS is missing');
   assert(html.includes('id="exportSvgBtn"') && html.includes('>Download Design Image</button>') && html.includes('scalable SVG image'), 'Plain-language design-image download control or tooltip is missing');
   assert(html.includes('Actual Board Dimensions') && html.includes('id="actualBoardWarning"'), 'Actual Board Dimensions result or its warning is missing');
   assert(html.includes('id="stripTotalMetric"') && html.includes('id="stripTotalWarning"') && html.includes('id="laminationWarning"'), 'Pre-45 strip-total validation is missing');
@@ -55,7 +55,7 @@ function functionSource(source, name) {
   assert(html.includes('id="laminatedRowHelp"') && html.includes('id="materialLengthHelp"'), 'Laminated-row length guidance is missing');
   assert(html.includes('Starting crosscut') && (html.match(/data-glue-up-phase=/g) || []).length === 2, 'Starting-crosscut glue-up control is missing');
   assert(html.includes('id="userGuideLink"') && html.includes('id="faqLink"') && !html.includes('id="helpMenu"'), 'Direct User Guide and FAQ header actions are missing or the Help dropdown remains');
-  assert(html.indexOf('id="userGuideLink"') < html.indexOf('id="faqLink"'), 'User Guide must appear before FAQ');
+  assert(html.indexOf('id="userGuideLink"') < html.indexOf('id="undoBtn"') && html.indexOf('id="userGuideLink"') < html.indexOf('id="faqLink"'), 'User Guide must be the first header action');
   assert(html.includes('Estimated Wood Cost') && html.includes('Estimated rough lumber'), 'Rough-lumber cost estimate is missing');
   assert(!html.includes('materialNetMetric') && !html.includes('materialVolumeHelp') && !html.includes('materialGapWarning'), 'Finished/net material volume remains visible');
   const controlOrder = ['Strip Schedule', 'Diamond Accent', 'Top &amp; Bottom Borders', 'Crosscut Engineering', 'Estimated Wood Cost', 'Wood Library'].map(label => html.indexOf(label));
@@ -93,9 +93,9 @@ function functionSource(source, name) {
   const userGuideHtml = fs.readFileSync(path.join(root, 'user-guide.html'), 'utf8');
   const faqHtml = fs.readFileSync(path.join(root, 'faq.html'), 'utf8');
   for (const required of ['Quick start','Using the Designer controls','Reading the top results','Understanding warnings','Estimated Wood Cost','Project and output tools','Build references','Recommended workshop workflow','Glossary']) assert(userGuideHtml.includes(required), 'User Guide section missing: ' + required);
-  assert(userGuideHtml.includes('Designer v3.0.74') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('0.2850-inch rough rip') && userGuideHtml.includes('Diamond Accent') && userGuideHtml.includes('Download Design Image') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.74 page');
+  assert(userGuideHtml.includes('Designer v3.0.75') && userGuideHtml.includes('Starting Crosscut') && userGuideHtml.includes('Strip total before 45° cuts') && userGuideHtml.includes('0.2850-inch rough rip') && userGuideHtml.includes('Diamond Accent') && userGuideHtml.includes('Download Design Image') && userGuideHtml.includes('<style>'), 'User Guide is not a self-contained v3.0.75 page');
   assert((faqHtml.match(/class="faq"/g) || []).length === 37, 'FAQ must contain the 37 approved questions');
-  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.74') && faqHtml.includes('+0.035-inch rough-rip recommendation') && faqHtml.includes('What does the Diamond Accent control change?') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('What is Download Design Image for?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.74 page');
+  assert(faqHtml.includes('Frequently asked questions') && faqHtml.includes('Designer v3.0.75') && faqHtml.includes('+0.035-inch rough-rip recommendation') && faqHtml.includes('What does the Diamond Accent control change?') && faqHtml.includes('Why must the strip total match the required pre-45° lamination size?') && faqHtml.includes('What is Download Design Image for?') && faqHtml.includes('<style>'), 'FAQ is not a self-contained v3.0.75 page');
 
   const browser = await chromium.launch({
     headless: true,
@@ -106,7 +106,7 @@ function functionSource(source, name) {
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
 
-  assert(await page.locator('.version-badge').textContent() === 'v3.0.74', 'Wrong visible version');
+  assert(await page.locator('.version-badge').textContent() === 'v3.0.75', 'Wrong visible version');
   const headerControlSizes = await page.locator('.header-actions > button, .header-actions > .header-link').evaluateAll(elements => elements.map(element => {
     const rect = element.getBoundingClientRect();
     return { width: Math.round(rect.width), height: Math.round(rect.height) };
@@ -123,21 +123,26 @@ function functionSource(source, name) {
   const desktopScrollFrame = await page.evaluate(() => {
     const header = document.querySelector('.app-header');
     const panel = document.querySelector('.controls-panel');
-    window.scrollTo(0, 100);
     const panelTopBefore = panel.getBoundingClientRect().top;
     panel.scrollTop = Math.min(250, panel.scrollHeight - panel.clientHeight);
+    const panelTopAfterPanelScroll = panel.getBoundingClientRect().top;
+    window.scrollTo(0, 100);
     return {
-      bodyOverflow: getComputedStyle(document.body).overflow,
+      panelPosition: getComputedStyle(panel).position,
       pageScrollY: window.scrollY,
       headerBottom: header.getBoundingClientRect().bottom,
       panelTopBefore,
-      panelTopAfter: panel.getBoundingClientRect().top,
-      panelScrollTop: panel.scrollTop
+      panelTopAfterPanelScroll,
+      panelTopAfterPageScroll: panel.getBoundingClientRect().top,
+      panelScrollTop: panel.scrollTop,
+      previewHeight: document.querySelector('.preview-card').getBoundingClientRect().height
     };
   });
-  assert(desktopScrollFrame.bodyOverflow === 'hidden' && desktopScrollFrame.pageScrollY === 0, 'Desktop page can still scroll behind the sticky header');
-  assert(desktopScrollFrame.panelTopBefore >= desktopScrollFrame.headerBottom && Math.abs(desktopScrollFrame.panelTopAfter - desktopScrollFrame.panelTopBefore) < 0.5, 'Controls-panel scrollbar can move beneath the header');
+  assert(desktopScrollFrame.pageScrollY > 0, 'Main design area did not retain normal page scrolling');
+  assert(desktopScrollFrame.panelPosition === 'sticky' && desktopScrollFrame.panelTopAfterPageScroll >= desktopScrollFrame.headerBottom, 'Controls panel can move beneath the sticky header');
+  assert(Math.abs(desktopScrollFrame.panelTopAfterPanelScroll - desktopScrollFrame.panelTopBefore) < 0.5 && Math.abs(desktopScrollFrame.panelTopAfterPageScroll - desktopScrollFrame.panelTopBefore) < 0.5, 'Controls-panel scrollbar does not remain fixed below the header');
   assert(desktopScrollFrame.panelScrollTop > 0, 'Controls panel did not retain its own scrolling');
+  assert(desktopScrollFrame.previewHeight >= 620, 'Desktop board preview became too small');
   assert(await page.evaluate(() => recommendedRoughRip(0.25)) === 0.285, 'Quarter-inch strip does not recommend a 0.2850 in rough rip');
   assert(await page.locator('#exportSvgBtn').textContent() === 'Download Design Image', 'Design-image download button label is incorrect');
   assert((await page.locator('#exportSvgBtn').getAttribute('title')).includes('scalable SVG image'), 'Design-image download tooltip is missing');
@@ -235,7 +240,7 @@ function functionSource(source, name) {
   assert(await page.locator('#userGuideLink').isVisible() && await page.locator('#faqLink').isVisible(), 'Direct User Guide or FAQ action is missing');
   assert(await page.locator('#userGuideLink').textContent() === 'User Guide' && await page.locator('#faqLink').textContent() === 'FAQ', 'Documentation action labels are incorrect');
   assert(await page.locator('#userGuideLink').getAttribute('target') === '_blank' && await page.locator('#faqLink').getAttribute('target') === '_blank', 'Documentation pages are not independent');
-  assert(await page.locator('#userGuideLink').evaluate((link, faq) => Boolean(link.compareDocumentPosition(faq) & Node.DOCUMENT_POSITION_FOLLOWING), await page.locator('#faqLink').elementHandle()), 'User Guide does not appear before FAQ');
+  assert(await page.locator('.header-actions > :not(input)').first().getAttribute('id') === 'userGuideLink', 'User Guide is not the first clickable header action');
   assert(await page.locator('#sampleBuildLink').isVisible(), 'Sample Build link is missing');
   assert(await page.locator('#sampleBuildLink').getAttribute('target') === '_blank', 'Sample Build is not independent of the active designer view');
   assert(await page.locator('#laminationMinimumMetric').count() === 0, 'Minimum/rounding explanation still occupies the top metric card');

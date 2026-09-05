@@ -1,3 +1,10 @@
+## v3.0.75 — First-position User Guide and restored preview size
+
+- Moved User Guide ahead of Undo so it is the first header action.
+- Restored a large desktop board preview instead of shrinking it into the remaining viewport height.
+- Kept the controls panel and its scrollbar sticky below the header while the main design area uses normal page scrolling.
+- Preserved all Designer calculations, saved projects, and print output.
+
 ## v3.0.74 — Direct User Guide and FAQ actions
 
 - Replaced the Help dropdown with separate User Guide and FAQ header buttons.
