@@ -1,9 +1,11 @@
-# v3.0.78 Crosscut Engineering Labels
+# v3.0.80 Correct Picture 8 Perspective
 
 - PASS — User Guide is the first clickable header action, ahead of Undo.
 - PASS — the desktop preview card retains a 620 px minimum height for a substantially larger board.
 - PASS — the controls panel remains sticky below the header and retains its independent scrollbar during page scrolling.
-- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.78.
+- PASS — syntax, geometry, manufacturing, material, version/cache, print-guide, and browser regression checks completed for v3.0.80.
+- PASS — Picture 8 flips Sections 1 and 3 by 180° so asymmetric matching bands close into half-diamonds; Pictures 9 and 10 reuse that corrected phase.
+- PASS — Pictures 9–12 carry the active four-section profile, crosscut count, strip schedule, Diamond Accent, alternating orientation, finished grid, and borders through the remaining build sequence.
 - PASS — Crosscut Engineering displays “Required Length” and “Projected Width,” with the former labels removed.
 - PASS — Picture 8 contains four edge-to-edge sections with alternating +45°/−45° orientation, three flat-face seams, the complete active strip schedule, and the selected Diamond Accent wood.
 - PASS — frozen geometry.js and frozen Diamond Accent/laminate/board-renderer function hashes are unchanged.

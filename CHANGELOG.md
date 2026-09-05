@@ -1,3 +1,17 @@
+## v3.0.80 — Correct Picture 8 perspective
+
+- Flipped Sections 1 and 3 end-for-end while keeping Sections 2 and 4 in place.
+- Matching asymmetric strip bands such as Purpleheart now meet to form the intended half-diamonds.
+- Carried the corrected section phase into the master-blank views in Pictures 9 and 10 while preserving the exact finished-board geometry in Pictures 11 and 12.
+
+## v3.0.79 — Realistic Pictures 9–12
+
+- Rebuilt Picture 9 from the same four aligned section profiles shown in Picture 8, including the selected borders and required length.
+- Rebuilt Picture 10 as the top surface of that four-section master blank with every calculated crosscut line.
+- Rebuilt Picture 11 from the actual active strip schedule, Diamond Accent geometry, and alternating as-cut/turned orientation for every assigned crosscut.
+- Rebuilt Picture 12 as the complete calculated end-grain grid with the selected strip widths, species, Diamond Accent, starting crosscut, dimensions, and borders.
+- Added regression coverage that verifies the real piece, strip, crosscut, cell, and border counts carried through the four diagrams.
+
 ## v3.0.78 — Clearer Crosscut Engineering labels
 
 - Renamed “Required master blank” to “Required Length.”

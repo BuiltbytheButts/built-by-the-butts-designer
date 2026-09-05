@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '3.0.78';
+const VERSION = '3.0.80';
 const STRIP_ROUGH_RIP_EXTRA = 0.035;
 const BORDER_ROUGH_RIP_EXTRA = 1 / 16;
 const ROUGH_CROSSCUT_EXTRA = 1 / 8;
@@ -919,31 +919,20 @@ function buildGuideVisuals(crosscuts, border, lamination) {
   const stripOrderLabels = strips.map((strip, index) => stripOffsetLabel(index, strips.length));
   const stripOrderMiddle = Math.ceil(stripOrderLabels.length / 2);
   const stripOrderGuide = `<text x="210" y="174" text-anchor="middle" class="guide-strip-order">A side: ${stripOrderLabels.slice(0, stripOrderMiddle).join(' · ')}</text><text x="210" y="186" text-anchor="middle" class="guide-strip-order">B side: ${stripOrderLabels.slice(stripOrderMiddle).join(' · ')}</text>`;
-  const pieceCount = Math.min(crosscuts.crosscutCount, 12);
-  const pieceWidth = 310 / Math.max(pieceCount, 1);
-  const pieces = Array.from({ length: pieceCount }, (_, index) => `<rect x="${48 + index * pieceWidth}" y="65" width="${Math.max(5, pieceWidth - 3)}" height="62" fill="${index % 2 ? guideWood(state.edgeWood) : guideWood(strips[index % strips.length]?.wood)}"/><line x1="${48 + (index + 1) * pieceWidth - 1.5}" y1="54" x2="${48 + (index + 1) * pieceWidth - 1.5}" y2="138" class="guide-cut"/>`).join('');
-  const diamonds = Array.from({ length: 8 }, (_, index) => {
-    const col = index % 4;
-    const row = Math.floor(index / 4);
-    const cx = 90 + col * 80;
-    const cy = 62 + row * 72;
-    return `<polygon points="${cx},${cy - 30} ${cx + 36},${cy} ${cx},${cy + 30} ${cx - 36},${cy}" fill="${guideWood(strips[0]?.wood)}" stroke="${guideWood(state.edgeWood)}" stroke-width="9"/><polygon points="${cx},${cy - 15} ${cx + 18},${cy} ${cx},${cy + 15} ${cx - 18},${cy}" fill="${guideWood(strips[Math.floor(strips.length / 2)]?.wood)}"/>`;
-  }).join('');
   const assignedCount = Math.max(0, crosscuts.crosscutCount);
-  const assignedSize = Math.min(52, 340 / Math.max(assignedCount, 1));
-  const assignedStart = 210 - assignedCount * assignedSize / 2;
-  const assignedCrosscuts = Array.from({ length: assignedCount }, (_, index) => {
-    const x = assignedStart + index * assignedSize;
-    const center = x + assignedSize / 2;
-    const cy = 94;
-    const radius = assignedSize * 0.46;
-    const inner = radius * 0.53;
-    return `<polygon points="${center.toFixed(2)},${(cy - radius).toFixed(2)} ${(center + radius).toFixed(2)},${cy} ${center.toFixed(2)},${(cy + radius).toFixed(2)} ${(center - radius).toFixed(2)},${cy}" fill="${guideWood(strips[0]?.wood)}" stroke="${guideWood(strips.at(-1)?.wood)}" stroke-width="${Math.max(2, assignedSize * .12).toFixed(2)}"/><polygon points="${center.toFixed(2)},${(cy - inner).toFixed(2)} ${(center + inner).toFixed(2)},${cy} ${center.toFixed(2)},${(cy + inner).toFixed(2)} ${(center - inner).toFixed(2)},${cy}" fill="${guideWood(strips[Math.floor(strips.length / 2)]?.wood)}"/><text x="${center.toFixed(2)}" y="${(cy + 4).toFixed(2)}" text-anchor="middle">${index + 1}</text>`;
-  }).join('');
   const edgeRipSelected = number(state.edgeInset) > 0.0005;
   const edgeRipSpecies = WOODS[state.edgeWood]?.name || state.edgeWood;
   const ripTargetWood = strips.some(strip => strip.wood === 'walnut') ? 'walnut' : strips[Math.floor(strips.length / 2)]?.wood;
   const ripTargetSpecies = WOODS[ripTargetWood]?.name || ripTargetWood;
+  const guideEndGrainCell = (x, y, size, row, col, part) => {
+    const patternCol = col + (firstCrosscutTurned ? 1 : 0);
+    const rotate180 = patternCol % 2 === 1;
+    const slope = (row + patternCol) % 2 === 0 ? 1 : -1;
+    const angleDeg = (slope >= 0 ? 45 : -45) + (rotate180 ? 180 : 0);
+    const bands = DiamondGeometry.laminateBands({ x, y, size, strips, angleDeg }).map(band => `<polygon data-guide-part="guide-laminate-band" data-strip-index="${band.index}" points="${points(band.polygon)}" fill="${guideWood(band.wood)}" stroke="none"/>`).join('');
+    const accentTriangles = DiamondGeometry.edgeCutTriangles({ x, y, size, slope, cutDepth: number(state.edgeInset), moduleWidth: moduleWidth() }).triangles.map(triangle => `<polygon data-guide-part="guide-diamond-accent" points="${points(triangle)}" fill="${guideWood(state.edgeWood)}" stroke="#241710" stroke-width="${Math.max(0.35, size * 0.006).toFixed(2)}"/>`).join('');
+    return `<g data-guide-part="${part}" data-guide-row="${row}" data-guide-column="${col}" data-guide-slope="${slope}" data-guide-turned="${rotate180}">${bands}${accentTriangles}<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${size.toFixed(2)}" height="${size.toFixed(2)}" fill="none" stroke="#4d382d" stroke-opacity=".55" stroke-width="${Math.max(0.35, size * 0.009).toFixed(2)}"/></g>`;
+  };
   let edgeGlueStripX = 40;
   const edgeGlueStripWidth = 340;
   const edgeGlueStrips = strips.map(strip => {
@@ -963,7 +952,7 @@ function buildGuideVisuals(crosscuts, border, lamination) {
   const dryFitCoreTop = dryFitCenterY - dryFitCoreHalfHeight;
   const dryFitCoreBottom = dryFitCenterY + dryFitCoreHalfHeight;
   const dryFitDefinitions = dryFitCenters.map((center, index) => `<clipPath id="guide-dry-fit-core-${index}"><polygon points="${(center - dryFitCoreHalf).toFixed(2)},${dryFitCoreTop.toFixed(2)} ${(center + dryFitCoreHalf).toFixed(2)},${dryFitCoreTop.toFixed(2)} ${(center + dryFitRadius).toFixed(2)},${dryFitCenterY} ${(center + dryFitCoreHalf).toFixed(2)},${dryFitCoreBottom.toFixed(2)} ${(center - dryFitCoreHalf).toFixed(2)},${dryFitCoreBottom.toFixed(2)} ${(center - dryFitRadius).toFixed(2)},${dryFitCenterY}"/></clipPath>`).join('');
-  const dryFitPieces = dryFitCenters.map((center, index) => {
+  const dryFitPieceBodies = dryFitCenters.map((center, index) => {
     let pieceStripX = center - dryFitRadius;
     const pieceStrips = strips.map(strip => {
       const width = dryFitRadius * 2 * number(strip.width) / Math.max(total, 0.001);
@@ -972,11 +961,18 @@ function buildGuideVisuals(crosscuts, border, lamination) {
       return shape;
     }).join('');
     const completionWood = edgeRipSelected ? state.edgeWood : strips[0]?.wood;
-    const rotation = index % 2 === 0 ? 45 : -45;
-    return `<g data-guide-part="dry-fit-piece" data-guide-piece="${index + 1}" data-guide-orientation="${rotation}" transform="rotate(${rotation} ${center} ${dryFitCenterY})"><g clip-path="url(#guide-dry-fit-core-${index})">${pieceStrips}</g><polygon data-guide-part="dry-fit-accent-top" points="${(center - dryFitCoreHalf).toFixed(2)},${dryFitCoreTop.toFixed(2)} ${(center + dryFitCoreHalf).toFixed(2)},${dryFitCoreTop.toFixed(2)} ${center},${(dryFitCenterY - dryFitRadius).toFixed(2)}" fill="${guideWood(completionWood)}" stroke="#6e5a4b" stroke-width="1.5" stroke-linejoin="round"/><polygon data-guide-part="dry-fit-accent-bottom" points="${(center - dryFitCoreHalf).toFixed(2)},${dryFitCoreBottom.toFixed(2)} ${(center + dryFitCoreHalf).toFixed(2)},${dryFitCoreBottom.toFixed(2)} ${center},${(dryFitCenterY + dryFitRadius).toFixed(2)}" fill="${guideWood(completionWood)}" stroke="#6e5a4b" stroke-width="1.5" stroke-linejoin="round"/><polygon data-guide-part="dry-fit-outline" points="${center},${(dryFitCenterY - dryFitRadius).toFixed(2)} ${(center + dryFitRadius).toFixed(2)},${dryFitCenterY} ${center},${(dryFitCenterY + dryFitRadius).toFixed(2)} ${(center - dryFitRadius).toFixed(2)},${dryFitCenterY}" fill="none" stroke="#33261e" stroke-width="2" stroke-linejoin="round"/></g><text x="${center}" y="148" text-anchor="middle">Section ${index + 1}</text>`;
+    const rotation = index % 2 === 0 ? -135 : -45;
+    return `<g data-guide-part="dry-fit-piece" data-guide-piece="${index + 1}" data-guide-orientation="${rotation}" transform="rotate(${rotation} ${center} ${dryFitCenterY})"><g clip-path="url(#guide-dry-fit-core-${index})">${pieceStrips}</g><polygon data-guide-part="dry-fit-accent-top" points="${(center - dryFitCoreHalf).toFixed(2)},${dryFitCoreTop.toFixed(2)} ${(center + dryFitCoreHalf).toFixed(2)},${dryFitCoreTop.toFixed(2)} ${center},${(dryFitCenterY - dryFitRadius).toFixed(2)}" fill="${guideWood(completionWood)}" stroke="#6e5a4b" stroke-width="1.5" stroke-linejoin="round"/><polygon data-guide-part="dry-fit-accent-bottom" points="${(center - dryFitCoreHalf).toFixed(2)},${dryFitCoreBottom.toFixed(2)} ${(center + dryFitCoreHalf).toFixed(2)},${dryFitCoreBottom.toFixed(2)} ${center},${(dryFitCenterY + dryFitRadius).toFixed(2)}" fill="${guideWood(completionWood)}" stroke="#6e5a4b" stroke-width="1.5" stroke-linejoin="round"/><polygon data-guide-part="dry-fit-outline" points="${center},${(dryFitCenterY - dryFitRadius).toFixed(2)} ${(center + dryFitRadius).toFixed(2)},${dryFitCenterY} ${center},${(dryFitCenterY + dryFitRadius).toFixed(2)} ${(center - dryFitRadius).toFixed(2)},${dryFitCenterY}" fill="none" stroke="#33261e" stroke-width="2" stroke-linejoin="round"/></g>`;
   }).join('');
+  const dryFitLabels = dryFitCenters.map((center, index) => `<text x="${center}" y="148" text-anchor="middle">Section ${index + 1}</text>`).join('');
+  const remapDryFitIds = prefix => ({
+    definitions: dryFitDefinitions.replaceAll('guide-dry-fit-core-', `guide-${prefix}-dry-fit-core-`),
+    bodies: dryFitPieceBodies.replaceAll('guide-dry-fit-core-', `guide-${prefix}-dry-fit-core-`)
+  });
+  const picture8DryFit = remapDryFitIds('picture-8');
+  const dryFitPieces = `${picture8DryFit.bodies}${dryFitLabels}`;
   const dryFitJoints = dryFitCenters.slice(0, -1).map(center => `<line data-guide-part="dry-fit-joint" x1="${center + dryFitHalfSize}" y1="${dryFitTop}" x2="${center + dryFitHalfSize}" y2="${dryFitBottom}" stroke="#8f431f" stroke-width="1.5" stroke-dasharray="3 3"/>`).join('');
-  const dryFitRow = `<defs>${dryFitDefinitions}</defs>${dryFitPieces}${dryFitJoints}<text x="210" y="178" text-anchor="middle">Flat-face dry fit · align each ${edgeRipSpecies} Diamond Accent seam</text>`;
+  const dryFitRow = `<defs>${picture8DryFit.definitions}</defs>${dryFitPieces}${dryFitJoints}<text x="210" y="178" text-anchor="middle">Sections 1 and 3 flipped 180° · align matching bands and ${edgeRipSpecies}</text>`;
   const edgeRipSteps = edgeRipSelected ? [{
     title: 'Cut the Diamond Accent shoulders',
     text: `Use the completed 45° piece. Cut across the ${ripTargetSpecies} section to the selected ${number(state.edgeInset).toFixed(3)} in depth, creating the two angled shoulders shown below.`,
@@ -986,39 +982,68 @@ function buildGuideVisuals(crosscuts, border, lamination) {
     text: `Prepare matching 45° ${edgeRipSpecies} Diamond Accent pieces. Glue them flush to the freshly cut top and bottom ${ripTargetSpecies} faces so the completed cross-section is a square.`,
     svg: guideSvg(`<defs><clipPath id="guide-edge-glue-center"><polygon points="140,45 280,45 380,95 280,145 140,145 40,95"/></clipPath></defs><g clip-path="url(#guide-edge-glue-center)">${edgeGlueStrips}</g><polygon data-guide-part="edge-rip-center-blank" points="140,45 280,45 380,95 280,145 140,145 40,95" fill="none" stroke="#33261e" stroke-width="3" stroke-linejoin="round"/><polygon data-guide-part="replacement-top" points="140,45 280,45 210,12" fill="${guideWood(state.edgeWood)}" stroke="#6e5a4b" stroke-width="3" stroke-linejoin="round"/><polygon data-guide-part="replacement-bottom" points="140,145 280,145 210,178" fill="${guideWood(state.edgeWood)}" stroke="#6e5a4b" stroke-width="3" stroke-linejoin="round"/><line data-guide-part="replacement-top-seam" x1="140" y1="45" x2="280" y2="45" stroke="#6e5a4b" stroke-width="3"/><line data-guide-part="replacement-bottom-seam" x1="140" y1="145" x2="280" y2="145" stroke="#6e5a4b" stroke-width="3"/><polygon data-guide-part="edge-rip-diamond-square" points="210,12 380,95 210,178 40,95" fill="none" stroke="#33261e" stroke-width="3" stroke-linejoin="round"/>`, `Completed square rotated 45 degrees with two ${edgeRipSpecies} triangles attached flush to the top and bottom ${ripTargetSpecies} cut faces`)
   }] : [];
-  const borderTop = state.includeBorders ? border.bands.reduce((html, band, index) => html + `<rect x="45" y="${30 + index * 8}" width="330" height="8" fill="${guideWood(band.wood)}"/>`, '') : '';
-  const borderBottom = state.includeBorders ? border.bands.reduce((html, band, index) => html + `<rect x="45" y="${152 - index * 8}" width="330" height="8" fill="${guideWood(band.wood)}"/>`, '') : '';
-  const masterX = 125;
-  const masterY = 20;
-  const masterWidth = 170;
-  const masterHeight = 150;
-  const totalBoardWidth = Math.max(actual.width, 0.001);
-  const visualBorderWidth = state.includeBorders ? masterWidth * border.effectiveWidth / totalBoardWidth : 0;
-  const fieldX = masterX + visualBorderWidth;
-  const fieldWidth = masterWidth - 2 * visualBorderWidth;
-  let masterStripX = fieldX;
-  const masterStrips = strips.map(strip => {
-    const width = fieldWidth * number(strip.width) / total;
-    const shape = `<rect x="${masterStripX.toFixed(2)}" y="${masterY}" width="${width.toFixed(2)}" height="${masterHeight}" fill="${guideWood(strip.wood)}"/>`;
-    masterStripX += width;
-    return shape;
-  }).join('');
-  const leftMasterBorders = state.includeBorders ? border.bands.reduce((html, band) => {
-    const width = visualBorderWidth * band.width / Math.max(border.effectiveWidth, 0.001);
-    const prior = Number((html.match(/data-used="([\d.]+)"/) || [])[1] || 0);
-    return html.replace(/<meta data-used="[\d.]+">/, '') + `<rect x="${(masterX + prior).toFixed(2)}" y="${masterY}" width="${width.toFixed(2)}" height="${masterHeight}" fill="${guideWood(band.wood)}"/><meta data-used="${prior + width}">`;
-  }, '<meta data-used="0">').replace(/<meta data-used="[\d.]+">/, '') : '';
-  let rightBorderX = masterX + masterWidth - visualBorderWidth;
-  const rightMasterBorders = state.includeBorders ? border.bands.map(band => {
-    const width = visualBorderWidth * band.width / Math.max(border.effectiveWidth, 0.001);
-    const shape = `<rect x="${rightBorderX.toFixed(2)}" y="${masterY}" width="${width.toFixed(2)}" height="${masterHeight}" fill="${guideWood(band.wood)}"/>`;
-    rightBorderX += width;
-    return shape;
+  const picture9DryFit = remapDryFitIds('picture-9');
+  const picture10DryFit = remapDryFitIds('picture-10');
+  let masterProfileBorderOffset = 0;
+  const masterProfileBorders = state.includeBorders ? border.bands.map(band => {
+    const bandHeight = Math.max(2, 88 * number(band.width) / Math.max(actual.width, 0.001));
+    const topY = dryFitTop - masterProfileBorderOffset - bandHeight;
+    const bottomY = dryFitBottom + masterProfileBorderOffset;
+    masterProfileBorderOffset += bandHeight;
+    return `<rect data-guide-part="master-blank-border" x="34" y="${topY.toFixed(2)}" width="352" height="${bandHeight.toFixed(2)}" fill="${guideWood(band.wood)}"/><rect data-guide-part="master-blank-border" x="34" y="${bottomY.toFixed(2)}" width="352" height="${bandHeight.toFixed(2)}" fill="${guideWood(band.wood)}"/>`;
   }).join('') : '';
-  const masterBlankTop = `<rect x="${masterX}" y="${masterY}" width="${masterWidth}" height="${masterHeight}" fill="#eee"/>${leftMasterBorders}${masterStrips}${rightMasterBorders}<rect x="${masterX}" y="${masterY}" width="${masterWidth}" height="${masterHeight}" fill="none" stroke="#33261e" stroke-width="2"/>`;
+  const masterProfileSeams = dryFitCenters.slice(0, -1).map(center => `<line data-guide-part="master-blank-seam" x1="${center + dryFitHalfSize}" y1="${dryFitTop}" x2="${center + dryFitHalfSize}" y2="${dryFitBottom}" stroke="#33261e" stroke-width="1"/>`).join('');
+  const assembledMasterProfile = `<defs>${picture9DryFit.definitions}</defs><text x="210" y="16" text-anchor="middle">Required Length: ${crosscuts.requiredBlankLength.toFixed(3)} in</text><g data-guide-part="master-blank-profile">${picture9DryFit.bodies}${masterProfileBorders}${masterProfileSeams}<rect x="34" y="${(dryFitTop - masterProfileBorderOffset).toFixed(2)}" width="352" height="${(88 + masterProfileBorderOffset * 2).toFixed(2)}" fill="none" stroke="#33261e" stroke-width="2"/></g><text x="210" y="154" text-anchor="middle">Joined master-blank end profile</text><text x="210" y="175" text-anchor="middle">Four aligned sections continue through the full required length</text>`;
+
+  const masterTopX = 38;
+  const masterTopY = 26;
+  const masterTopWidth = 344;
+  const masterTopHeight = 126;
+  const masterTopBorderWidths = state.includeBorders ? border.bands.map(band => Math.max(2, masterTopWidth * number(band.width) / Math.max(actual.width, 0.001))) : [];
+  const masterTopTotalBorder = masterTopBorderWidths.reduce((sum, width) => sum + width, 0);
+  const masterTopCoreX = masterTopX + masterTopTotalBorder;
+  const masterTopCoreWidth = masterTopWidth - masterTopTotalBorder * 2;
+  let masterTopBorderOffset = 0;
+  const masterTopBorders = state.includeBorders ? border.bands.map((band, index) => {
+    const width = masterTopBorderWidths[index];
+    const leftX = masterTopX + masterTopBorderOffset;
+    const rightX = masterTopX + masterTopWidth - masterTopBorderOffset - width;
+    masterTopBorderOffset += width;
+    return `<rect data-guide-part="master-top-border" x="${leftX.toFixed(2)}" y="${masterTopY}" width="${width.toFixed(2)}" height="${masterTopHeight}" fill="${guideWood(band.wood)}"/><rect data-guide-part="master-top-border" x="${rightX.toFixed(2)}" y="${masterTopY}" width="${width.toFixed(2)}" height="${masterTopHeight}" fill="${guideWood(band.wood)}"/>`;
+  }).join('') : '';
+  const masterTopSurface = `<g data-guide-part="master-blank-top-view"><svg x="${masterTopCoreX.toFixed(2)}" y="${masterTopY}" width="${masterTopCoreWidth.toFixed(2)}" height="${masterTopHeight}" viewBox="34 ${(dryFitTop + 3).toFixed(2)} 352 2" preserveAspectRatio="none"><defs>${picture10DryFit.definitions}</defs>${picture10DryFit.bodies}</svg>${masterTopBorders}<rect x="${masterTopX}" y="${masterTopY}" width="${masterTopWidth}" height="${masterTopHeight}" fill="none" stroke="#33261e" stroke-width="2"/></g>`;
   const shownCutCount = Math.max(1, crosscuts.crosscutCount);
-  const cutGap = masterHeight / shownCutCount;
-  const topCrosscutLines = Array.from({ length: shownCutCount - 1 }, (_, index) => `<line x1="${masterX}" y1="${(masterY + (index + 1) * cutGap).toFixed(2)}" x2="${masterX + masterWidth}" y2="${(masterY + (index + 1) * cutGap).toFixed(2)}" class="guide-center-cut"/>`).join('');
+  const cutGap = masterTopHeight / shownCutCount;
+  const topCrosscutLines = Array.from({ length: shownCutCount - 1 }, (_, index) => `<line data-guide-part="master-crosscut-line" x1="${masterTopX}" y1="${(masterTopY + (index + 1) * cutGap).toFixed(2)}" x2="${masterTopX + masterTopWidth}" y2="${(masterTopY + (index + 1) * cutGap).toFixed(2)}" class="guide-center-cut"/>`).join('');
+  const masterCrosscutDiagram = `${masterTopSurface}${topCrosscutLines}<path d="M389 ${masterTopY} V${(masterTopY + cutGap).toFixed(2)}" class="guide-dimension"/><text x="394" y="${(masterTopY + cutGap / 2 + 4).toFixed(2)}">${crosscuts.roughCrosscut.toFixed(3)} in</text><text x="210" y="174" text-anchor="middle">Top surface of the same four-section master blank</text>`;
+
+  const assignedSize = Math.min(44, 352 / Math.max(assignedCount, 1));
+  const assignedStart = 210 - assignedCount * assignedSize / 2;
+  const assignedY = 67;
+  const assignedCrosscuts = Array.from({ length: assignedCount }, (_, index) => guideEndGrainCell(assignedStart + index * assignedSize, assignedY, assignedSize, 0, index, 'assigned-crosscut')).join('');
+  const assignedRowDiagram = `<text x="210" y="23" text-anchor="middle">${assignedCount} crosscut${assignedCount === 1 ? '' : 's'} · ${glueUpLabel}</text><g data-guide-part="assigned-crosscut-row">${assignedCrosscuts}</g><path d="M${assignedStart.toFixed(2)} ${(assignedY + assignedSize + 18).toFixed(2)} H${(assignedStart + assignedCount * assignedSize).toFixed(2)}" class="guide-dimension"/><text x="210" y="${Math.min(174, assignedY + assignedSize + 38).toFixed(2)}" text-anchor="middle">Alternate as cut / turned 180° to close the diamonds</text>`;
+
+  const finishedRows = Math.max(1, border.selectedRows);
+  const finishedCols = Math.max(1, crosscuts.crosscutCount);
+  const finishedBorderUnits = state.includeBorders ? 2 * border.effectiveWidth / Math.max(number(state.finishedThickness), 0.001) : 0;
+  const finishedCellSize = Math.min(348 / finishedCols, 124 / (finishedRows + finishedBorderUnits));
+  const finishedFieldWidth = finishedCols * finishedCellSize;
+  const finishedFieldHeight = finishedRows * finishedCellSize;
+  const finishedBorderHeight = state.includeBorders ? finishedCellSize * border.effectiveWidth / Math.max(number(state.finishedThickness), 0.001) : 0;
+  const finishedBoardHeight = finishedFieldHeight + finishedBorderHeight * 2;
+  const finishedFieldX = 210 - finishedFieldWidth / 2;
+  const finishedBoardY = 22 + (124 - finishedBoardHeight) / 2;
+  const finishedFieldY = finishedBoardY + finishedBorderHeight;
+  const finishedCells = Array.from({ length: finishedRows }, (_, row) => Array.from({ length: finishedCols }, (_, col) => guideEndGrainCell(finishedFieldX + col * finishedCellSize, finishedFieldY + row * finishedCellSize, finishedCellSize, row, col, 'finished-board-cell')).join('')).join('');
+  let finishedBorderOffset = 0;
+  const finishedBorders = state.includeBorders ? border.bands.map(band => {
+    const bandHeight = finishedCellSize * number(band.width) / Math.max(number(state.finishedThickness), 0.001);
+    const topY = finishedBoardY + finishedBorderOffset;
+    const bottomY = finishedBoardY + finishedBoardHeight - finishedBorderOffset - bandHeight;
+    finishedBorderOffset += bandHeight;
+    return `<rect data-guide-part="finished-board-border" x="${finishedFieldX.toFixed(2)}" y="${topY.toFixed(2)}" width="${finishedFieldWidth.toFixed(2)}" height="${bandHeight.toFixed(2)}" fill="${guideWood(band.wood)}"/><rect data-guide-part="finished-board-border" x="${finishedFieldX.toFixed(2)}" y="${bottomY.toFixed(2)}" width="${finishedFieldWidth.toFixed(2)}" height="${bandHeight.toFixed(2)}" fill="${guideWood(band.wood)}"/>`;
+  }).join('') : '';
+  const finishedBoardDiagram = `<g data-guide-part="finished-board-realistic">${finishedCells}${finishedBorders}<rect x="${finishedFieldX.toFixed(2)}" y="${finishedBoardY.toFixed(2)}" width="${finishedFieldWidth.toFixed(2)}" height="${finishedBoardHeight.toFixed(2)}" rx="3" fill="none" stroke="#6e5a4b" stroke-width="2.5"/></g><path d="M${finishedFieldX.toFixed(2)} ${(finishedBoardY + finishedBoardHeight + 13).toFixed(2)} H${(finishedFieldX + finishedFieldWidth).toFixed(2)}" class="guide-dimension"/><text x="210" y="184" text-anchor="middle">${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in actual</text>`;
   const steps = [
     { title: 'Prepare the lumber', text: 'Mill the selected lumber square and straight, and make sure to include extra allowance for planing and sanding.', svg: guideSvg(`${lumberBlocks}<text x="210" y="28" text-anchor="middle">Allow extra material for planing and sanding</text>`, `All ${strips.length} selected lumber strips milled square with extra planing and sanding allowance`) },
     { title: 'Rip the laminate strips', text: `Rough-rip every strip about 0.035 in wider than its finished design width. Joint and plane consistently; the assembled blank must finish at least ${lamination.recommended.toFixed(3)} in before the 45° cuts.`, svg: guideSvg(`<rect x="48" y="62" width="324" height="66" fill="${guideWood(strips[0]?.wood)}"/>${[1,2,3,4,5].map(i => `<line x1="${48 + i * 54}" y1="48" x2="${48 + i * 54}" y2="142" class="guide-cut"/>`).join('')}<text x="210" y="32" text-anchor="middle">Rip oversize → finish to schedule</text>`, 'Rip lines through rough lumber') },
@@ -1026,11 +1051,11 @@ function buildGuideVisuals(crosscuts, border, lamination) {
     { title: 'Glue and flatten the laminated blank', text: `Apply glue evenly, clamp across the full blank, then flatten it. The finished blank must be a ${lamination.recommended.toFixed(3)} × ${lamination.recommended.toFixed(3)} in square before continuing.`, svg: guideSvg(`${squareStripBlocks}<rect x="145" y="30" width="130" height="130" fill="none" stroke="#222" stroke-width="2"/><path d="M145 19 H275 M134 30 V160" class="guide-dimension"/><text x="210" y="16" text-anchor="middle">${lamination.recommended.toFixed(3)} in</text><text x="123" y="99" text-anchor="middle" transform="rotate(-90 123 99)">${lamination.recommended.toFixed(3)} in</text>${stripOrderGuide}`, `Clamped ${lamination.recommended.toFixed(3)} inch square laminated blank`) },
     { title: 'Make the four 45° cuts', text: 'Mark the center of all four edges. Connect each center to the center of the next edge with a dotted line, then complete all four 45° cuts before beginning the Diamond Accent operation.', svg: guideSvg(`${squareStripBlocks}<rect x="145" y="30" width="130" height="130" fill="none" stroke="#222" stroke-width="2"/><path d="M210 30 L275 95 L210 160 L145 95 Z" class="guide-center-cut" fill="none"/><circle cx="210" cy="30" r="4" class="guide-center-point"/><circle cx="275" cy="95" r="4" class="guide-center-point"/><circle cx="210" cy="160" r="4" class="guide-center-point"/><circle cx="145" cy="95" r="4" class="guide-center-point"/><text x="252" y="55">CUT</text><text x="250" y="139">CUT</text><text x="153" y="139">CUT</text><text x="151" y="55">CUT</text>${stripOrderGuide}`, 'Square laminate with four dotted 45-degree cuts') },
     ...edgeRipSteps,
-    { title: 'Dry-fit the 45° cut pieces', text: `Before crosscutting the long blanks, lay the four completed 45° sections flat in one row, alternating their orientation as shown. Confirm the diagonal strip bands form matching half-diamonds${edgeRipSelected ? ` and the ${edgeRipSpecies} Diamond Accent faces meet at each seam` : ''} before gluing.`, svg: guideSvg(dryFitRow, `One-row flat-face dry fit of four completed 45-degree sections with alternating orientation and aligned ${edgeRipSpecies} Diamond Accent faces`) },
-    { title: state.includeBorders ? 'Glue the borders before crosscutting' : 'Prepare the full master blank', text: state.includeBorders ? `Glue the complete border schedule to both long outside edges of the master blank now. The borders must become part of the blank before any crosscuts are made.` : `Join the dry-fitted sections into the full master blank and verify at least ${crosscuts.requiredBlankLength.toFixed(3)} in of usable length before crosscutting.`, svg: guideSvg(`${masterBlankTop}<text x="210" y="187" text-anchor="middle">${state.includeBorders ? 'Borders glued to both long edges before crosscutting' : 'Full master blank ready for crosscut layout'}</text>`, state.includeBorders ? 'Top view of borders glued to the long master blank before crosscutting' : 'Top view of the full master blank before crosscutting') },
-    { title: 'Mark the crosscuts from the top view', text: `With the completed master blank viewed from above, run each dotted cut line fully across its width. Mark ${crosscuts.crosscutCount} crosscuts at approximately ${crosscuts.roughCrosscut.toFixed(3)} in spacing, allowing for the editable ${crosscuts.bladeKerf.toFixed(3)} in blade kerf.`, svg: guideSvg(`${masterBlankTop}${topCrosscutLines}<path d="M305 ${masterY} V${(masterY + cutGap).toFixed(2)}" class="guide-dimension"/><text x="314" y="${(masterY + cutGap / 2 + 4).toFixed(2)}">${crosscuts.roughCrosscut.toFixed(3)} in</text>`, 'Top view of the completed master blank with dotted crosscut lines running across it') },
-    { title: 'Lay out every assigned crosscut', text: `Keep the pieces in order. Lay out all ${assignedCount} crosscuts assigned to this build in one diamond row as shown below. ${glueUpInstruction} Mirror adjacent faces so the bands close into the selected diamond placement.`, svg: guideSvg(`<path d="M38 52 H382" stroke="${guideWood(state.edgeWood)}" stroke-width="10"/>${assignedCrosscuts}<path d="M38 136 H382" stroke="${guideWood(state.edgeWood)}" stroke-width="10"/><text x="210" y="20" text-anchor="middle">${assignedCount} crosscut${assignedCount === 1 ? '' : 's'} · ${glueUpLabel}</text>${guideArrow(115,166,185,166,'continue alternating')}`, `All assigned crosscuts with ${glueUpLabel.toLowerCase()}`) },
-    { title: 'Flatten, trim, sand, and finish', text: `Flatten both faces, make only the cleanup cuts needed to square the board, ease the edges, sand, and apply a food-safe finish appropriate to your use. Actual buildable size: ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in.`, svg: guideSvg(`<rect x="55" y="35" width="310" height="120" rx="7" fill="#b65c3d" stroke="#6e5a4b" stroke-width="5"/>${diamonds}<path d="M55 171 H365" class="guide-dimension"/><text x="210" y="186" text-anchor="middle">${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in actual</text>`, 'Finished cutting board with actual buildable dimensions') }
+    { title: 'Dry-fit the 45° cut pieces', text: `Before crosscutting the long blanks, lay the four completed 45° sections flat in one row. Flip Sections 1 and 3 end-for-end as shown so matching diagonal bands meet to form half-diamonds${edgeRipSelected ? ` and the ${edgeRipSpecies} Diamond Accent faces align at each seam` : ''} before gluing.`, svg: guideSvg(dryFitRow, `One-row flat-face dry fit with Sections 1 and 3 flipped 180 degrees so matching bands form half-diamonds and the ${edgeRipSpecies} Diamond Accent faces align`) },
+    { title: state.includeBorders ? 'Glue the borders before crosscutting' : 'Prepare the full master blank', text: state.includeBorders ? `Glue the complete border schedule to both long outside edges of the aligned four-section master blank. Verify that the end profile still matches Picture 8 and that at least ${crosscuts.requiredBlankLength.toFixed(3)} in remains usable before crosscutting.` : `Glue the four Picture 8 sections edge-to-edge into the full master blank. Verify the aligned end profile and at least ${crosscuts.requiredBlankLength.toFixed(3)} in of usable length before crosscutting.`, svg: guideSvg(assembledMasterProfile, state.includeBorders ? 'Realistic four-section master-blank end profile with the selected borders attached' : 'Realistic joined four-section master-blank end profile matching Picture 8') },
+    { title: 'Mark the crosscuts from the top view', text: `View the same four-section master blank from above and run each dotted cut line fully across its width. Mark ${crosscuts.crosscutCount} crosscuts at approximately ${crosscuts.roughCrosscut.toFixed(3)} in spacing, allowing for the editable ${crosscuts.bladeKerf.toFixed(3)} in blade kerf.`, svg: guideSvg(masterCrosscutDiagram, 'Realistic top surface of the aligned four-section master blank with every calculated crosscut marked') },
+    { title: 'Lay out every assigned crosscut', text: `Keep all ${assignedCount} crosscuts in order and lay them edge-to-edge in one row as shown. ${glueUpInstruction} The actual strip bands and ${edgeRipSelected ? `${edgeRipSpecies} Diamond Accents` : 'corners'} should close into the selected diamond placement.`, svg: guideSvg(assignedRowDiagram, `One realistic row of all ${assignedCount} assigned crosscuts using the active strip schedule and ${glueUpLabel.toLowerCase()}`) },
+    { title: 'Flatten, trim, sand, and finish', text: `Flatten both faces, make only the cleanup cuts needed to square the board, ease the edges, sand, and apply a food-safe finish appropriate to your use. The diagram now reproduces this design's ${finishedCols} × ${finishedRows} end-grain layout${state.includeBorders ? ' and selected borders' : ''}. Actual buildable size: ${actual.length.toFixed(3)} × ${actual.width.toFixed(3)} × ${actual.thickness.toFixed(3)} in.`, svg: guideSvg(finishedBoardDiagram, 'Finished cutting board reproduced from the active strip schedule, Diamond Accent, alternating crosscuts, dimensions, and borders') }
   ];
   return steps.map((step, index) => `<article class="guide-step"><div class="guide-step-number">${index + 1}</div><div class="guide-copy"><h3>${step.title}</h3><p>${step.text}</p></div>${step.svg}</article>`).join('');
 }
